@@ -1,0 +1,22 @@
+# Runs the MuscleMapKit package tests (the app's logic) when a PR or a push to main
+# changes them. These run on macOS without a simulator. The app's few UI smoke tests
+# are run locally in Xcode before a milestone, not here.
+name: iOS logic tests
+
+on:
+  pull_request:
+    paths: ["ios/MuscleMapKit/**", ".github/workflows/ios-tests.yml"]
+  push:
+    branches: [main]
+    paths: ["ios/MuscleMapKit/**", ".github/workflows/ios-tests.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  swift-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift --version
+      - run: swift test --package-path ios/MuscleMapKit
