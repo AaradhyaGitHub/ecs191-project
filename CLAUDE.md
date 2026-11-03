@@ -43,7 +43,7 @@ A human is in the loop at two points: **approving the plan** and **merging the P
 2. **Spec.** A human writes `specs/<feature>.md`. No spec, no feature work.
 3. **Plan.** `implementer` (plan mode) writes `specs/<feature>.llm.md`. **✋ A human reads it and approves it** by changing its status line to `Approved by <name>, <date>`, or tells you to.
 4. **Scaffold.** `implementer` (scaffold mode) creates the interface as stubs.
-5. **Tests.** `test-writer` writes tests from the spec and plan, without reading the implementation, and shows they fail.
+5. **Tests.** `test-writer` writes tests from the spec and plan and shows they fail. A guard (`.claude/hooks/test_writer_guard.py`) stops it reading any source file except those the approved plan for the current branch lists under `## Test-writer may read`.
 6. **Build.** `implementer` (build mode) makes them pass, then runs the full fast suite.
 7. **Review.** `reviewer` does one read-only round. A human picks fix or defer for each finding; deferred ones become Issues. If a blocker or should-fix was fixed, `reviewer` checks only those fixes.
 8. **PR.** Open it with the template. **✋ A human merges it.** Claude never merges or approves a PR.

@@ -18,14 +18,19 @@ Review findings to fix: <path or "none">   (build mode, after review)
 If anything is missing, stop and ask for it.
 
 ## Mode: plan
-Write `specs/<feature>.llm.md` and nothing else. Keep it under about 80 lines:
-1. **Status:** `Draft`. A human changes it to approved; you never do.
+Write `specs/<feature>.llm.md` and nothing else. Keep it under about 80 lines. Start with these two lines exactly; the test-writer's guard reads them:
+```
+Status: Draft
+Branch: <branch from the brief>
+```
+1. **Status:** stays `Draft`. A human changes it to `Approved by <name>, <date>`; you never do.
 2. **Acceptance criteria:** numbered `AC-1`, `AC-2`, … Each is observable behavior, taken from the spec. Where the spec is silent or ambiguous, list the question under **Open questions** instead of picking an answer.
 3. **Interface:** the public types, functions and endpoints tests will call, with signatures. For endpoints, point to `API.md` and say whether the contract is new or changed (a new or changed contract lands first, in its own small PR; see CLAUDE.md "Contract first").
 4. **Files:** the files you will create or change. Call out any hot spot (CLAUDE.md lists them).
 5. **Reuse:** what existing code, shared components or Apple/Flask APIs you'll use. Search before proposing anything new.
 6. **Tests:** which tier each criterion is tested at (unit, integration, UI smoke), and the test files.
-7. **Open questions** for the humans.
+7. **`## Test-writer may read`:** a bullet list of the source files (paths from the repo root, in backticks) that hold the interface, and nothing more. The test-writer can't read any other source file.
+8. **Open questions** for the humans.
 
 Return a short summary and the open questions. The caller shows the plan to a human; nothing else happens until they approve it.
 
