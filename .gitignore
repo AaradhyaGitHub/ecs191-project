@@ -1,4 +1,4 @@
-# Private, local-only material (never committed)
+# Private, local-only material (never committed). Keys go in .private/secrets/.
 .private/
 
 # macOS
@@ -11,8 +11,32 @@
 # Claude Code personal settings (shared settings in .claude/settings.json are committed)
 .claude/settings.local.json
 
-# Secrets
+# Secrets and keys
 .env
 .env.*
 *.pem
 *.key
+*.p8
+*.p12
+service-account*.json
+*-service-account.json
+credentials*.json
+
+# Paid 3D model: licensed, must never be committed
+ios/MuscleMap/Resources/ThirdParty/
+
+# Xcode and Swift Package Manager
+xcuserdata/
+DerivedData/
+build/
+.build/
+.swiftpm/
+*.xcresult
+*.xcuserstate
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
