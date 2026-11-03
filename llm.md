@@ -49,7 +49,7 @@ These two documents aren't in the repo. Their content is summarized in `server_a
 ## Open questions
 0. **For the team:** confirm the dumbbell rule above (log one dumbbell; `implement_count` on each exercise).
 1. ~~Design token names~~: decided (see Decisions).
-2. **`shared/muscles.json`**: the level of detail is decided (see Decisions). Still open: the actual list of about 45 heads, parents and groups. Claude drafts it as a contract PR for the team to review.
+2. **`shared/muscles.json`**: drafted (#24): 6 groups, 20 parents, 50 heads. Head IDs are `<parent>_<head>` (decided, see Decisions). Still open for the team: the judgment calls listed in #24 (brachialis under biceps, teres major under lats, no neck muscles, etc.).
 3. **Entity fields**: the setup checklist asks the team to agree on the data model in `server_architecture.llm.md` before building.
 4. **Request and response shapes for sign-in** (`/auth/sms/*`) depend on the course's SMS example, which isn't in the repo yet.
 5. ~~Swift package for app logic~~: decided (see Decisions).
