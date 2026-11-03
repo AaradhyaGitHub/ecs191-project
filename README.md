@@ -26,7 +26,9 @@ cd server && flask --app main run --port 5000
 ```
 
 ## Run the app
-Open `ios/MuscleMap.xcodeproj` in Xcode and run on a simulator. Debug builds talk to `http://localhost:5000`. On a real phone, use your laptop's network address instead.
+Requires **Xcode 27.2 or newer**: the project uses Xcode 27's project format, which older Xcode versions can't open. The app itself runs on iOS 17 and later, iPhone only.
+
+Open `ios/MuscleMap.xcodeproj` in Xcode and run on a simulator. If no simulators are listed, install the matching iOS simulator in Xcode → Settings → Components. Debug builds talk to `http://localhost:5000`. On a real phone, use your laptop's network address instead.
 
 ## Tests
 ```sh
