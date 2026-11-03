@@ -30,6 +30,8 @@ These two documents aren't in the repo. Their content is summarized in `server_a
 | "UP NEXT" on Lift home is the saved workout done longest ago (from `Template.last_done_at`; never-done workouts first) | Sasa, Nov 3, 2026 |
 | Saved workout (Template) IDs are UUIDs made on the phone, like workouts and sets, so saving is safe to retry | Sasa, Nov 3, 2026 |
 | Muscle chips on a saved-workout card: the 3 parent muscles (not heads) the workout works most, summed over its exercises' target sets × muscle weights, each shaded by its share of that work (intensity 0–4). Computed by the server and returned with `GET /templates`. Heads only matter for the body map | Sasa, Nov 3, 2026 |
+| API conventions: lists wrapped in an object; six error codes (`bad_request`, `unauthorized`, `forbidden`, `not_found`, `conflict`, `internal`); a repeated `POST /workouts` returns `200` with the same body (first time `201`); `PUT /users/me` is a partial update | Sasa, Nov 3, 2026 |
+| Home's history must reach any point in time: `GET /workouts` gets a `before=<timestamp>` parameter when Home is built, and the muscle map will need an end date as well as a window | Sasa, Nov 3, 2026 |
 | Workouts keep a `status` on the server. For now the app only sends finished workouts, so the server always stores `finished`; `active` is for when sets are saved live later | Sasa, Nov 3, 2026 |
 
 ## To do (not now)

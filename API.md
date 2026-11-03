@@ -9,12 +9,13 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 - **JSON** in and out, keys in `snake_case`. Timestamps are ISO 8601 in UTC (`2026-11-02T17:02:00Z`).
 - **Auth:** every endpoint except sign-in requires `Authorization: Bearer <token>`.
 - **Weights** are always kg. The app converts to the user's units for display.
-- **IDs** for workouts and sets are UUIDs made on the phone. Sending the same workout twice changes nothing.
+- **IDs** for workouts, sets and saved workouts (templates) are UUIDs made on the phone. Sending the same thing twice changes nothing.
+- **Lists are wrapped** in an object, e.g. `{"templates": [...]}`, never a bare array, so fields such as `next_cursor` can be added later without breaking the app (decided).
 - **Errors** use one shape, with the matching HTTP status:
   ```json
   {"error": {"code": "not_found", "message": "No workout with that id."}}
   ```
-  Codes (proposed): `bad_request` 400, `unauthorized` 401, `forbidden` 403, `not_found` 404, `conflict` 409, `internal` 500.
+  Codes (decided): `bad_request` 400 (malformed or invalid input), `unauthorized` 401 (not signed in, or token expired), `forbidden` 403 (someone else's data), `not_found` 404, `conflict` 409 (clashes with existing data), `internal` 500 (a server bug). Don't add codes without updating this list.
 
 ## Endpoints for the Lift tab
 
@@ -30,7 +31,7 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 | `GET /workouts?limit=20` | Recent workouts, newest first | History on Home | agreed; shapes proposed |
 | `GET /workouts/{id}` | One workout with its sets | Workout detail | agreed; shapes proposed |
 
-**Next, once Lift works:** `GET /muscle-map?window=7d` (Home), `GET` and `POST /goals`, `POST /smart-log/parse` (the AI feature).
+**Next, once Lift works:** `GET /muscle-map?window=7d` (Home), `GET` and `POST /goals`, `POST /smart-log/parse` (the AI feature). Home must also show where your muscles were at any past point, so the muscle map will need an end date as well as a window (for example `?window=7d&end=2026-10-01`); to be designed with Home.
 
 ---
 
@@ -51,8 +52,8 @@ Reuse the course's SMS authentication example. Request and response shapes will 
 }
 ```
 
-### `PUT /users/me`  (proposed shape)
-Send only the fields to change; the response is the full user, as in `GET /users/me`.
+### `PUT /users/me`  (decided: partial update)
+Send only the fields to change; fields left out stay as they are. The response is the full user, as in `GET /users/me`.
 ```json
 {"bodyweight_kg": 81.5, "units": "kg"}
 ```
@@ -146,10 +147,12 @@ Saves the workout and its sets, adds to that day's DailyStats and updates the ru
   ]
 }
 ```
-The setup guide's example has no `id`, `timezone` or `local_date`; they're added here because the guide's data model requires client-made UUIDs and a local date on every workout. Response (proposed): `201` with the saved workout in the `GET /workouts/{id}` shape; a repeated request returns `200` with the same body.
+The setup guide's example has no `id`, `timezone` or `local_date`; they're added here because the guide's data model requires client-made UUIDs and a local date on every workout. Response (decided): `201` with the saved workout in the `GET /workouts/{id}` shape. A repeated request with the same `id` saves nothing and returns `200` with the same body; the app treats both as success.
 
-### `GET /workouts?limit=20`  (proposed shape)
+### `GET /workouts?limit=20&before=<timestamp>`  (proposed shape)
 Newest first. A summary per workout, without its sets.
+- `limit` (default 20) is built first.
+- `before` is **required by Home** and built with it: it returns workouts that started before that time, so the app can page back through all of history or jump to any date. Home's history is the core of the app ("where you are now, where you've been, where your muscles were"), so it must reach any point in time.
 ```json
 {
   "workouts": [
