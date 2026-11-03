@@ -1,0 +1,2 @@
+# Local and CI only; never deployed.
+pytest>=8,<9

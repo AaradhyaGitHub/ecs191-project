@@ -1,0 +1,29 @@
+# Runs the server's tests when a PR (or a push to main) changes server/.
+# Emulator tests are skipped here for now; run them locally (see README).
+name: Server tests
+
+on:
+  pull_request:
+    paths: ["server/**", "shared/**", ".github/workflows/server-tests.yml"]
+  push:
+    branches: [main]
+    paths: ["server/**", "shared/**", ".github/workflows/server-tests.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: server/requirements*.txt
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: pytest

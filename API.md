@@ -15,12 +15,13 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
   ```json
   {"error": {"code": "not_found", "message": "No workout with that id."}}
   ```
-  Codes (decided): `bad_request` 400 (malformed or invalid input), `unauthorized` 401 (not signed in, or token expired), `forbidden` 403 (someone else's data), `not_found` 404, `conflict` 409 (clashes with existing data), `internal` 500 (a server bug). Don't add codes without updating this list.
+  Codes (decided): `bad_request` 400 (malformed or invalid input), `unauthorized` 401 (not signed in, or token expired), `forbidden` 403 (someone else's data), `not_found` 404, `conflict` 409 (clashes with existing data), `internal` 500 (a server bug). Don't add codes without updating this list. Other HTTP errors keep their own status and use the nearest code (a wrong method is `405` with `bad_request`). A `500` never includes internal details.
 
 ## Endpoints for the Lift tab
 
 | Method and path | Purpose | Needed for | Status |
 |---|---|---|---|
+| `GET /health` | Server is up: `{"status": "ok"}`. No auth | Deploy checks, the app's connection test | **built** |
 | `POST /auth/sms/start`, `POST /auth/sms/verify` | Sign in by phone code, return a token | Everything | agreed; shapes follow the course SMS example |
 | `GET /users/me`, `PUT /users/me` | Read or update the profile | Onboarding | agreed; shapes proposed |
 | `GET /exercises?q=bench` | Search exercises by name or alias | Adding exercises to a workout | agreed; shapes proposed |
