@@ -9,11 +9,21 @@ Xcode iOS App, SwiftUI, Swift, iOS 17+: SwiftData for local storage and `@Observ
 |---|---|
 | `App/` | App entry and `RootView` (the `TabView`) |
 | `DesignSystem/` | `Theme.swift` and the shared components |
-| `Models/` | `Codable` structs that mirror the API JSON exactly: `Exercise`, `Template`, `Workout`, `SetEntry`, `User`. Decoded with `.convertFromSnakeCase` and ISO 8601 dates |
-| `Networking/` | `APIClient.swift`: one async client, a method per endpoint. Base URL from the build configuration: `http://localhost:5000` for Debug, the App Engine URL for Release. Sign-in token in the Keychain, never UserDefaults |
-| `Features/{Home,Lift,Goals,Camera}/` | One folder per tab |
+| `Features/{Home,Lift,Goals,Camera}/` | One folder per tab: views only; their logic is in the package |
 | `PreviewData/` | Mock data for SwiftUI previews |
 | `Resources/ThirdParty/` | The paid 3D model. Gitignored; never commit it |
+
+## MuscleMapKit (local Swift package, decided Nov 3, 2026)
+The app's logic lives in `ios/MuscleMapKit/`, not in the app target, so its tests run with `swift test` on the Mac in seconds, without the simulator, one module at a time. Package code also builds for macOS (no UIKit), and anything the app uses is `public`.
+
+| Module | Holds |
+|---|---|
+| `Models` | `Codable` structs that mirror the API JSON exactly: `Exercise`, `Template`, `Workout`, `SetEntry`, `User`. Decoded with `.convertFromSnakeCase` and ISO 8601 dates. Unit conversion (exact kg; round only for display) |
+| `Networking` | `APIClient`: one async client, a method per endpoint. Base URL from the build configuration: `http://localhost:5000` for Debug, the App Engine URL for Release. Sign-in token in the Keychain, never UserDefaults |
+| `LiftCore` | Lift logic: plate maths (lb and kg plate sets), rest timer, set ordering and supersets, Up Next |
+| later `HomeCore`, `GoalsCore` | The other tabs' logic |
+
+Each module has a test target, `Tests/<Module>Tests/`. Command: `swift test --package-path ios/MuscleMapKit --filter <Module>Tests`.
 
 A real phone needs the laptop's network address and `NSAllowsLocalNetworking` in Info.plist for plain HTTP to the local server.
 

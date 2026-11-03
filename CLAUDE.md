@@ -18,7 +18,8 @@ Keep your own notes in `llm.md`, `client_architecture.llm.md` and `server_archit
 | `API.md` | Every endpoint with request and response JSON. The contract between app and server |
 | `specs/` | One human-written spec per feature, plus Claude's plan next to it (`<feature>.llm.md`) |
 | `shared/` | `muscles.json` (muscle IDs used by both sides) and contract fixtures |
-| `ios/MuscleMap/` | `App/`, `DesignSystem/`, `Models/`, `Networking/`, `Features/{Home,Lift,Goals,Camera}/`, `PreviewData/` |
+| `ios/MuscleMap/` | The app target, screens only: `App/`, `DesignSystem/`, `Features/{Home,Lift,Goals,Camera}/` (views), `PreviewData/` |
+| `ios/MuscleMapKit/` | Local Swift package with the app's logic, one module per area: `Sources/Models/`, `Sources/Networking/`, `Sources/LiftCore/` (later `HomeCore`, `GoalsCore`), each with a test target in `Tests/<Module>Tests/` |
 | `server/` | `main.py`, `api/` (one Blueprint per resource), `services/`, `models.py`, `seed/`, `tests/` |
 | `.private/` | Gitignored, per person. Keys go in `.private/secrets/`, which Claude never reads |
 
@@ -30,6 +31,7 @@ Keep your own notes in `llm.md`, `client_architecture.llm.md` and `server_archit
 - **IDs for workouts and sets are made on the phone** (UUIDs), so `POST /workouts` is safe to retry.
 - **The active workout lives on the phone** (SwiftData) and is sent once, on Finish.
 - **Errors** are `{"error": {"code": "...", "message": "..."}}` with the matching HTTP status.
+- **iOS code split:** logic and models go in the `MuscleMapKit` package; the app target holds only views and wiring. Package code must also build on macOS (no UIKit), so its tests run with `swift test` in seconds, without the simulator. Things the app uses are marked `public`.
 - **iOS:** iOS 17+, `@Observable` view models, `Codable` models with `.convertFromSnakeCase` and ISO 8601 dates, sign-in token in the Keychain. Colors, fonts and spacing come from `DesignSystem/Theme.swift` only.
 - **Cloud:** one region for everything, `us-west2`. Use the Datastore emulator for development; never point local runs at the real database.
 - **No secrets in the repo.** Server keys go in Secret Manager; local keys in `.private/secrets/` or a gitignored `.env`.
@@ -56,7 +58,7 @@ The main session runs this: it passes each agent its full brief (the format is a
 
 ## Contract first, and hot spots
 - A new or changed endpoint starts with its own small PR: the `API.md` entry plus example JSON in `shared/fixtures/`. After that merges, the server side and the iOS side can be built in parallel; iOS works against the fixtures until the server is ready.
-- **Hot spots** that everyone touches: `server/main.py`, `server/models.py`, `server/index.yaml`, `ios/MuscleMap/App/`, `ios/MuscleMap/Models/`, `shared/`, `API.md`. Keep changes to them small and on their own when possible, and say so in the Issue.
+- **Hot spots** that everyone touches: `server/main.py`, `server/models.py`, `server/index.yaml`, `ios/MuscleMap/App/`, `ios/MuscleMapKit/Package.swift`, `ios/MuscleMapKit/Sources/Models/`, `shared/`, `API.md`. Keep changes to them small and on their own when possible, and say so in the Issue.
 
 ## Testing
 Run the tests for what you changed, not everything. Run the full fast suite before opening a PR.
@@ -65,12 +67,13 @@ Run the tests for what you changed, not everything. Run the full fast suite befo
 |---|---|---|---|
 | Unit (server) | `server/services/` and pure functions, no database | `cd server && pytest tests/<path> -m "not emulator"` | every change, affected files only |
 | Integration (server) | endpoints via Flask's test client and the Datastore emulator | `cd server && pytest -m emulator` (emulator running) | before the PR |
-| Unit (iOS) | models, networking and feature logic | Xcode MCP `RunSomeTests`, or `swift test --filter <Target>` once logic moves to a Swift package | every change, affected targets only |
+| Unit (iOS) | `MuscleMapKit` modules: models, networking, feature logic | `swift test --package-path ios/MuscleMapKit --filter <Module>Tests` (no simulator) | every change, affected modules only |
 | UI smoke (iOS) | a few end-to-end flows on the simulator | Xcode MCP `RunSomeTests` | before a milestone |
 
 - Tests mirror the source layout: `server/services/workout_service.py` → `server/tests/services/test_workout_service.py`; an iOS module's tests sit in its own test target.
 - Changes to `shared/` or `API.md` run the contract tests on both sides.
-- iOS builds and tests go through the Xcode MCP when it's available. Never hand-edit `project.pbxproj`.
+- Logic tests go in the package and run with `swift test`. The app target only gets a few UI smoke tests.
+- iOS app builds and UI tests go through the Xcode MCP when it's available. Never hand-edit `project.pbxproj`.
 
 ## Git
 - **Never commit to `main`** and never force-push. Work on a branch, and only on branches you or your human own.

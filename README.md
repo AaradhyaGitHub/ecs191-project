@@ -33,7 +33,19 @@ Open `ios/MuscleMap.xcodeproj` in Xcode and run on a simulator. Debug builds tal
 cd server && pytest -m "not emulator"   # fast: logic only
 cd server && pytest -m emulator         # endpoints; emulator must be running
 ```
-iOS tests run from Xcode (⌘U).
+```sh
+# iOS logic lives in a local Swift package (ios/MuscleMapKit), so its tests run on the Mac, no simulator
+swift test --package-path ios/MuscleMapKit                       # all modules
+swift test --package-path ios/MuscleMapKit --filter LiftCoreTests # one module
+```
+The app's few UI smoke tests run from Xcode (⌘U).
+
+## Code layout
+- `server/`: Flask app. `api/` handlers stay thin, `services/` holds the logic, `models.py` is the only Datastore access.
+- `ios/MuscleMap/`: the iOS app target, screens only.
+- `ios/MuscleMapKit/`: a local Swift package with the app's logic, one module per area (`Models`, `Networking`, `LiftCore`, …), each with its own tests. New logic goes here, not in the app target.
+- `shared/`: files both sides use, such as `muscles.json` and the API example JSON.
+- Why it's laid out this way: see `client_architecture.md` and `server_architecture.md`.
 
 ## Deploy
 ```sh
