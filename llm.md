@@ -25,10 +25,12 @@ These two documents aren't in the repo. Their content is summarized in `server_a
 | Dark mode only | Setup guide (`.preferredColorScheme(.dark)`), Lift Tab UI |
 | Workflow: spec → approved plan → scaffold → tests → build → review → PR; humans approve the plan and merge | Team setup session, Nov 3, 2026 |
 | Design tokens: the Lift Tab UI set (`background`, `surface`, `surfaceRaised`, `sheet`, `accent`, `onAccent`, `textPrimary`, `textSecondary`, `intensity` 0–4), plus `border`, which has the same value as `surfaceRaised` for now so borders can change on their own. The setup guide's `surfaceBorder` name is dropped | Sasa, Nov 3, 2026 |
+| Muscles are tracked at head level (`triceps_long`), each with a `parent` muscle (`triceps`) and a `group` (`arms`), so the Home body map can shade small regions while chips and filters roll up. Start with about 45 heads. IDs are stable: new muscles are only ever added, never renamed or reused. An exercise may point at a parent ID, which spreads its weight evenly across that muscle's heads | Sasa, Nov 3, 2026 |
+| Later, not now: import a public exercise dataset (stored with `source: dataset`), mapped onto our parent IDs | Sasa, Nov 3, 2026 |
 
 ## Open questions
 1. ~~Design token names~~: decided (see Decisions).
-2. **`shared/muscles.json`**: the muscle IDs, names and groups. The setup checklist says the team agrees on it together.
+2. **`shared/muscles.json`**: the level of detail is decided (see Decisions). Still open: the actual list of heads, parents and groups, which the team reviews, and how each ID maps to the paid 3D model's parts.
 3. **Entity fields**: the setup checklist asks the team to agree on the data model in `server_architecture.llm.md` before building.
 4. **Request and response shapes for sign-in** (`/auth/sms/*`) depend on the course's SMS example, which isn't in the repo yet.
 5. **Swift package for app logic**: putting models, networking and feature logic in a local Swift package would let those tests run in seconds without the simulator. It's an architecture choice for `client_architecture.md`.
