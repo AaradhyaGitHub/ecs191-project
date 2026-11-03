@@ -24,9 +24,10 @@ These two documents aren't in the repo. Their content is summarized in `server_a
 | The active workout lives on the phone (SwiftData) and is sent once on Finish | Setup guide |
 | Dark mode only | Setup guide (`.preferredColorScheme(.dark)`), Lift Tab UI |
 | Workflow: spec → approved plan → scaffold → tests → build → review → PR; humans approve the plan and merge | Team setup session, Nov 3, 2026 |
+| Design tokens: the Lift Tab UI set (`background`, `surface`, `surfaceRaised`, `sheet`, `accent`, `onAccent`, `textPrimary`, `textSecondary`, `intensity` 0–4), plus `border`, which has the same value as `surfaceRaised` for now so borders can change on their own. The setup guide's `surfaceBorder` name is dropped | Sasa, Nov 3, 2026 |
 
 ## Open questions
-1. **Design token names disagree.** The setup guide names `#2A2C31` `surfaceBorder`; the Lift Tab UI calls it `surfaceRaised` and uses it for steppers and secondary buttons as well as borders. The Lift Tab UI also has `sheet` (`#17181C`) and `onAccent` (`#1A0F08`), which the setup guide doesn't list. Proposal: use the Lift Tab UI's set, since it's the more complete. Needs a team decision before `Theme.swift`.
+1. ~~Design token names~~: decided (see Decisions).
 2. **`shared/muscles.json`**: the muscle IDs, names and groups. The setup checklist says the team agrees on it together.
 3. **Entity fields**: the setup checklist asks the team to agree on the data model in `server_architecture.llm.md` before building.
 4. **Request and response shapes for sign-in** (`/auth/sms/*`) depend on the course's SMS example, which isn't in the repo yet.

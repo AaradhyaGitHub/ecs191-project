@@ -41,7 +41,8 @@ Dark only. Inter in the mockups, SF Pro on device. 8 pt spacing.
 |---|---|---|
 | `background` | Screen background | `#111214` |
 | `surface` | Cards, rows, inputs | `#1C1D21` |
-| `surfaceRaised` | Steppers, secondary buttons, borders | `#2A2C31` |
+| `surfaceRaised` | Steppers, secondary buttons | `#2A2C31` |
+| `border` | Card and input outlines (same value as `surfaceRaised` for now) | `#2A2C31` |
 | `sheet` | Bottom sheets | `#17181C` |
 | `accent` | Primary buttons, selected tab, Up next | `#F08A4B` |
 | `onAccent` | Text and icons on accent | `#1A0F08` |
@@ -49,7 +50,7 @@ Dark only. Inter in the mockups, SF Pro on device. 8 pt spacing.
 | `textSecondary` | Captions, labels, inactive tabs | `#9AA0AA` |
 | `intensity` 0–4 | Muscle shades, none to heavy | `#2F343E`, `#5C3B2E`, `#9C4A2A`, `#E0662E`, `#FFB46E` |
 
-The setup guide calls `#2A2C31` `surfaceBorder` and lists neither `sheet` nor `onAccent` (open question 1 in `llm.md`).
+Decided Nov 3, 2026: this is the token set for `Theme.swift`. The setup guide's `surfaceBorder` is replaced by `surfaceRaised` and `border`.
 
 **Type:** large title 34/700; hero number 52/700, tabular; card title 20/700; row title 16/600; secondary 14/400; section header 12/600 caps, +0.1em tracking.
 
@@ -59,7 +60,7 @@ The setup guide calls `#2A2C31` `surfaceBorder` and lists neither `sheet` nor `o
 | Component | What |
 |---|---|
 | `TabBar` | Four tabs, icon over label; accent = selected |
-| `CardView` | Surface, radius 16, 1 pt border; accent border when highlighted |
+| `CardView` | Surface, radius 16, 1 pt `border`; accent border when highlighted |
 | `PrimaryButton` | Accent fill, onAccent text, 52 tall |
 | `MuscleChip` | Muscle name with an intensity square |
 | `SectionHeader` | Caps label with optional count |
