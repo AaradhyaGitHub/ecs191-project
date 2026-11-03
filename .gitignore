@@ -1,0 +1,18 @@
+# Private, local-only material (never committed)
+.private/
+
+# macOS
+.DS_Store
+
+# Personal editor settings
+.vscode/
+.idea/
+
+# Claude Code personal settings (shared settings in .claude/settings.json are committed)
+.claude/settings.local.json
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
