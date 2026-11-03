@@ -1,0 +1,9 @@
+# Datastore composite indexes. Deployed with: gcloud app deploy app.yaml index.yaml
+indexes:
+  # One exercise's history for a user, newest first.
+  - kind: SetEntry
+    ancestor: yes
+    properties:
+      - name: exercise_id
+      - name: started_at
+        direction: desc

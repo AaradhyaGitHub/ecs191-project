@@ -5,24 +5,28 @@ An iOS workout tracker that shows which muscles you've trained. ECS 191 group pr
 - **App:** SwiftUI, iOS 17+ (`ios/`)
 - **Server:** Flask on Google App Engine, Firestore in Datastore mode (`server/`)
 
-> The app and server don't exist yet. The steps below are the plan from the team's setup guide; they'll be checked as each part is built.
+> Work in progress: the server skeleton runs locally; the iOS app is next. Steps marked below are checked as each part is built.
 
 ## Run the server locally
-Requires Python 3.13 and the Google Cloud CLI.
+**Prerequisites**
+- **Python 3.13.** With [uv](https://docs.astral.sh/uv/): `uv python install 3.13`. Or install it from python.org.
+- **Google Cloud CLI** (`gcloud`): [install guide](https://cloud.google.com/sdk/docs/install). Then `gcloud components install cloud-firestore-emulator`.
+- **Java 21 or newer**, which the database emulator runs on.
 
 ```sh
-# one time
-gcloud auth application-default login
+# one time, from the repo root
 cd server
-python3.13 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
+uv venv --python 3.13 .venv          # or: python3.13 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt   # with uv: uv pip install -r ...
 
 # terminal 1: Datastore-mode emulator, so nobody touches the real database
 gcloud emulators firestore start --database-mode=datastore-mode --host-port=localhost:8081
 
-# terminal 2
+# terminal 2, from server/ with the venv active
 export DATASTORE_EMULATOR_HOST=localhost:8081
-cd server && flask --app main run --port 5000
+flask --app main run --port 5000
+curl http://localhost:5000/api/v1/health   # → {"status": "ok"}
 ```
 
 ## Run the app
@@ -30,8 +34,9 @@ Open `ios/MuscleMap.xcodeproj` in Xcode and run on a simulator. Debug builds tal
 
 ## Tests
 ```sh
-cd server && pytest -m "not emulator"   # fast: logic only
-cd server && pytest -m emulator         # endpoints; emulator must be running
+cd server && pytest                      # everything; emulator tests skip if the emulator isn't running
+cd server && pytest -m "not emulator"   # fast: no database
+cd server && pytest -m emulator         # needs the emulator and DATASTORE_EMULATOR_HOST
 ```
 ```sh
 # iOS logic lives in a local Swift package (ios/MuscleMapKit), so its tests run on the Mac, no simulator

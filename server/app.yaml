@@ -1,0 +1,5 @@
+# App Engine standard. No entrypoint: App Engine runs Gunicorn on `app` in main.py.
+runtime: python313
+instance_class: F1
+automatic_scaling:
+  max_instances: 2 # keeps the bill near zero
