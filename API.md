@@ -147,7 +147,7 @@ Saves the workout and its sets, adds to that day's DailyStats and updates the ru
   ]
 }
 ```
-The setup guide's example has no `id`, `timezone` or `local_date`; they're added here because the guide's data model requires client-made UUIDs and a local date on every workout. Response (decided): `201` with the saved workout in the `GET /workouts/{id}` shape. A repeated request with the same `id` saves nothing and returns `200` with the same body; the app treats both as success.
+Decided: this body is the setup guide's example plus the fields its data model adds ("Fields to add to the kinds above"): the workout's and each set's phone-made `id`, `timezone` and `local_date`. `local_date` is the user's own day, so streaks and daily stats don't shift at midnight UTC. `rep_offsets_ms` (optional, per set) comes later with the camera. Response (decided): `201` with the saved workout in the `GET /workouts/{id}` shape. A repeated request with the same `id` saves nothing and returns `200` with the same body; the app treats both as success.
 
 ### `GET /workouts?limit=20&before=<timestamp>`  (proposed shape)
 Newest first. A summary per workout, without its sets.
