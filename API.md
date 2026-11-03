@@ -106,11 +106,17 @@ The app sorts by `last_used_at` for Recent and by `use_count` for Most used.
       "exercises": [
         {"exercise_id": "barbell_bench_press", "target_sets": 4, "target_reps": 6, "rest_s": 180}
       ],
-      "last_done_at": "2026-11-03T17:00:00Z"
+      "last_done_at": "2026-11-03T17:00:00Z",
+      "top_muscles": [
+        {"muscle_id": "chest", "level": 4},
+        {"muscle_id": "delts", "level": 4},
+        {"muscle_id": "triceps", "level": 3}
+      ]
     }
   ]
 }
 ```
+`top_muscles` (decided): the 3 parent muscles the workout works most, computed by the server and never stored. `level` is 0–4, the intensity shade for the chip. The IDs above are examples until `shared/muscles.json` is agreed. "UP NEXT" is the template with the oldest `last_done_at` (never-done first); the app works that out from this list.
 
 ### `POST /templates` and `PUT /templates/{id}`  (proposed shape)
 Request: `name`, `focus` and `exercises` as above. Response: the full template, `201` for create and `200` for update. `DELETE /templates/{id}` returns `204` with no body.
