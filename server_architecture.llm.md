@@ -37,7 +37,7 @@ shared/muscles.json             muscle IDs, names, groups (a file, not a kind)
 ## Kinds and fields
 **User:** `display_name`, `sex`, `birth_year` (optional, for strength standards), `bodyweight_kg`, `units` (`lb` | `kg`, display only), `experience` (`beginner` | `intermediate` | `advanced`), `created_at`. Later: `share_consent {anonymous, decided_at}`, `handle` (unique, optional, kept apart from the phone number), `timezone`.
 
-**Exercise** (shared, key = slug such as `barbell_bench_press`): `name`, `aliases` (help search and Smart Log: "bench", "BP"), `load_type` (`barbell` | `dumbbell` | `machine` | `cable` | `bodyweight` | `timed`; picks the set-entry screen), `bodyweight_fraction` (bodyweight exercises, e.g. about 0.64 for a push-up), `muscles` (list of `{muscle_id, role, weight}`; role is `primary` | `secondary` | `stabilizer`, weight 0–1 is what scoring multiplies by), `source` (`dataset` | `hand_tuned` | `user`), `weights_version`, `owner_id` (null = shared).
+**Exercise** (shared, key = slug such as `barbell_bench_press`): `name`, `aliases` (help search and Smart Log: "bench", "BP"), `load_type` (`barbell` | `dumbbell` | `machine` | `cable` | `bodyweight` | `timed`; picks the set-entry screen), `bodyweight_fraction` (bodyweight exercises, e.g. about 0.64 for a push-up), `implement_count` (1 or 2 dumbbells; sets log one dumbbell's weight and volume multiplies by this; pending team agreement), `muscles` (list of `{muscle_id, role, weight}`; role is `primary` | `secondary` | `stabilizer`, weight 0–1 is what scoring multiplies by), `source` (`dataset` | `hand_tuned` | `user`), `weights_version`, `owner_id` (null = shared).
 
 **Template** (a saved workout): `name`, `focus`, `exercises` (ordered `{exercise_id, target_sets, target_reps, rest_s}`), `last_done_at` (copied from the latest Workout, so the list needs no query). Later: `visibility` (`private` | `anonymous` | `public`), `shared_id`, `origin {shared_id, version}`.
 
@@ -56,7 +56,7 @@ shared/muscles.json             muscle IDs, names, groups (a file, not a kind)
 **Friendship:** `status` (`pending` | `accepted`), `requested_by`, `created_at`. **Challenge:** `metric`, `start_date`, `end_date`, `participants`, `created_by`, `status`. Scores are never stored; they're summed from each participant's DailyStats.
 
 ## Computed, never stored
-Style (strength, hypertrophy or endurance, from reps and rest), e1RM, volume, each muscle's level per style, neglect flags, goal progress. Volume for bodyweight exercises = (bodyweight × `bodyweight_fraction` + added load) × reps. Bumping an exercise's `weights_version` lets history be recomputed.
+Style (strength, hypertrophy or endurance, from reps and rest), e1RM, volume, each muscle's level per style, neglect flags, goal progress. Volume for bodyweight exercises = (bodyweight × `bodyweight_fraction` + added load) × reps. Volume for dumbbell exercises = weight × `implement_count` × reps (pending team agreement). Weights are stored as the exact kg value, never rounded. Bumping an exercise's `weights_version` lets history be recomputed.
 
 ## Write path
 `POST /workouts` does three things in **one transaction**: save the workout and its sets, add to that day's DailyStats, update Stats/totals. If the user has consented, it then refreshes the shared copy of the template. Repeating the request with the same UUIDs changes nothing.

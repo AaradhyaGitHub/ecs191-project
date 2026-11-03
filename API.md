@@ -8,7 +8,7 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 - **Base URL:** `http://localhost:5000/api/v1` locally; `https://<PROJECT_ID>.<REGION_ID>.r.appspot.com/api/v1` deployed.
 - **JSON** in and out, keys in `snake_case`. Timestamps are ISO 8601 in UTC (`2026-11-02T17:02:00Z`).
 - **Auth:** every endpoint except sign-in requires `Authorization: Bearer <token>`.
-- **Weights** are always kg. The app converts to the user's units for display.
+- **Weights** are always kg, sent and stored at full precision (157.5 lb → 71.4408 kg), never rounded. The app converts to the user's units and rounds only for display. Dumbbell weights are one dumbbell's weight (pending team agreement).
 - **IDs** for workouts, sets and saved workouts (templates) are UUIDs made on the phone. Sending the same thing twice changes nothing.
 - **Lists are wrapped** in an object, e.g. `{"templates": [...]}`, never a bare array, so fields such as `next_cursor` can be added later without breaking the app (decided).
 - **Errors** use one shape, with the matching HTTP status:
