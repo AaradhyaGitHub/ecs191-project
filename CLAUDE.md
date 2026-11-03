@@ -48,6 +48,8 @@ A human is in the loop at two points: **approving the plan** and **merging the P
 7. **Review.** `reviewer` does one read-only round. A human picks fix or defer for each finding; deferred ones become Issues. If a blocker or should-fix was fixed, `reviewer` checks only those fixes.
 8. **PR.** Open it with the template. **✋ A human merges it.** Claude never merges or approves a PR.
 
+**Where am I?** Each plan ends with a `## Progress` checklist (plan approved, scaffold, tests red, build green, review, PR) that `implementer` ticks as steps finish, with the commit for each. Across features, the open and assigned Issues show who's doing what.
+
 The main session runs this: it passes each agent its full brief (the format is at the top of each file in `.claude/agents/`), shows the human the plan and the review, and never skips the two checkpoints.
 
 **Small changes** (docs, config, a typo, a one-line fix) skip steps 2–7: branch, change, PR.

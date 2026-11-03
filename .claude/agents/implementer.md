@@ -31,6 +31,18 @@ Branch: <branch from the brief>
 6. **Tests:** which tier each criterion is tested at (unit, integration, UI smoke), and the test files.
 7. **`## Test-writer may read`:** a bullet list of the source files (paths from the repo root, in backticks) that hold the interface, and nothing more. The test-writer can't read any other source file.
 8. **Open questions** for the humans.
+9. **`## Progress`**, last, exactly this list, all unticked:
+   ```
+   - [ ] Plan approved
+   - [ ] Scaffold
+   - [ ] Tests red
+   - [ ] Build green
+   - [ ] Review
+   - [ ] PR
+   ```
+
+## Keeping Progress current
+Each time you finish a step, tick its box in the plan's `## Progress` and add the commit, for example `- [x] Scaffold (a1b2c3d)`. Tick "Plan approved" only after a human has changed the status line. When the caller tells you test-writer or reviewer has finished, tick theirs too (test-writer can't edit the plan). Commit the plan along with the step's work.
 
 Return a short summary and the open questions. The caller shows the plan to a human; nothing else happens until they approve it.
 

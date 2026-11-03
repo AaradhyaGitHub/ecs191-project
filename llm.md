@@ -27,8 +27,12 @@ These two documents aren't in the repo. Their content is summarized in `server_a
 | Design tokens: the Lift Tab UI set (`background`, `surface`, `surfaceRaised`, `sheet`, `accent`, `onAccent`, `textPrimary`, `textSecondary`, `intensity` 0–4), plus `border`, which has the same value as `surfaceRaised` for now so borders can change on their own. The setup guide's `surfaceBorder` name is dropped | Sasa, Nov 3, 2026 |
 | Muscles are tracked at head level (`triceps_long`), each with a `parent` muscle (`triceps`) and a `group` (`arms`), so the Home body map can shade small regions while chips and filters roll up. Start with about 45 heads. IDs are stable: new muscles are only ever added, never renamed or reused. An exercise may point at a parent ID, which spreads its weight evenly across that muscle's heads | Sasa, Nov 3, 2026 |
 | The muscle list isn't limited to what the body map can show. The map starts as a 2D drawing, and mapping IDs to its regions is the Home tab's job, not part of `shared/muscles.json`. A muscle with no region of its own still counts, and can appear in a detailed list view later | Sasa, Nov 3, 2026 |
+| "UP NEXT" on Lift home is the saved workout done longest ago (from `Template.last_done_at`; never-done workouts first) | Sasa, Nov 3, 2026 |
+| Saved workout (Template) IDs are UUIDs made on the phone, like workouts and sets, so saving is safe to retry | Sasa, Nov 3, 2026 |
+| Workouts keep a `status` on the server. For now the app only sends finished workouts, so the server always stores `finished`; `active` is for when sets are saved live later | Sasa, Nov 3, 2026 |
 
 ## To do (not now)
+- A smarter "UP NEXT": predict which workout you're likely to do today from your recent pattern (for example, what you did on this weekday last week).
 - Import a public exercise dataset, stored with `source: dataset` and mapped onto our parent IDs. Check its license first (for example `free-exercise-db` is public domain; `wger` data is share-alike).
 - A detailed "every muscle used" view, beyond the regions on the body map.
 
