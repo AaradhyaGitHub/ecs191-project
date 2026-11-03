@@ -1,0 +1,12 @@
+{
+  "exercises": [
+    {
+      "exercise_id": "push_up",
+      "use_count": 14,
+      "last_used_at": "2026-11-01T18:10:00Z",
+      "last_set": {"weight_kg": null, "added_load_kg": 0, "reps": 20, "duration_s": null, "effort_pct": 90},
+      "best_e1rm_kg": null,
+      "best_e1rm_at": null
+    }
+  ]
+}

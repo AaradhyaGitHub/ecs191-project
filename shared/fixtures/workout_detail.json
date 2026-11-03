@@ -1,0 +1,18 @@
+{
+  "id": "6f1c2b1e-4b7a-4c3e-9d2a-0a1b2c3d4e5f",
+  "name": "Push 1",
+  "template_id": "tpl_push1",
+  "status": "finished",
+  "started_at": "2026-11-02T17:02:00.123456+00:00",
+  "ended_at": "2026-11-02T19:33:00+00:00",
+  "timezone": "America/Los_Angeles",
+  "local_date": "2026-11-02",
+  "bodyweight_kg": 82.1,
+  "sets": [
+    {"id": "a0b1c2d3-0000-4000-8000-000000000001",
+     "exercise_id": "barbell_bench_press", "order": 1, "superset_group": null, "set_type": "working",
+     "reps": 5, "duration_s": null, "weight_kg": 70.3, "added_load_kg": null, "effort_pct": 80,
+     "started_at": "2026-11-02T17:10:05Z", "ended_at": "2026-11-02T17:10:40Z",
+     "rest_before_s": 186, "time_source": "rest_timer", "input": "manual"}
+  ]
+}
