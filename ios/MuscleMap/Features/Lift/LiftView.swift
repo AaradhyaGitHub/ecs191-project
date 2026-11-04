@@ -22,6 +22,9 @@ struct LiftView: View {
                 Text("Lift")
                     .font(Theme.Fonts.largeTitle)
                     .foregroundStyle(Theme.Colors.textPrimary)
+                if session.storageIsTemporary {
+                    NoticeLine(text: "Workouts can't be saved on this phone right now.")
+                }
                 OutboxBanner(outbox: session.outbox) { deleting = $0 }
                 if let active = session.active {
                     resumeCard(active)

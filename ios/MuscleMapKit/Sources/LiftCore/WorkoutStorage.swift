@@ -24,16 +24,18 @@ public struct OutboxItem: Codable, Identifiable, Equatable, Sendable {
 }
 
 /// Where the open workout and the outbox live on the phone.
+/// Each write returns true when it reached the phone's storage, false when it failed
+/// (for example a full disk); a failed write changes nothing that is stored.
 @MainActor
 public protocol WorkoutStorage: AnyObject {
     func loadActive() -> ActiveWorkout?
-    func saveActive(_ workout: ActiveWorkout)
-    func clearActive()
+    @discardableResult func saveActive(_ workout: ActiveWorkout) -> Bool
+    @discardableResult func clearActive() -> Bool
     /// Outbox items in the order they were added.
     func outboxItems() -> [OutboxItem]
     /// Adds an item, or replaces the one with the same id (keeping its place).
-    func saveOutboxItem(_ item: OutboxItem)
-    func removeOutboxItem(id: String)
+    @discardableResult func saveOutboxItem(_ item: OutboxItem) -> Bool
+    @discardableResult func removeOutboxItem(id: String) -> Bool
 }
 
 /// One stored row: the open workout or an outbox item, as JSON.
@@ -93,8 +95,15 @@ public final class SwiftDataWorkoutStorage: WorkoutStorage {
         return (try? context.fetch(descriptor)) ?? []
     }
 
-    private func save() {
-        try? context.save()
+    /// Writes the changes; on failure, undoes them so memory matches what is stored.
+    private func save() -> Bool {
+        do {
+            try context.save()
+            return true
+        } catch {
+            context.rollback()
+            return false
+        }
     }
 
     // MARK: Active workout
@@ -103,8 +112,9 @@ public final class SwiftDataWorkoutStorage: WorkoutStorage {
         rows(kind: Self.activeKind).first.flatMap { try? decoder.decode(ActiveWorkout.self, from: $0.json) }
     }
 
-    public func saveActive(_ workout: ActiveWorkout) {
-        guard let json = try? encoder.encode(workout) else { return }
+    @discardableResult
+    public func saveActive(_ workout: ActiveWorkout) -> Bool {
+        guard let json = try? encoder.encode(workout) else { return false }
         let existing = rows(kind: Self.activeKind)
         if let row = existing.first {
             row.key = workout.id
@@ -113,12 +123,13 @@ public final class SwiftDataWorkoutStorage: WorkoutStorage {
         } else {
             context.insert(StoredWorkoutRow(kind: Self.activeKind, key: workout.id, position: 0, json: json))
         }
-        save()
+        return save()
     }
 
-    public func clearActive() {
+    @discardableResult
+    public func clearActive() -> Bool {
         rows(kind: Self.activeKind).forEach(context.delete)
-        save()
+        return save()
     }
 
     // MARK: Outbox
@@ -127,8 +138,9 @@ public final class SwiftDataWorkoutStorage: WorkoutStorage {
         rows(kind: Self.outboxKind).compactMap { try? decoder.decode(OutboxItem.self, from: $0.json) }
     }
 
-    public func saveOutboxItem(_ item: OutboxItem) {
-        guard let json = try? encoder.encode(item) else { return }
+    @discardableResult
+    public func saveOutboxItem(_ item: OutboxItem) -> Bool {
+        guard let json = try? encoder.encode(item) else { return false }
         let existing = rows(kind: Self.outboxKind)
         if let row = existing.first(where: { $0.key == item.id }) {
             row.json = json
@@ -136,11 +148,12 @@ public final class SwiftDataWorkoutStorage: WorkoutStorage {
             let position = (existing.map(\.position).max() ?? -1) + 1
             context.insert(StoredWorkoutRow(kind: Self.outboxKind, key: item.id, position: position, json: json))
         }
-        save()
+        return save()
     }
 
-    public func removeOutboxItem(id: String) {
+    @discardableResult
+    public func removeOutboxItem(id: String) -> Bool {
         rows(kind: Self.outboxKind).filter { $0.key == id }.forEach(context.delete)
-        save()
+        return save()
     }
 }

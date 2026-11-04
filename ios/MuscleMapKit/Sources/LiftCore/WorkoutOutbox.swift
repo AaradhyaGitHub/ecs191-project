@@ -74,7 +74,10 @@ public final class WorkoutOutbox {
         guard let finished = workout.finished(at: date) else { return .noSets }
         guard WorkoutLimits.isValid(finished) else { return .notSaved(.outOfRange) }
         let item = OutboxItem(workout: finished, addedAt: date)
-        storage.saveOutboxItem(item)
+        // If the outbox write fails, the workout stays open, so nothing is lost (S2).
+        guard storage.saveOutboxItem(item) else { return .notSaved(.storageFailed) }
+        // If only this fails, the workout is safe in the outbox; LiftSession drops the stale
+        // open copy on the next launch.
         storage.clearActive()
         items.removeAll { $0.id == item.id }
         items.append(item)
