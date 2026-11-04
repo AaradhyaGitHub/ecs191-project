@@ -6,6 +6,7 @@ saved in one transaction by models.save_workout. Daily stats and totals come lat
 """
 from __future__ import annotations
 
+import logging
 import math
 import re
 from datetime import date
@@ -14,6 +15,8 @@ import models
 from services import template_service
 from services.errors import ApiError
 from services.timestamps import iso, parse
+
+logger = logging.getLogger(__name__)
 
 # Limits from API.md.
 MAX_SETS = 300
@@ -337,10 +340,16 @@ def save_workout(user_id: str, body: dict) -> tuple[dict, bool]:
 def _record_template_done(user_id: str, workout: dict) -> None:
     """Moves the saved workout's "last done" to this workout's start (saved-workouts plan, D13).
 
-    Runs on every request, first save or repeat; record_done is safe to repeat.
+    Runs on every request, first save or repeat; record_done is safe to repeat. It never fails
+    the request: the workout is already saved, so an error is logged and the save still answers
+    (review S-1, Sasa, Nov 4, 2026). The next save from that saved workout moves it again.
     """
-    if workout.get("template_id"):
+    if not workout.get("template_id"):
+        return
+    try:
         template_service.record_done(user_id, workout["template_id"], workout["started_at"])
+    except Exception:  # noqa: BLE001 - any failure here must not undo a saved workout
+        logger.exception("Couldn't record last done for saved workout %s", workout["template_id"])
 
 
 def get_workout(user_id: str, workout_id: str) -> dict:
