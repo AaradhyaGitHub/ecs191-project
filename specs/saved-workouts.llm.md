@@ -111,7 +111,7 @@ public func activeWorkout(from template: Template, library: [Exercise], startedA
 - **Issue #43 owns only these files** (#42 owns the rest of `LiftCore/` and `Features/Lift/`): `server/api/templates.py`, `server/services/template_service.py`, `server/tests/services/test_template_service.py`, `server/tests/api/test_templates.py`, `shared/fixtures/template_post.json`, `ios/MuscleMapKit/Sources/LiftCore/SavedWorkouts.swift`, `ios/MuscleMapKit/Tests/LiftCoreTests/SavedWorkoutsTests.swift`, and in `ios/MuscleMap/Features/Lift/`: `SavedWorkoutsSection.swift`, `SavedWorkoutCard.swift`, `SavedWorkoutsModel.swift`, `SaveAsWorkoutSheet.swift`. Shared, small edits: `LiftView.swift`, `PreviewData.swift` and the hot spots above.
 
 ## Reuse
-`require_user`, `ApiError`, `exercise_service.load_muscles()` (#8), `models.get_exercises` (#42), #42's shared ISO helper (`_iso`). `APIClient` template methods, `searchExercises()` for the library, `Template`, `TemplateInput`, `ClientID`, `Workout`, #42's `ActiveWorkout`. `CardView` (`isHighlighted`), `MuscleChip`, `PrimaryButton`, `SectionHeader`, `Theme`, `PreviewData.templates`. SwiftUI `contextMenu`, `alert` with text fields, `confirmationDialog`, `refreshable`. No new dependency.
+`require_user`, `ApiError`, `exercise_service.load_muscles()` (#8), `models.get_exercises` (#42), #42's shared ISO helper (`services.timestamps.iso`). `APIClient` template methods, `searchExercises()` for the library, `Template`, `TemplateInput`, `ClientID`, `Workout`, #42's `ActiveWorkout`. `CardView` (`isHighlighted`), `MuscleChip`, `PrimaryButton`, `SectionHeader`, `Theme`, `PreviewData.templates`. SwiftUI `contextMenu`, `alert` with text fields, `confirmationDialog`, `refreshable`. No new dependency.
 
 ## Tests
 - Server unit (AC-3, 6, 7 logic): `server/tests/services/test_template_service.py`, with `seed/exercises.json` and `server/muscles.json` in memory.
@@ -144,7 +144,7 @@ public func activeWorkout(from template: Template, library: [Exercise], startedA
 - `server/services/auth.py`
 - `server/services/exercise_service.py`
 - `ios/MuscleMapKit/Sources/LiftCore/SavedWorkouts.swift`
-- `ios/MuscleMapKit/Sources/LiftCore/ActiveWorkout.swift` (#42's; after it merges)
+- `ios/MuscleMapKit/Sources/LiftCore/ActiveWorkout.swift` (#42's; holds `ActiveWorkout` and `WorkoutBlock`)
 - `ios/MuscleMapKit/Sources/Models/Template.swift`
 - `ios/MuscleMapKit/Sources/Models/Workout.swift`
 - `ios/MuscleMapKit/Sources/Models/Exercise.swift`
@@ -177,7 +177,7 @@ None.
 
 ## Progress
 - [x] Plan approved (369fb8b)
-- [x] Scaffold (9e214e9, server + LiftCore rules; activeWorkout(from:) and screens after #42)
+- [x] Scaffold (9e214e9, server + LiftCore rules; part 2: fb75854, activeWorkout(from:) after merging main 81bbc49 and the record_done call 702c180)
 - [x] Tests red (75d4aa1)
 - [x] Build green (abf9f83, server + LiftCore rules; activeWorkout(from:), screens and the record_done call after #42)
 - [ ] Review
