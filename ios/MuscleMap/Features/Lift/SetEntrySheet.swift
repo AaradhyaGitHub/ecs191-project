@@ -57,12 +57,18 @@ struct SetEntrySheet: View {
                                onPlus: { draft.stepRestAfter(by: 1) })
                 }
                 effortPicker
-                PrimaryButton(title: LocalizedStringKey(primaryTitle)) {
-                    onSubmit(draft.clamped())
-                    dismiss()
-                }
             }
             .padding(Theme.Spacing.gutter)
+        }
+        // Log stays on screen below the scrolling content, however tall the sheet gets (#63).
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            PrimaryButton(title: LocalizedStringKey(primaryTitle)) {
+                onSubmit(draft.clamped())
+                dismiss()
+            }
+            .padding(.horizontal, Theme.Spacing.gutter)
+            .padding(.vertical, Theme.Spacing.s)
+            .background(Theme.Colors.sheet)
         }
         .background(Theme.Colors.sheet)
         .presentationDetents([.large])
@@ -103,7 +109,9 @@ struct SetEntrySheet: View {
     private var setTypePicker: some View {
         HStack(spacing: Theme.Spacing.s) {
             ForEach(SetType.allCases, id: \.self) { type in
-                Chip(title: Self.name(of: type), isSelected: draft.setType == type) { draft.setType = type }
+                Chip(title: Self.name(of: type), isSelected: draft.setType == type, fillsWidth: true) {
+                    draft.setType = type
+                }
             }
         }
     }
@@ -257,9 +265,12 @@ private struct RoundButton: View {
 }
 
 /// A selectable chip: set types here, exercise filters in the set log.
+/// `fillsWidth` chips share a row equally with smaller side padding, so four set types fit on
+/// one line on a 375 pt phone without "Warm-…" (#63).
 struct Chip: View {
     let title: String
     let isSelected: Bool
+    var fillsWidth = false
     let action: () -> Void
 
     var body: some View {
@@ -267,9 +278,10 @@ struct Chip: View {
             Text(title)
                 .font(Theme.Fonts.secondary.weight(.semibold))
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .foregroundStyle(isSelected ? Theme.Colors.onAccent : Theme.Colors.textPrimary)
-                .padding(.horizontal, Theme.Spacing.m)
-                .frame(minHeight: Theme.Size.minTouchTarget)
+                .padding(.horizontal, fillsWidth ? Theme.Spacing.s : Theme.Spacing.m)
+                .frame(maxWidth: fillsWidth ? .infinity : nil, minHeight: Theme.Size.minTouchTarget)
                 .background(isSelected ? Theme.Colors.accent : Theme.Colors.surfaceRaised,
                             in: RoundedRectangle(cornerRadius: Theme.Radius.pill))
         }
@@ -287,6 +299,18 @@ struct Chip: View {
                             weight: Weight(155, .lb)),
             editing: nil, lastSet: PreviewData.myExercises[2].lastSet, number: "3"),
         unit: .lb, onUnitChange: { _ in }, onSubmit: { _ in })
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Barbell, 375 pt phone") {
+    SetEntrySheet(
+        request: SetSheetRequest(
+            blockID: "b", exercise: PreviewData.benchPress,
+            draft: SetDraft(exerciseId: PreviewData.benchPress.id, loadType: .barbell, setType: .warmup,
+                            reps: 6, weight: Weight(155, .lb)),
+            editing: nil, lastSet: PreviewData.myExercises[2].lastSet, number: "3"),
+        unit: .lb, onUnitChange: { _ in }, onSubmit: { _ in })
+        .frame(width: 375)
         .preferredColorScheme(.dark)
 }
 

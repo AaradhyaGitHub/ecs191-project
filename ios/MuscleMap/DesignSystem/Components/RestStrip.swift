@@ -20,6 +20,8 @@ struct RestStrip: View {
                         .foregroundStyle(Theme.Colors.textSecondary)
                     Text(clockText(seconds: left))
                         .font(Theme.Fonts.cardTitle.monospacedDigit())
+                        .lineLimit(1)
+                        .fixedSize()
                         .foregroundStyle(left == 0 ? Theme.Colors.accent : Theme.Colors.textPrimary)
                         .contentTransition(.numericText(countsDown: true))
                 }
@@ -28,7 +30,7 @@ struct RestStrip: View {
                 StripButton(title: "+30s") { onAdjust(SetSteps.rest) }
                 StripButton(title: "Skip", action: onSkip)
             }
-            .padding(.horizontal, Theme.Spacing.m)
+            .padding(.horizontal, Theme.Spacing.s + Theme.Spacing.xs)
             .padding(.vertical, Theme.Spacing.s)
             .background(Theme.Colors.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.card))
             .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card)
@@ -44,10 +46,13 @@ private struct StripButton: View {
 
     var body: some View {
         Button(action: action) {
+            // One line each ("Skip", not "Ski / p"); shrinks a little before it would wrap (#63).
             Text(title)
                 .font(Theme.Fonts.secondary.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .foregroundStyle(Theme.Colors.textPrimary)
-                .padding(.horizontal, Theme.Spacing.m)
+                .padding(.horizontal, Theme.Spacing.s + Theme.Spacing.xs)
                 .frame(minHeight: Theme.Size.minTouchTarget)
                 .background(Theme.Colors.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.smallButton))
         }
@@ -59,6 +64,18 @@ private struct StripButton: View {
     var timer = RestTimer()
     timer.start(seconds: 90, at: .now)
     return RestStrip(timer: timer, onAdjust: { _ in }, onSkip: {})
+        .padding(Theme.Spacing.gutter)
+        .frame(maxHeight: .infinity)
+        .background(Theme.Colors.background)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("375 pt phone, next to the + button") {
+    var timer = RestTimer()
+    timer.start(seconds: 90, at: .now)
+    // 375 − 2 × 16 gutter − 52 (+ button) − 16 spacing = 275 pt for the strip.
+    return RestStrip(timer: timer, onAdjust: { _ in }, onSkip: {})
+        .frame(width: 275)
         .padding(Theme.Spacing.gutter)
         .frame(maxHeight: .infinity)
         .background(Theme.Colors.background)
