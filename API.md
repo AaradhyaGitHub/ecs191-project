@@ -248,6 +248,7 @@ Errors: `400 bad_request`, and nothing is saved, when:
 - `effort_pct` is outside 0–100, or `weight_kg` is below 0;
 - a set has neither `reps` nor `duration_s`;
 - there are no sets, or more than 300;
+- the sets use more than 30 different `exercise_id`s (D-23);
 - `ended_at` is before `started_at`, or `local_date` is not `YYYY-MM-DD`;
 - `name`, `started_at`, `ended_at`, `timezone` or `local_date` is missing.
 

@@ -179,6 +179,7 @@ Server: `require_user`, `ApiError`, `models.client()`, `user_key`, `get_user`; f
 20. **Phone storage format.** (a) One SwiftData row per workout holding its JSON. (b) A SwiftData model per field and set. **Decided: (a).** No migrations when fields change. Fallback: a JSON file, if SwiftData does not work under `swift test`.
 21. **Where the outbox lives.** (a) `LiftCore`, which then also depends on `Networking`. (b) A new module. **Decided: (a).** One line in `Package.swift`.
 22. **Dumbbell rule (the team still has to confirm it, llm.md).** Log one dumbbell's weight now, labelled "per dumbbell". Only `entryKind(for:)` and its label change if the team decides otherwise; `implement_count` belongs to volume (Home). **Decided: yes.**
+23. **D-23: at most 30 exercises per workout, enforced when adding (Sasa, Nov 4, 2026).** Each exercise of a superset counts; sets stay limited only by the 300-set rule. `ActiveWorkout.add` refuses picks that would go over 30 and `remainingExerciseSlots` says how many more fit. The picker disables Add and shows "A workout can have up to 30 exercises. You can add N more." (N = remaining − picked, never below 0), or "This workout has 30 exercises, the most it can have." when none are left. `POST /workouts` with more than 30 different `exercise_id`s is `400 bad_request`.
 
 ## Open questions
 None.

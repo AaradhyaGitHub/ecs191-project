@@ -15,6 +15,8 @@ from services.timestamps import iso, parse
 
 # Limits from API.md.
 MAX_SETS = 300
+# Different exercises in one workout (D-23, Sasa, Nov 4, 2026). Each superset exercise counts.
+MAX_EXERCISES = 30
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 100
 
@@ -186,8 +188,11 @@ def validate_workout(body: dict, known_exercise_ids: set[str]) -> dict:
     if len({s["order"] for s in sets}) != len(sets):
         raise _bad("Two sets have the same order.")
 
+    exercise_count = len({s["exercise_id"] for s in sets})
+    if exercise_count > MAX_EXERCISES:
+        raise _bad(f"A workout can have at most {MAX_EXERCISES} different exercises.")
     workout["set_count"] = len(sets)
-    workout["exercise_count"] = len({s["exercise_id"] for s in sets})
+    workout["exercise_count"] = exercise_count
     return {"workout": workout, "sets": sets}
 
 
