@@ -176,7 +176,7 @@ A reference such as "D13" in the plan points to this list. Sasa took every recom
 None.
 
 ## Progress
-- [ ] Plan approved
+- [x] Plan approved (369fb8b)
 - [ ] Scaffold
 - [ ] Tests red
 - [ ] Build green

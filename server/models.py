@@ -147,5 +147,52 @@ def put_user_exercise(user_id: str, slug: str, data: dict) -> None:
     client().put(entity)
 
 
+def get_exercises(slugs) -> dict:
+    """The library exercises with these slugs, as {slug: exercise}; unknown slugs are left out.
+
+    #42 plans the same helper; whichever lands first adds it, the other reuses it.
+    SCAFFOLD: returns {} until build mode.
+    """
+    return {}
+
+
+# --- Template (User/{id}/Template/{uuid}; a saved workout, server_architecture.llm.md) ----
+# SCAFFOLD: these return valid but wrong values until build mode.
+
+TEMPLATE = "Template"
+
+
+def template_key(user_id: str, template_id: str) -> datastore.Key:
+    return client().key(USER, user_id, TEMPLATE, template_id)
+
+
+def get_template(user_id: str, template_id: str) -> dict | None:
+    """One of this user's saved workouts, or None."""
+    return None
+
+
+def user_templates(user_id: str) -> list[dict]:
+    """All of this user's saved workouts, in no set order (the service sorts them)."""
+    return []
+
+
+def put_template(user_id: str, data: dict) -> None:
+    """Creates or replaces one saved workout; `data["id"]` is its key."""
+    return None
+
+
+def delete_template(user_id: str, template_id: str) -> None:
+    """Deletes one saved workout. A missing one is no error."""
+    return None
+
+
+def change_template(user_id: str, template_id: str, change) -> dict | None:
+    """In one transaction: reads the template, calls change(old), writes the result if not None.
+
+    Returns the written template, or None when the template is missing or nothing changed.
+    """
+    return None
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
