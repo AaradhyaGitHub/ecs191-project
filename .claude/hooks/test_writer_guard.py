@@ -166,6 +166,10 @@ def main() -> None:
         event = json.load(sys.stdin)
     except json.JSONDecodeError:
         block("could not parse the hook input; refusing to guess.")
+    # From .claude/settings.json the hook runs for every tool call, so it acts only inside
+    # the test-writer (agent hooks in test-writer.md alone did not fire, Nov 3, 2026).
+    if "--settings" in sys.argv[1:] and event.get("agent_type") != "test-writer":
+        sys.exit(0)
     tool = event.get("tool_name", "")
     ti = event.get("tool_input") or {}
     cwd = event.get("cwd") or PROJECT
