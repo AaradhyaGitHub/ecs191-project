@@ -6,6 +6,7 @@ On App Engine, the project comes from the environment and no setup is needed.
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 from functools import lru_cache
 
 from google.cloud import datastore
@@ -71,3 +72,45 @@ def all_exercises() -> list[dict]:
     """The whole shared library, sorted by name."""
     return sorted((_exercise_dict(e) for e in client().query(kind=EXERCISE).fetch()),
                   key=lambda e: e["name"].lower())
+
+
+# --- User and Session --------------------------------------------------------------------
+# User key = the course sign-in service's user_id. Session key = SHA-256 of the token
+# (services/auth.py), so the raw token is never stored.
+
+USER = "User"
+SESSION = "Session"
+
+
+def user_key(user_id: str) -> datastore.Key:
+    return client().key(USER, user_id)
+
+
+def ensure_user(user_id: str) -> None:
+    """Creates the User the first time someone signs in; later sign-ins change nothing."""
+    db = client()
+    with db.transaction():
+        if db.get(user_key(user_id)) is None:
+            entity = datastore.Entity(key=user_key(user_id))
+            entity["created_at"] = _now()
+            db.put(entity)
+
+
+def get_user(user_id: str) -> dict | None:
+    entity = client().get(user_key(user_id))
+    return {"id": entity.key.name, **dict(entity)} if entity else None
+
+
+def create_session(token_hash: str, user_id: str) -> None:
+    entity = datastore.Entity(key=client().key(SESSION, token_hash))
+    entity.update({"user_id": user_id, "created_at": _now()})
+    client().put(entity)
+
+
+def session_user_id(token_hash: str) -> str | None:
+    entity = client().get(client().key(SESSION, token_hash))
+    return entity["user_id"] if entity else None
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)

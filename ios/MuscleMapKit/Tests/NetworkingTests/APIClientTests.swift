@@ -160,6 +160,51 @@ struct APIClientTests {
         #expect(StubURLProtocol.request?.url?.path == "/api/v1/templates/tpl_push1")
     }
 
+    @Test("Starting sign-in posts the phone number without a token")
+    func startSignIn() async throws {
+        StubURLProtocol.answer(200, #"{"sent": true}"#)
+        try await client.startSignIn(phoneNumber: APIClient.testPhoneNumber)
+        let request = try #require(StubURLProtocol.request)
+        #expect(request.url?.path == "/api/v1/auth/sms/start")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+        let sent = String(decoding: try #require(StubURLProtocol.body), as: UTF8.self)
+        #expect(sent == #"{"phone_number":"+15305550000"}"#)
+    }
+
+    @Test("Verifying saves the token, so later requests are signed in")
+    func verifySavesToken() async throws {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubURLProtocol.self]
+        let tokens = InMemoryTokenStore()
+        let fresh = APIClient(baseURL: URL(string: "http://localhost:5000")!,
+                              session: URLSession(configuration: config), tokens: tokens)
+        #expect(!fresh.isSignedIn)
+
+        StubURLProtocol.answer(200, #"{"token": "example-session-token-not-real", "user_id": "5642800292954112"}"#)
+        let signIn = try await fresh.verifySignIn(phoneNumber: APIClient.testPhoneNumber, code: APIClient.testCode)
+        #expect(signIn.userId == "5642800292954112")
+        #expect(tokens.token() == "example-session-token-not-real")
+        #expect(fresh.isSignedIn)
+
+        StubURLProtocol.answer(200, #"{"exercises": []}"#)
+        _ = try await fresh.myExercises()
+        #expect(StubURLProtocol.request?.value(forHTTPHeaderField: "Authorization") == "Bearer example-session-token-not-real")
+    }
+
+    @Test("A wrong code surfaces as unauthorized and saves nothing")
+    func wrongCode() async throws {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubURLProtocol.self]
+        let tokens = InMemoryTokenStore()
+        let fresh = APIClient(baseURL: URL(string: "http://localhost:5000")!,
+                              session: URLSession(configuration: config), tokens: tokens)
+        StubURLProtocol.answer(401, #"{"error": {"code": "unauthorized", "message": "Invalid or expired code"}}"#)
+        await #expect(throws: APIError.server(status: 401, code: .unauthorized, message: "Invalid or expired code")) {
+            try await fresh.verifySignIn(phoneNumber: APIClient.testPhoneNumber, code: "000000")
+        }
+        #expect(tokens.token() == nil)
+    }
+
     @Test("A body that doesn't match the model becomes a decoding error")
     func decodingError() async throws {
         StubURLProtocol.answer(200, #"{"unexpected": true}"#)

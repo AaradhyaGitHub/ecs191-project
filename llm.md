@@ -37,6 +37,7 @@ These two documents aren't in the repo. Their content is summarized in `server_a
 | The plate loader supports both lb (45 lb bar; 45, 35, 25, 10, 5, 2.5) and kg (20 kg bar; 25, 20, 15, 10, 5, 2.5, 1.25), with a kg/lb toggle. lb is the expected default. Details (whether the toggle also changes the profile's units) go in the Lift set-entry spec | Sasa, Nov 3, 2026 |
 | **Pending team agreement:** dumbbell sets log one dumbbell's weight ("the 50s" = 50). Each exercise has `implement_count` (1 or 2), and volume multiplies by it | Sasa (proposed to the team), Nov 3, 2026 |
 | iOS logic lives in a local Swift package, `ios/MuscleMapKit/`, from day one: one module per area (`Models`, `Networking`, `LiftCore`; later `HomeCore`, `GoalsCore`), each with its own test target, run with `swift test` without the simulator. The app target holds only views and wiring. This replaces the setup guide's `ios/MuscleMap/Models/` and `Networking/` folders | Sasa, Nov 3, 2026 |
+| **Sign-in (kept minimal; the professor doesn't want time spent on auth):** our server passes `/auth/sms/start` and `/verify` through to the course's hosted SMS service (`ecs191-sms-authentication.uc.r.appspot.com`), so there's no Twilio account of our own. On success our server creates its own session for the course `user_id`; `@require_user` then checks only our database. The course `app_token` stays on the server (needed only for real phone numbers; the test number `+15305550000` / `123456` works without it). Sessions never expire for now; logout comes later. Development uses the test number | Sasa, Nov 3, 2026 |
 | Home's history must reach any point in time: `GET /workouts` gets a `before=<timestamp>` parameter when Home is built, and the muscle map will need an end date as well as a window | Sasa, Nov 3, 2026 |
 | Workouts keep a `status` on the server. For now the app only sends finished workouts, so the server always stores `finished`; `active` is for when sets are saved live later | Sasa, Nov 3, 2026 |
 
@@ -52,5 +53,5 @@ These two documents aren't in the repo. Their content is summarized in `server_a
 1. ~~Design token names~~: decided (see Decisions).
 2. **`shared/muscles.json`**: drafted (#24): 6 groups, 20 parents, 50 heads. Head IDs are `<parent>_<head>` (decided, see Decisions). Still open for the team: the judgment calls listed in #24 (brachialis under biceps, teres major under lats, no neck muscles, etc.).
 3. **Entity fields**: the setup checklist asks the team to agree on the data model in `server_architecture.llm.md` before building.
-4. **Request and response shapes for sign-in** (`/auth/sms/*`) depend on the course's SMS example, which isn't in the repo yet.
+4. ~~Sign-in shapes~~: decided (see Decisions). Still to get: an `app_token` from the course staff, for real phone numbers.
 5. ~~Swift package for app logic~~: decided (see Decisions).
