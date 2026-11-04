@@ -31,10 +31,35 @@ def block(reason: str) -> None:
     sys.exit(2)
 
 
-def rel(path: str, cwd: str) -> str | None:
+def worktree_roots() -> list[str]:
+    """The main checkout and every lane (git worktree) of this repo, longest path first."""
+    roots = {PROJECT}
+    try:
+        out = subprocess.run(["git", "-C", PROJECT, "worktree", "list", "--porcelain"],
+                             capture_output=True, text=True, timeout=10)
+        for line in out.stdout.splitlines():
+            if line.startswith("worktree "):
+                roots.add(os.path.realpath(line[len("worktree "):]))
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return sorted(roots, key=len, reverse=True)
+
+
+ROOTS = worktree_roots()
+
+
+def locate(path: str, cwd: str) -> tuple[str | None, str | None]:
+    """(checkout root, path inside it) for the main checkout or a lane; (None, None) if outside."""
     full = os.path.realpath(os.path.join(cwd, os.path.expanduser(path or ".")))
-    r = os.path.relpath(full, PROJECT).replace(os.sep, "/")
-    return None if r.startswith("..") else r
+    for root in ROOTS:
+        r = os.path.relpath(full, root).replace(os.sep, "/")
+        if not r.startswith(".."):
+            return root, r
+    return None, None
+
+
+def rel(path: str, cwd: str) -> str | None:
+    return locate(path, cwd)[1]
 
 
 def is_test_path(r: str) -> bool:
@@ -54,20 +79,23 @@ def contains_source(r: str) -> bool:
     return r in (".", "server", "ios") or is_source(r)
 
 
-def current_branch() -> str:
+def current_branch(root: str) -> str:
     try:
-        out = subprocess.run(["git", "-C", PROJECT, "branch", "--show-current"],
+        out = subprocess.run(["git", "-C", root, "branch", "--show-current"],
                              capture_output=True, text=True, timeout=10)
         return out.stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return ""
 
 
-def allowed_source_files() -> set[str]:
-    branch = current_branch()
+def allowed_source_files(root: str | None) -> set[str]:
+    """The approved plan for the branch checked out in `root` lists what may be read."""
+    if root is None:
+        return set()
+    branch = current_branch(root)
     if not branch:
         return set()
-    for plan in glob.glob(os.path.join(PROJECT, "specs", "*.llm.md")):
+    for plan in glob.glob(os.path.join(root, "specs", "*.llm.md")):
         with open(plan, encoding="utf-8") as f:
             text = f.read()
         if not re.search(r"^\**Branch:?\**:?\s*`?" + re.escape(branch) + r"`?\s*$", text, re.M):
@@ -85,8 +113,8 @@ def allowed_source_files() -> set[str]:
 
 
 def check_read(path: str, cwd: str) -> None:
-    r = rel(path, cwd)
-    if r and is_source(r) and r not in allowed_source_files():
+    root, r = locate(path, cwd)
+    if r and is_source(r) and r not in allowed_source_files(root):
         block(f"{path} is implementation code. You may read only the files the approved plan "
               "lists under '## Test-writer may read'. Work from the spec and plan.")
 
@@ -95,10 +123,10 @@ def check_grep(path: str | None, cwd: str) -> None:
     if not path:
         block("Grep needs a `path` outside app and server source (for example server/tests, "
               "an iOS *Tests folder, specs, shared, or an allowed file).")
-    r = rel(path, cwd)
+    root, r = locate(path, cwd)
     if r is None:
         return
-    if r in allowed_source_files():
+    if r in allowed_source_files(root):
         return
     if contains_source(r):
         block(f"Grep on {path} would search implementation code. Pick a path outside source.")
@@ -147,6 +175,8 @@ def check_bash(command: str, cwd: str) -> None:
         if not seg:
             continue
         text = " ".join(seg)
+        if seg[0] == "cd" and len(seg) == 2:
+            cwd = os.path.realpath(os.path.join(cwd, os.path.expanduser(seg[1])))
         if seg[0] == "git" and len(seg) > 1 and seg[1] == "add":
             paths = [p for p in seg[2:] if not p.startswith("-")]
             bad = [p for p in paths if not (rel(p, cwd) and is_test_path(rel(p, cwd)))]
@@ -166,6 +196,10 @@ def main() -> None:
         event = json.load(sys.stdin)
     except json.JSONDecodeError:
         block("could not parse the hook input; refusing to guess.")
+    # From .claude/settings.json the hook runs for every tool call, so it acts only inside
+    # the test-writer (agent hooks in test-writer.md alone did not fire, Nov 3, 2026).
+    if "--settings" in sys.argv[1:] and event.get("agent_type") != "test-writer":
+        sys.exit(0)
     tool = event.get("tool_name", "")
     ti = event.get("tool_input") or {}
     cwd = event.get("cwd") or PROJECT

@@ -43,6 +43,9 @@ These two documents aren't in the repo. Their content is summarized in `server_a
 | Exercise search: `GET /exercises` is public and takes `q` and `group`. A match is any word start (after a space or hyphen) in the name or an alias; order is name-starts, then later word, then alias-only, ties A–Z. Full details in `specs/exercise-search.llm.md` | Sasa, Nov 3, 2026 |
 | An exercise belongs to every group of its primary-role muscles (Deadlift is in Legs and Back). The server returns `groups` and `primary_muscles` (parent display names, strongest first) on each exercise | Sasa, Nov 3, 2026 |
 | App Engine uploads only `server/`, so the server reads its own copy, `server/muscles.json`. A test fails if it differs from `shared/muscles.json`; edit `shared/` and copy it over | Sasa, Nov 3, 2026 |
+| The local server runs on port 5001, not 5000: on recent Macs the AirPlay Receiver holds 5000. Debug builds call `http://localhost:5001` | Sasa, Nov 3, 2026 |
+| Picker texts: "Can't reach the server." with "Try again", "Search exercises", "Picked exercises" (temporary list), "Last: 2 days ago" when there's no last set | Sasa, Nov 3, 2026 |
+| Workflow: planning (spec, plan, contract) happens in the main folder and lands as a small planning PR first; features then build in lanes (`scripts/lane.sh`, `../ecs191-impl-<n>`), each with its own emulator port. Merge order follows dependencies (picker → log a workout → saved workouts) | Sasa, Nov 3, 2026 |
 
 ## To do (not now)
 - **Handover:** `client_architecture.md` (human-written) must explain the `MuscleMapKit` package split and why it exists, so the next team knows where code goes. Sasa writes it.

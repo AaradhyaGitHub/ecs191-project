@@ -132,9 +132,9 @@ public func exerciseSubtitle(_ exercise: Exercise) -> String
 None.
 
 ## Progress
-- [ ] Plan approved
-- [ ] Scaffold
-- [ ] Tests red
-- [ ] Build green
-- [ ] Review
+- [x] Plan approved (ff83fa6)
+- [x] Scaffold (638e175)
+- [x] Tests red (23209ef)
+- [x] Build green (1bf8126)
+- [x] Review (0 blockers; S1 and S2 deferred to #44)
 - [ ] PR

@@ -5,7 +5,7 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 **Status of each endpoint:** **agreed** = taken from the team's setup guide; **proposed** = drafted to fill a gap, needs a team OK before it's built.
 
 ## Conventions
-- **Base URL:** `http://localhost:5000/api/v1` locally; `https://<PROJECT_ID>.<REGION_ID>.r.appspot.com/api/v1` deployed.
+- **Base URL:** `http://localhost:5001/api/v1` locally; `https://<PROJECT_ID>.<REGION_ID>.r.appspot.com/api/v1` deployed.
 - **JSON** in and out, keys in `snake_case`. Timestamps are ISO 8601 in UTC. The app sends `2026-11-02T17:02:00Z`; it also accepts fractional seconds and `+00:00` (Python's `isoformat()`), so the server may send either.
 - **Examples as files:** every example below is also in `shared/fixtures/`. The iOS tests decode them, and server tests should produce the same shapes, so the two sides can't drift apart.
 - **Auth:** every endpoint except sign-in, `GET /health` and `GET /exercises` requires `Authorization: Bearer <token>`.

@@ -51,6 +51,25 @@ struct FixtureTests {
         #expect(bench.muscles.first == ExerciseMuscle(muscleId: "chest_sternal", role: .primary, weight: 1.0))
     }
 
+    @Test("AC-10: Exercise decodes groups and primary_muscles from the search fixture")
+    func exerciseGroups() throws {
+        let list = try Self.decode(ExerciseList.self, "exercises_search")
+        let bench = try #require(list.exercises.first { $0.id == "barbell_bench_press" })
+        #expect(bench.groups == ["chest"])
+        #expect(bench.primaryMuscles == ["Chest"])
+        let deadlift = try #require(list.exercises.first { $0.id == "deadlift" })
+        #expect(deadlift.groups == ["legs", "back"])
+        #expect(deadlift.primaryMuscles == ["Glutes", "Lower back", "Hamstrings"])
+    }
+
+    @Test("AC-10: an older server's exercise without groups still decodes, with empty lists")
+    func exerciseWithoutGroups() throws {
+        let json = #"{"id": "x", "name": "X", "aliases": [], "load_type": "barbell", "muscles": []}"#
+        let exercise = try APIJSON.decoder().decode(Exercise.self, from: Data(json.utf8))
+        #expect(exercise.groups == [])
+        #expect(exercise.primaryMuscles == [])
+    }
+
     @Test("My exercises decode, including e1RM fields and the last set")
     func myExercises() throws {
         let list = try Self.decode(UserExerciseList.self, "exercises_mine")

@@ -112,5 +112,40 @@ def session_user_id(token_hash: str) -> str | None:
     return entity["user_id"] if entity else None
 
 
+# --- UserExercise (User/{id}/UserExercise/{slug}; server_architecture.llm.md) -------------
+
+USER_EXERCISE = "UserExercise"
+# The last set is an embedded entity that is never queried.
+_USER_EXERCISE_UNINDEXED = ("last_set",)
+
+
+def user_exercise_key(user_id: str, slug: str) -> datastore.Key:
+    return client().key(USER, user_id, USER_EXERCISE, slug)
+
+
+def user_exercises(user_id: str) -> list[dict]:
+    """This user's history with each exercise, one dict per UserExercise (`exercise_id` = slug)."""
+    rows = []
+    for entity in client().query(kind=USER_EXERCISE, ancestor=user_key(user_id)).fetch():
+        row = {"exercise_id": entity.key.name, **dict(entity)}
+        if row.get("last_set") is not None:
+            row["last_set"] = dict(row["last_set"])
+        rows.append(row)
+    return rows
+
+
+def put_user_exercise(user_id: str, slug: str, data: dict) -> None:
+    """Creates or replaces one UserExercise. Only tests use it until POST /workouts exists."""
+    entity = datastore.Entity(key=user_exercise_key(user_id, slug),
+                              exclude_from_indexes=_USER_EXERCISE_UNINDEXED)
+    fields = dict(data)
+    if fields.get("last_set") is not None:
+        embedded = datastore.Entity()
+        embedded.update(fields["last_set"])
+        fields["last_set"] = embedded
+    entity.update(fields)
+    client().put(entity)
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)

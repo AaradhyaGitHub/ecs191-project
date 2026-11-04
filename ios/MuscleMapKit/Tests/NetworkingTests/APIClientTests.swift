@@ -102,6 +102,57 @@ struct APIClientTests {
         #expect(StubURLProtocol.request?.url?.query == nil)
     }
 
+    private static let emptyList = #"{"exercises": []}"#
+
+    private func searchQuery(_ text: String?, group: String?) async throws -> [String: String]? {
+        StubURLProtocol.answer(200, Self.emptyList)
+        _ = try await client.searchExercises(text, group: group)
+        let url = try #require(StubURLProtocol.request?.url)
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+        return items.map { Dictionary(uniqueKeysWithValues: $0.map { ($0.name, $0.value ?? "") }) }
+    }
+
+    @Test("AC-15: search sends q and group together")
+    func searchSendsBoth() async throws {
+        let query = try await searchQuery("bench", group: "chest")
+        #expect(query == ["q": "bench", "group": "chest"])
+        #expect(StubURLProtocol.request?.url?.path == "/api/v1/exercises")
+    }
+
+    @Test("AC-15: search sends only group when the text is nil")
+    func searchGroupOnly() async throws {
+        let query = try await searchQuery(nil, group: "legs")
+        #expect(query == ["group": "legs"])
+    }
+
+    @Test("AC-15: a blank q is not sent", arguments: ["", "   "])
+    func searchBlankText(text: String) async throws {
+        let query = try await searchQuery(text, group: nil)
+        #expect(query == nil)
+    }
+
+    @Test("AC-15: a blank q is not sent, but the group still is")
+    func searchBlankTextWithGroup() async throws {
+        let query = try await searchQuery("  ", group: "core")
+        #expect(query == ["group": "core"])
+    }
+
+    @Test("AC-15: no text and no group sends no query at all")
+    func searchNoQuery() async throws {
+        let query = try await searchQuery(nil, group: nil)
+        #expect(query == nil)
+    }
+
+    @Test("AC-15: my exercises calls /exercises/mine with the token and decodes the list")
+    func myExercisesSendsToken() async throws {
+        StubURLProtocol.answer(200, #"{"exercises": [{"exercise_id": "push_up", "use_count": 14, "last_used_at": "2026-11-01T18:10:00Z", "last_set": null}]}"#)
+        let mine = try await client.myExercises()
+        #expect(mine.map(\.exerciseId) == ["push_up"])
+        let request = try #require(StubURLProtocol.request)
+        #expect(request.url?.path == "/api/v1/exercises/mine")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer secret-token")
+    }
+
     @Test("The server's error shape becomes APIError.server")
     func serverError() async throws {
         StubURLProtocol.answer(404, #"{"error": {"code": "not_found", "message": "No workout with that id."}}"#)
