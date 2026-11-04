@@ -179,9 +179,9 @@ This user's saved workouts, oldest-created first. A new user gets `{"templates":
 }
 ```
 - **`exercises`** are in the order the user does them. `target_reps` is `null` for a timed hold (plank). Neighbours with the same `superset_group` form one superset; `null` means no superset. Responses always include both fields.
-- **`last_done_at`:** the `started_at` of the latest workout saved with this `template_id` (see `POST /workouts`), or `null` if never done.
+- **`last_done_at`:** the `started_at` of the latest workout saved with this `template_id` (see `POST /workouts`), or the `last_done_at` sent when it was created from a finished workout, or `null` if never done.
 - **`top_muscles`** (decided): the 3 parent muscles the workout works most, computed by the server and never stored. For each exercise and each of its muscles (every role), add `target_sets × weight` to that muscle's parent in `shared/muscles.json`. A head adds to its parent; a parent ID adds to itself; unknown IDs are skipped. Keep the 3 parents with the most work, ties in `muscles.json` order. `name` is the parent's display name. `level` (0–4, the chip's shade) is ceil(4 × work ÷ the top muscle's work), so the first chip is always 4. Example: 4 sets of Bench Press alone give Chest 4, Delts 2, Triceps 2.
-- **UP NEXT** is the saved workout with the oldest `last_done_at` (never-done first); the app works that out from this list.
+- **UP NEXT** (Sasa, Nov 4, 2026) is the saved workout with the oldest `last_done_at` among those that have one. Never-done saved workouts are never UP NEXT, and there is no UP NEXT until at least 2 have a `last_done_at`. The app works that out from this list and shows the cards UP NEXT first, then newest-created first (this list reversed).
 
 ### `POST /templates`, `PUT /templates/{id}` and `DELETE /templates/{id}`  (agreed)
 `POST` creates a saved workout. The `id` is a lowercase UUID made on the phone, so a retry is safe (`shared/fixtures/template_post.json`):
@@ -197,16 +197,19 @@ This user's saved workouts, oldest-created first. A new user gets `{"templates":
   ]
 }
 ```
-→ `201` with the full template, as in `GET /templates` (`last_done_at` is `null`). The same `id` again → `200` with the stored template; nothing changes.
+→ `201` with the full template, as in `GET /templates` (`last_done_at` as sent, else `null`). The same `id` again → `200` with the stored template; nothing changes.
 
-`PUT /templates/{id}` takes the same body and replaces `name`, `focus` and `exercises`; `last_done_at` stays. The `id` in the path says which saved workout to change; the app also sends it in the body. → `200` with the full template.
+"Save as a workout" after Finish also sends `"last_done_at"`: the finished workout's `started_at`, so the new saved workout counts as done (Sasa, Nov 4, 2026).
+
+`PUT /templates/{id}` takes the same body and replaces `name`, `focus` and `exercises`; `last_done_at` stays (a `last_done_at` in a `PUT` body is ignored). The `id` in the path says which saved workout to change; the app also sends it in the body. → `200` with the full template.
 
 `DELETE /templates/{id}` → `204` with no body, also when it is already gone. Past workouts that came from it stay.
 
 The body (`POST` and `PUT`):
 - `name`: required, 1–60 characters after trimming spaces. Names may repeat.
 - `focus`: optional, up to 60 characters after trimming; empty or left out is `null`.
-- `exercises`: 1–30 items. `exercise_id` must be in the library. `target_sets` 1–20. `target_reps` 1–100, or `null` or left out. `rest_s` 0–600. `superset_group` may be left out.
+- `exercises`: 1–30 items. `exercise_id` must be in the library. `target_sets` 1–20. `target_reps` 1–100, or `null` or left out. `rest_s` 0–600. `superset_group` is text or `null`, at most 60 characters, and may be left out.
+- `last_done_at` (`POST` only): optional. An ISO 8601 timestamp, or `null` or left out; anything else is `400 bad_request`. A time later than the server's clock (a phone clock running ahead) is stored as the server's current time. `PUT` ignores this field, even an invalid one.
 
 Errors: `400 bad_request` when `id` isn't a lowercase UUID or any rule above is broken. `404 not_found` for `PUT` with an unknown id, or another user's.
 

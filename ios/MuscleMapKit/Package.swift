@@ -15,7 +15,8 @@ let package = Package(
     targets: [
         .target(name: "Models"),
         .target(name: "Networking", dependencies: ["Models"]),
-        .target(name: "LiftCore", dependencies: ["Models", "Networking"]),
+        // Resources/exercise_library.json: the bundled exercise library (server/seed/export_library.py).
+        .target(name: "LiftCore", dependencies: ["Models", "Networking"], resources: [.process("Resources")]),
         .testTarget(name: "ModelsTests", dependencies: ["Models"]),
         .testTarget(name: "NetworkingTests", dependencies: ["Networking"]),
         .testTarget(name: "LiftCoreTests", dependencies: ["LiftCore"]),

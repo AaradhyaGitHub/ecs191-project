@@ -265,5 +265,91 @@ def update_user(user_id: str, fields: dict) -> dict:
     return {"id": entity.key.name, **dict(entity)}
 
 
+# --- Template (User/{id}/Template/{uuid}; a saved workout, server_architecture.llm.md) ----
+# The service sorts by `created_at` in Python, so no index is needed (plan, "Card order").
+
+TEMPLATE = "Template"
+# The exercise list is embedded and never queried.
+_TEMPLATE_UNINDEXED = ("exercises",)
+
+
+def template_key(user_id: str, template_id: str) -> datastore.Key:
+    return client().key(USER, user_id, TEMPLATE, template_id)
+
+
+def _template_entity(user_id: str, data: dict) -> datastore.Entity:
+    entity = datastore.Entity(key=template_key(user_id, data["id"]),
+                              exclude_from_indexes=_TEMPLATE_UNINDEXED)
+    fields = {k: v for k, v in data.items() if k != "id"}
+    exercises = []
+    for row in fields.pop("exercises", []):
+        embedded = datastore.Entity()
+        embedded.update(row)
+        exercises.append(embedded)
+    entity.update(fields)
+    entity["exercises"] = exercises
+    return entity
+
+
+def _template_dict(entity: datastore.Entity) -> dict:
+    data = {"id": entity.key.name, **dict(entity)}
+    data["exercises"] = [dict(row) for row in entity.get("exercises", [])]
+    return data
+
+
+def get_template(user_id: str, template_id: str) -> dict | None:
+    """One of this user's saved workouts, or None."""
+    entity = client().get(template_key(user_id, template_id))
+    return _template_dict(entity) if entity else None
+
+
+def user_templates(user_id: str) -> list[dict]:
+    """All of this user's saved workouts, in no set order (the service sorts them)."""
+    query = client().query(kind=TEMPLATE, ancestor=user_key(user_id))
+    return [_template_dict(e) for e in query.fetch()]
+
+
+def put_template(user_id: str, data: dict) -> None:
+    """Creates or replaces one saved workout; `data["id"]` is its key."""
+    client().put(_template_entity(user_id, data))
+
+
+def add_template(user_id: str, data: dict) -> tuple[dict, bool]:
+    """In one transaction: writes `data` as a new saved workout unless its id is taken.
+
+    Returns (stored, created). When the id is already there, nothing changes and `stored` is
+    the saved one, so two POSTs with the same id write once (API.md, "POST /templates").
+    """
+    db = client()
+    with db.transaction():
+        entity = db.get(template_key(user_id, data["id"]))
+        if entity is not None:
+            return _template_dict(entity), False
+        db.put(_template_entity(user_id, data))
+        return data, True
+
+
+def delete_template(user_id: str, template_id: str) -> None:
+    """Deletes one saved workout. A missing one is no error."""
+    client().delete(template_key(user_id, template_id))
+
+
+def change_template(user_id: str, template_id: str, change) -> dict | None:
+    """In one transaction: reads the template, calls change(old), writes the result if not None.
+
+    Returns the written template, or None when the template is missing or nothing changed.
+    """
+    db = client()
+    with db.transaction():
+        entity = db.get(template_key(user_id, template_id))
+        if entity is None:
+            return None
+        new = change(_template_dict(entity))
+        if new is None:
+            return None
+        db.put(_template_entity(user_id, {**new, "id": template_id}))
+        return new
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)

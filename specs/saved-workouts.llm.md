@@ -111,7 +111,7 @@ public func activeWorkout(from template: Template, library: [Exercise], startedA
 - **Issue #43 owns only these files** (#42 owns the rest of `LiftCore/` and `Features/Lift/`): `server/api/templates.py`, `server/services/template_service.py`, `server/tests/services/test_template_service.py`, `server/tests/api/test_templates.py`, `shared/fixtures/template_post.json`, `ios/MuscleMapKit/Sources/LiftCore/SavedWorkouts.swift`, `ios/MuscleMapKit/Tests/LiftCoreTests/SavedWorkoutsTests.swift`, and in `ios/MuscleMap/Features/Lift/`: `SavedWorkoutsSection.swift`, `SavedWorkoutCard.swift`, `SavedWorkoutsModel.swift`, `SaveAsWorkoutSheet.swift`. Shared, small edits: `LiftView.swift`, `PreviewData.swift` and the hot spots above.
 
 ## Reuse
-`require_user`, `ApiError`, `exercise_service.load_muscles()` (#8), `models.get_exercises` (#42), #42's shared ISO helper (`_iso`). `APIClient` template methods, `searchExercises()` for the library, `Template`, `TemplateInput`, `ClientID`, `Workout`, #42's `ActiveWorkout`. `CardView` (`isHighlighted`), `MuscleChip`, `PrimaryButton`, `SectionHeader`, `Theme`, `PreviewData.templates`. SwiftUI `contextMenu`, `alert` with text fields, `confirmationDialog`, `refreshable`. No new dependency.
+`require_user`, `ApiError`, `exercise_service.load_muscles()` (#8), `models.get_exercises` (#42), #42's shared ISO helper (`services.timestamps.iso`). `APIClient` template methods, `searchExercises()` for the library, `Template`, `TemplateInput`, `ClientID`, `Workout`, #42's `ActiveWorkout`. `CardView` (`isHighlighted`), `MuscleChip`, `PrimaryButton`, `SectionHeader`, `Theme`, `PreviewData.templates`. SwiftUI `contextMenu`, `alert` with text fields, `confirmationDialog`, `refreshable`. No new dependency.
 
 ## Tests
 - Server unit (AC-3, 6, 7 logic): `server/tests/services/test_template_service.py`, with `seed/exercises.json` and `server/muscles.json` in memory.
@@ -144,7 +144,7 @@ public func activeWorkout(from template: Template, library: [Exercise], startedA
 - `server/services/auth.py`
 - `server/services/exercise_service.py`
 - `ios/MuscleMapKit/Sources/LiftCore/SavedWorkouts.swift`
-- `ios/MuscleMapKit/Sources/LiftCore/ActiveWorkout.swift` (#42's; after it merges)
+- `ios/MuscleMapKit/Sources/LiftCore/ActiveWorkout.swift` (#42's; holds `ActiveWorkout` and `WorkoutBlock`)
 - `ios/MuscleMapKit/Sources/Models/Template.swift`
 - `ios/MuscleMapKit/Sources/Models/Workout.swift`
 - `ios/MuscleMapKit/Sources/Models/Exercise.swift`
@@ -172,13 +172,23 @@ A reference such as "D13" in the plan points to this list. Sasa took every recom
 18. **Start while a workout is open:** disabled, as Empty workout is.
 19. **UP NEXT right after Finish:** the app sets `last_done_at` on the card at once; the server catches up when the outbox sends.
 
+## Decided (Sasa, Nov 4, 2026), after review
+These replace D9's "never done" effect, D12 and the UP NEXT rule above where they differ.
+20. **S-1:** `record_done` never fails `POST /workouts`, first save or repeat. An error is logged and the workout is returned with its normal status.
+21. **"Save as a workout" counts as done:** the new saved workout's `last_done_at` = the finished workout's `started_at`. `POST /templates` takes an optional `last_done_at` (ISO, else `400`; a time later than the server clock is stored as the server's current time, reviewer's should-fix, Sasa, Nov 4); `PUT` drops it before checking, so it never causes a `400` there. `TemplateInput.lastDoneAt`.
+22. **UP NEXT without a plan:** the saved workout done longest ago among those with a `last_done_at`; never-done ones are never UP NEXT; no UP NEXT until at least 2 have a `last_done_at`. Ties go to the first in server order. With a plan (the later "Custom plan" feature), UP NEXT follows the plan.
+23. **Card order:** UP NEXT on top (if any), then the others newest-created first.
+24. **Card text:** "Last done 6 days ago"; a never-done card shows no time line ("Not done yet" is gone).
+25. **S-4:** on Lift appearing, the outbox upload, `GET /users/me` and the saved-workouts load run at the same time, upload started first.
+26. **Bundled exercise library:** the app ships the 45-exercise library as one generated file, `ios/MuscleMapKit/Sources/LiftCore/Resources/exercise_library.json`, in `GET /exercises`' shape, made by `server/seed/export_library.py`; a server test fails when it is out of date. Start uses it, so Lift never downloads the library. The picker's search stays on the server. Exercises missing from it are skipped on Start.
+
 ## Open questions
 None.
 
 ## Progress
-- [ ] Plan approved
-- [ ] Scaffold
-- [ ] Tests red
-- [ ] Build green
-- [ ] Review
-- [ ] PR
+- [x] Plan approved (369fb8b)
+- [x] Scaffold (9e214e9, server + LiftCore rules; part 2: fb75854, activeWorkout(from:) after merging main 81bbc49 and the record_done call 702c180)
+- [x] Tests red (75d4aa1; part 2: 758a6ff)
+- [x] Build green (abf9f83, server + LiftCore rules; part 2: 5bbf6ec, activeWorkout(from:) and the screens)
+- [x] Review (part 2: S-1, S-2, S-4 fixed; S-3 deferred to #56; follow-up should-fix fixed)
+- [x] PR (#61)
