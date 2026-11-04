@@ -177,7 +177,7 @@ None.
 
 ## Progress
 - [x] Plan approved (369fb8b)
-- [ ] Scaffold
+- [x] Scaffold (9e214e9, server + LiftCore rules; activeWorkout(from:) and screens after #42)
 - [ ] Tests red
 - [ ] Build green
 - [ ] Review
