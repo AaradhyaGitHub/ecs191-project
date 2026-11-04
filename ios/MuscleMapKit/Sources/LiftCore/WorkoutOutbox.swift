@@ -85,12 +85,17 @@ public final class WorkoutOutbox {
     }
 
     /// Sends every item that is not rejected, oldest first, each with the same id and body every time.
+    /// It keeps going until no item is left that it hasn't tried in this run, so an item added
+    /// while a send runs (Finish during a slow upload) goes out in the same run. A call made
+    /// meanwhile returns at once; the running one picks up its items.
     public func sendPending() async {
         guard !isSending else { return }
         isSending = true
         defer { isSending = false }
-        for item in pending {
-            await send(item.id)
+        var tried: Set<String> = []
+        while let next = pending.first(where: { !tried.contains($0.id) }) {
+            tried.insert(next.id)
+            await send(next.id)
         }
     }
 
