@@ -23,6 +23,8 @@ struct LiftView: View {
     @State private var saved: SavedWorkoutsModel?
     /// Finish on the Resume card (#63): the confirm, then the same alerts as inside the workout.
     @State private var asksToFinish = false
+    /// What Finish did, shown once the confirm alert has closed (review S1).
+    @State private var afterConfirm: FinishResult?
     @State private var asksToDiscardEmpty = false
     @State private var finishProblem: SaveProblem?
 
@@ -88,6 +90,9 @@ struct LiftView: View {
             Button("Finish", action: finishOpenWorkout)
             Button("Cancel", role: .cancel) {}
         }
+        .onChange(of: asksToFinish) { _, isShown in
+            if !isShown { showAfterConfirm() }
+        }
         .alert("No sets logged. Discard this workout?", isPresented: $asksToDiscardEmpty) {
             Button("Discard", role: .destructive) { session.discard() }
             Button("Keep going", role: .cancel) {}
@@ -98,25 +103,36 @@ struct LiftView: View {
         }
     }
 
-    /// Finish on the Resume card does what Finish inside the workout does: upload and offer
-    /// "Save as a workout", or ask to discard a workout with no sets (#63). The next sheet or
-    /// alert waits for the confirm alert to leave, because SwiftUI ignores one presented while
-    /// another is still animating out.
-    private func finishOpenWorkout() {
-        let result = ActiveWorkoutModel(session: session).finish()
-        if case .finished(let workout) = result { saved?.finished(workout) }
-        Task {
-            try? await Task.sleep(for: .seconds(Self.alertCloseTime))
-            switch result {
-            case .finished: saved?.showPendingOffer()
-            case .noSets: asksToDiscardEmpty = true
-            case .notSaved(let problem): finishProblem = problem
-            }
+    /// Finish on the Resume card (#63). With no sets it asks only "Discard this workout?"
+    /// (Sasa, Nov 4, 2026); otherwise it asks "Finish this workout?" first.
+    private func askToFinish(_ active: ActiveWorkout) {
+        afterConfirm = nil
+        if active.sets.isEmpty {
+            asksToDiscardEmpty = true
+        } else {
+            asksToFinish = true
         }
     }
 
-    /// About how long an alert takes to animate out.
-    private static let alertCloseTime: TimeInterval = 0.5
+    /// The confirm's Finish does what Finish inside the workout does. What comes next (the
+    /// "Save as a workout" sheet or an alert) waits until the confirm alert has closed.
+    private func finishOpenWorkout() {
+        let result = ActiveWorkoutModel(session: session).finish()
+        if case .finished(let workout) = result { saved?.finished(workout) }
+        afterConfirm = result
+        // SwiftUI may close the alert before or after running this action.
+        if !asksToFinish { showAfterConfirm() }
+    }
+
+    private func showAfterConfirm() {
+        guard let result = afterConfirm else { return }
+        afterConfirm = nil
+        switch result {
+        case .finished: saved?.showPendingOffer()
+        case .noSets: asksToDiscardEmpty = true
+        case .notSaved(let problem): finishProblem = problem
+        }
+    }
 
     /// "Add" in the picker: a new workout with the picks, opened at once.
     private func start(_ picks: ExerciseSelection) {
@@ -169,8 +185,11 @@ struct LiftView: View {
                     }
                 }
                 HStack(spacing: Theme.Spacing.s) {
-                    cardButton("Resume", isPrimary: true) { showsWorkout = true }
-                    cardButton("Finish", isPrimary: false) { asksToFinish = true }
+                    cardButton("Resume", isPrimary: true) {
+                        afterConfirm = nil
+                        showsWorkout = true
+                    }
+                    cardButton("Finish", isPrimary: false) { askToFinish(active) }
                 }
             }
         }
