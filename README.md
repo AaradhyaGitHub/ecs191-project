@@ -25,6 +25,7 @@ gcloud emulators firestore start --database-mode=datastore-mode --host-port=loca
 
 # terminal 2, from server/ with the venv active
 export DATASTORE_EMULATOR_HOST=localhost:8081
+python -m seed.load_exercises   # loads the 45 starter exercises (safe to re-run; the emulator forgets them when it stops)
 flask --app main run --port 5000
 curl http://localhost:5000/api/v1/health   # → {"status": "ok"}
 ```
