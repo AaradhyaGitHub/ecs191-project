@@ -11,13 +11,13 @@ from __future__ import annotations
 
 import math
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 
 import models
 from services import exercise_service
 from services.errors import ApiError
-from services.timestamps import iso
+from services.timestamps import iso, parse
 
 # Lowercase only: Datastore keys are case-sensitive, so a retry must match exactly (API.md, "IDs").
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
@@ -31,6 +31,8 @@ REPS = (1, 100)
 REST = (0, 600)
 TOP_COUNT = 3
 TOP_LEVEL = 4
+# How far a phone's clock may run ahead of the server's for `last_done_at` on POST.
+CLOCK_SKEW = timedelta(minutes=5)
 
 
 @lru_cache(maxsize=1)
@@ -114,11 +116,24 @@ def _clean_exercise(row, number: int, exercises: dict[str, dict]) -> dict:
             "rest_s": row["rest_s"], "superset_group": group}
 
 
-def clean_input(body: dict, exercises: dict[str, dict]) -> dict:
+def _clean_last_done(value, now: datetime) -> datetime | None:
+    """The optional `last_done_at` of a POST: an ISO timestamp, not later than now + CLOCK_SKEW."""
+    if value is None:
+        return None
+    done = parse(value)
+    if done is None:
+        raise _bad("last_done_at must be an ISO 8601 timestamp or null.")
+    if done > now + CLOCK_SKEW:
+        raise _bad("last_done_at can't be in the future.")
+    return done
+
+
+def clean_input(body: dict, exercises: dict[str, dict], now: datetime | None = None) -> dict:
     """Checks a POST/PUT body against API.md's rules and returns the cleaned fields.
 
-    Returns {id, name, focus, exercises}: name and focus trimmed, empty focus None, and every
-    exercise with all five fields. Raises ApiError("bad_request") when a rule is broken.
+    Returns {id, name, focus, exercises, last_done_at}: name and focus trimmed, empty focus None,
+    every exercise with all five fields, and `last_done_at` as a UTC datetime or None. Raises
+    ApiError("bad_request") when a rule is broken. `now` is for tests; it defaults to the clock.
     """
     if not isinstance(body, dict):
         raise _bad("Send a JSON object.")
@@ -141,8 +156,10 @@ def clean_input(body: dict, exercises: dict[str, dict]) -> dict:
     if not isinstance(rows, list) or not 1 <= len(rows) <= MAX_EXERCISES:
         raise _bad(f"exercises must have 1 to {MAX_EXERCISES} items.")
 
+    last_done = _clean_last_done(body.get("last_done_at"), now or datetime.now(timezone.utc))
     return {"id": body["id"], "name": name, "focus": focus or None,
-            "exercises": [_clean_exercise(row, n, exercises) for n, row in enumerate(rows)]}
+            "exercises": [_clean_exercise(row, n, exercises) for n, row in enumerate(rows)],
+            "last_done_at": last_done}
 
 
 def _body_slugs(body) -> list[str]:
@@ -202,10 +219,14 @@ def list_templates(user_id: str) -> list[dict]:
 
 
 def create_template(user_id: str, body: dict) -> tuple[dict, bool]:
-    """Creates a saved workout. Returns (template, created); a repeat id gives the stored one."""
+    """Creates a saved workout. Returns (template, created); a repeat id gives the stored one.
+
+    `last_done_at` is the body's (a saved workout made from a finished workout counts as done,
+    Sasa, Nov 4, 2026), else None.
+    """
     library = models.get_exercises(_body_slugs(body))
     cleaned = clean_input(body, library)
-    template = {**cleaned, "last_done_at": None, "created_at": datetime.now(timezone.utc)}
+    template = {**cleaned, "created_at": datetime.now(timezone.utc)}
     # One transaction, so two POSTs with the same id at the same moment write only once.
     stored, created = models.add_template(user_id, template)
     return _public(stored, library if created else _library_for([stored])), created
@@ -214,7 +235,8 @@ def create_template(user_id: str, body: dict) -> tuple[dict, bool]:
 def update_template(user_id: str, template_id: str, body: dict) -> dict:
     """Replaces name, focus and exercises; keeps `last_done_at`. ApiError("not_found") if missing.
 
-    The path id decides which template changes; an id in the body is ignored (API.md).
+    The path id decides which template changes; an id or `last_done_at` in the body is ignored
+    (API.md).
     """
     if not is_template_id(template_id):
         raise ApiError("not_found", "No saved workout with that id.")
