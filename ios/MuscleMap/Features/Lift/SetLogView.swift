@@ -105,19 +105,27 @@ struct SetLogView: View {
         }
     }
 
+    /// Names on rows only when the log shows more than one exercise: a superset with the
+    /// All chip on (#63).
+    private var showsNames: Bool {
+        (block?.exercises.count ?? 0) > 1 && filter == nil
+    }
+
     private func row(_ set: SetEntry) -> some View {
         let all = model.active?.sets ?? []
         let name = block?.exercises.first { $0.id == set.exerciseId }?.name ?? ""
         return HStack(spacing: Theme.Spacing.m) {
-            Text(LiftCore.badge(for: set, in: all))
+            Text(logBadge(for: set, in: all))
                 .font(Theme.Fonts.secondary.weight(.bold).monospacedDigit())
                 .foregroundStyle(set.setType == .warmup ? Theme.Colors.textSecondary : Theme.Colors.textPrimary)
                 .frame(width: Theme.Size.minTouchTarget * 0.7, height: Theme.Size.minTouchTarget * 0.7)
                 .background(Theme.Colors.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.chip))
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text(name)
-                    .font(Theme.Fonts.rowTitle)
-                    .foregroundStyle(Theme.Colors.textPrimary)
+                if showsNames {
+                    Text(name)
+                        .font(Theme.Fonts.rowTitle)
+                        .foregroundStyle(Theme.Colors.textPrimary)
+                }
                 Text(restText(for: set))
                     .font(Theme.Fonts.secondary)
                     .foregroundStyle(Theme.Colors.textSecondary)
