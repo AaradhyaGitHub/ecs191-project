@@ -184,8 +184,8 @@ Server: `require_user`, `ApiError`, `models.client()`, `user_key`, `get_user`; f
 None.
 
 ## Progress
-- [ ] Plan approved
-- [ ] Scaffold
+- [x] Plan approved (369fb8b)
+- [x] Scaffold (d8c220a)
 - [ ] Tests red
 - [ ] Build green
 - [ ] Review
