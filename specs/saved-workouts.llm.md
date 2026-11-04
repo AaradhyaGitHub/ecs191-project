@@ -191,4 +191,4 @@ None.
 - [x] Tests red (75d4aa1; part 2: 758a6ff)
 - [x] Build green (abf9f83, server + LiftCore rules; part 2: 5bbf6ec, activeWorkout(from:) and the screens)
 - [x] Review (part 2: S-1, S-2, S-4 fixed; S-3 deferred to #56; follow-up should-fix fixed)
-- [ ] PR
+- [x] PR (#61)
