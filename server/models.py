@@ -12,6 +12,9 @@ from google.cloud import datastore
 
 LOCAL_PROJECT = "musclemap-local"
 
+# Datastore writes at most 500 entities per commit.
+_BATCH = 500
+
 
 @lru_cache(maxsize=1)
 def client() -> datastore.Client:
@@ -19,3 +22,52 @@ def client() -> datastore.Client:
     if os.environ.get("DATASTORE_EMULATOR_HOST"):
         return datastore.Client(project=os.environ.get("DATASTORE_PROJECT_ID", LOCAL_PROJECT))
     return datastore.Client()
+
+
+# --- Exercise (shared library; key = slug, e.g. "barbell_bench_press") -------------------
+
+EXERCISE = "Exercise"
+# Lists of embedded entities aren't queried, so they're kept out of the indexes.
+_EXERCISE_UNINDEXED = ("muscles",)
+
+
+def exercise_key(slug: str) -> datastore.Key:
+    return client().key(EXERCISE, slug)
+
+
+def _exercise_entity(data: dict) -> datastore.Entity:
+    entity = datastore.Entity(key=exercise_key(data["id"]), exclude_from_indexes=_EXERCISE_UNINDEXED)
+    fields = {k: v for k, v in data.items() if k != "id"}
+    muscles = []
+    for m in fields.pop("muscles", []):
+        embedded = datastore.Entity()
+        embedded.update(m)
+        muscles.append(embedded)
+    entity.update(fields)
+    entity["muscles"] = muscles
+    return entity
+
+
+def _exercise_dict(entity: datastore.Entity) -> dict:
+    data = {"id": entity.key.name, **dict(entity)}
+    data["muscles"] = [dict(m) for m in entity.get("muscles", [])]
+    return data
+
+
+def put_exercises(exercises: list[dict]) -> int:
+    """Creates or replaces exercises by slug, so loading the same list twice changes nothing."""
+    entities = [_exercise_entity(e) for e in exercises]
+    for start in range(0, len(entities), _BATCH):
+        client().put_multi(entities[start:start + _BATCH])
+    return len(entities)
+
+
+def get_exercise(slug: str) -> dict | None:
+    entity = client().get(exercise_key(slug))
+    return _exercise_dict(entity) if entity else None
+
+
+def all_exercises() -> list[dict]:
+    """The whole shared library, sorted by name."""
+    return sorted((_exercise_dict(e) for e in client().query(kind=EXERCISE).fetch()),
+                  key=lambda e: e["name"].lower())
