@@ -123,13 +123,36 @@ public func templateInput(from workout: Workout, name: String, focus: String?) -
 /// The active workout that Start opens ("Start → active workout"): named after the saved
 /// workout, with `templateId` set. Exercises go in template order; neighbours with the same
 /// `supersetGroup` form one superset block, which gets the targets of its first exercise.
-/// Exercises not in `library` are skipped.
+/// Exercises not in `library` are skipped. A superset left with one exercise becomes a plain
+/// block. Superset letters are assigned fresh by `ActiveWorkout.add`.
 public func activeWorkout(from template: Template, library: [Exercise], startedAt: Date) -> ActiveWorkout {
-    // Scaffold: an empty workout. Build mode fills the blocks with ActiveWorkout.add.
-    ActiveWorkout(startedAt: startedAt)
+    var workout = ActiveWorkout(name: template.name, templateId: template.id, startedAt: startedAt)
+    let byID = Dictionary(library.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+    for group in neighbourGroups(template.exercises) {
+        guard let first = group.first else { continue }
+        let exercises = group.compactMap { byID[$0.exerciseId] }
+        guard !exercises.isEmpty else { continue }
+        workout.add(exercises, asSuperset: exercises.count > 1, targetSets: first.targetSets,
+                    targetReps: first.targetReps, restS: first.restS)
+    }
+    return workout
 }
 
 // MARK: - Helpers
+
+/// Template rows split into blocks: neighbours with the same `supersetGroup` go together;
+/// a row without a group is a block of its own.
+private func neighbourGroups(_ rows: [TemplateExercise]) -> [[TemplateExercise]] {
+    var groups: [[TemplateExercise]] = []
+    for row in rows {
+        if let group = row.supersetGroup, let last = groups.last?.last, last.supersetGroup == group {
+            groups[groups.count - 1].append(row)
+        } else {
+            groups.append([row])
+        }
+    }
+    return groups
+}
 
 private func clamp(_ value: Int, to range: ClosedRange<Int>) -> Int {
     min(max(value, range.lowerBound), range.upperBound)
