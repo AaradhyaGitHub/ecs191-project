@@ -43,16 +43,26 @@ struct SavedWorkoutsTests {
     func emptyList() {
         #expect(upNextID([]) == nil)
         #expect(homeOrder([]).isEmpty)
-        // and the functions are not just returning nothing
-        #expect(upNextID([Self.template("a")]) == "a")
+        // and a single card still shows
         #expect(Self.ids(homeOrder([Self.template("a")])) == ["a"])
     }
 
-    @Test("AC-9: one saved workout is UP NEXT, done or not")
-    func singleIsUpNext() {
-        #expect(upNextID([Self.template("a")]) == "a")
-        #expect(upNextID([Self.template("a", lastDone: Self.day(0))]) == "a")
+    @Test("AC-9: one saved workout is never UP NEXT, done or not, but its card shows")
+    func singleIsNotUpNext() {
+        #expect(upNextID([Self.template("a")]) == nil)
+        #expect(upNextID([Self.template("a", lastDone: Self.day(0))]) == nil)
         #expect(Self.ids(homeOrder([Self.template("a")])) == ["a"])
+        #expect(Self.ids(homeOrder([Self.template("a", lastDone: Self.day(0))])) == ["a"])
+    }
+
+    @Test("AC-9: UP NEXT needs at least 2 done; 1 done among never-done gives none")
+    func needsTwoDone() {
+        let one = [Self.template("n1"), Self.template("d", lastDone: Self.day(1)), Self.template("n2")]
+        #expect(upNextID(one) == nil)
+        #expect(upNextID([Self.template("n1"), Self.template("n2")]) == nil)
+        let two = [Self.template("n1"), Self.template("d1", lastDone: Self.day(3)),
+                   Self.template("d2", lastDone: Self.day(1))]
+        #expect(upNextID(two) == "d2")
     }
 
     @Test("AC-9: the oldest last done is UP NEXT")
@@ -63,19 +73,15 @@ struct SavedWorkoutsTests {
         #expect(upNextID(list) == "old")
     }
 
-    @Test("AC-9: a never-done saved workout comes before any done one")
-    func neverDoneFirst() {
+    @Test("AC-9: a never-done saved workout is never UP NEXT, whatever the others are")
+    func neverDoneIsNeverUpNext() {
         let list = [Self.template("old", lastDone: Self.day(-400)),
                     Self.template("never"),
                     Self.template("recent", lastDone: Self.day(5))]
-        #expect(upNextID(list) == "never")
-    }
-
-    @Test("AC-9: of several never-done, the first in server order is UP NEXT")
-    func neverDoneTieGoesToFirst() {
-        let list = [Self.template("done", lastDone: Self.day(1)),
-                    Self.template("n1"), Self.template("n2")]
-        #expect(upNextID(list) == "n1")
+        #expect(upNextID(list) == "old")
+        let neverFirst = [Self.template("n1"), Self.template("n2"),
+                          Self.template("x", lastDone: Self.day(9)), Self.template("y", lastDone: Self.day(8))]
+        #expect(upNextID(neverFirst) == "y")
     }
 
     @Test("AC-9: a tie on last done goes to the first in server order")
@@ -86,20 +92,28 @@ struct SavedWorkoutsTests {
         #expect(upNextID(list) == "t1")
     }
 
-    @Test("AC-9: the UP NEXT card comes first, the others keep server order")
+    @Test("AC-9: the UP NEXT card comes first, the others newest-created first")
     func homeOrderPutsUpNextFirst() {
+        // server order is oldest-created first: a, b, c, d
         let list = [Self.template("a", lastDone: Self.day(5)),
                     Self.template("b", lastDone: Self.day(6)),
                     Self.template("c", lastDone: Self.day(1)),
                     Self.template("d", lastDone: Self.day(7))]
-        #expect(Self.ids(homeOrder(list)) == ["c", "a", "b", "d"])
+        #expect(Self.ids(homeOrder(list)) == ["c", "d", "b", "a"])
     }
 
-    @Test("AC-9: when UP NEXT is already first, the order does not change")
-    func homeOrderKeepsOrderWhenUpNextIsFirst() {
-        let list = [Self.template("a"), Self.template("b", lastDone: Self.day(1)),
+    @Test("AC-9: when UP NEXT is the newest-created, it stays on top and the rest are newest first")
+    func homeOrderUpNextIsNewest() {
+        let list = [Self.template("a", lastDone: Self.day(5)), Self.template("b"),
                     Self.template("c", lastDone: Self.day(2))]
-        #expect(Self.ids(homeOrder(list)) == ["a", "b", "c"])
+        #expect(Self.ids(homeOrder(list)) == ["c", "b", "a"])
+    }
+
+    @Test("AC-9: with no UP NEXT, all cards are newest-created first")
+    func homeOrderWithoutUpNext() {
+        let list = [Self.template("a"), Self.template("b", lastDone: Self.day(1)), Self.template("c")]
+        #expect(upNextID(list) == nil)
+        #expect(Self.ids(homeOrder(list)) == ["c", "b", "a"])
     }
 
     @Test("AC-9: homeOrder keeps every card once")
