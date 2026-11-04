@@ -133,3 +133,9 @@ public func exerciseSubtitle(_ exercise: Exercise) -> String {
     if exercise.primaryMuscles.isEmpty { return load }
     return "\(exercise.primaryMuscles.joined(separator: ", ")) · \(load)"
 }
+
+/// The subtitle in two parts, so the view can show the equipment as a tag (#63):
+/// muscles "Glutes, Lower back, Hamstrings" (empty when none) and equipment "Barbell".
+public func exerciseSubtitleParts(_ exercise: Exercise) -> (muscles: String, equipment: String) {
+    (exercise.primaryMuscles.joined(separator: ", "), exercise.loadType.rawValue.capitalized)
+}
