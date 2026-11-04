@@ -7,7 +7,8 @@ public enum Experience: String, Codable, Sendable, CaseIterable {
 /// The signed-in user's profile (`GET /users/me`).
 public struct User: Codable, Identifiable, Hashable, Sendable {
     public var id: String
-    public var displayName: String
+    /// `nil` for a new user who hasn't set a name.
+    public var displayName: String?
     public var sex: String?
     public var birthYear: Int?
     public var bodyweightKg: Double?
@@ -16,7 +17,7 @@ public struct User: Codable, Identifiable, Hashable, Sendable {
     public var experience: Experience?
     public var createdAt: Date
 
-    public init(id: String, displayName: String, sex: String? = nil, birthYear: Int? = nil,
+    public init(id: String, displayName: String? = nil, sex: String? = nil, birthYear: Int? = nil,
                 bodyweightKg: Double? = nil, units: WeightUnit, experience: Experience? = nil,
                 createdAt: Date) {
         self.id = id

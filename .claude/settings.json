@@ -61,6 +61,15 @@
             "command": "python3 -I \"$CLAUDE_PROJECT_DIR/.claude/hooks/test_writer_guard.py\" --settings"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I \"$CLAUDE_PROJECT_DIR/.claude/hooks/lane_guard.py\""
+          }
+        ]
       }
     ]
   }
