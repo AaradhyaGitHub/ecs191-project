@@ -175,7 +175,7 @@ A reference such as "D13" in the plan points to this list. Sasa took every recom
 ## Decided (Sasa, Nov 4, 2026), after review
 These replace D9's "never done" effect, D12 and the UP NEXT rule above where they differ.
 20. **S-1:** `record_done` never fails `POST /workouts`, first save or repeat. An error is logged and the workout is returned with its normal status.
-21. **"Save as a workout" counts as done:** the new saved workout's `last_done_at` = the finished workout's `started_at`. `POST /templates` takes an optional `last_done_at` (ISO; at most 5 minutes ahead of the server clock, else `400`); `PUT` ignores it. `TemplateInput.lastDoneAt`.
+21. **"Save as a workout" counts as done:** the new saved workout's `last_done_at` = the finished workout's `started_at`. `POST /templates` takes an optional `last_done_at` (ISO, else `400`; a time later than the server clock is stored as the server's current time, reviewer's should-fix, Sasa, Nov 4); `PUT` drops it before checking, so it never causes a `400` there. `TemplateInput.lastDoneAt`.
 22. **UP NEXT without a plan:** the saved workout done longest ago among those with a `last_done_at`; never-done ones are never UP NEXT; no UP NEXT until at least 2 have a `last_done_at`. Ties go to the first in server order. With a plan (the later "Custom plan" feature), UP NEXT follows the plan.
 23. **Card order:** UP NEXT on top (if any), then the others newest-created first.
 24. **Card text:** "Last done 6 days ago"; a never-done card shows no time line ("Not done yet" is gone).
@@ -190,5 +190,5 @@ None.
 - [x] Scaffold (9e214e9, server + LiftCore rules; part 2: fb75854, activeWorkout(from:) after merging main 81bbc49 and the record_done call 702c180)
 - [x] Tests red (75d4aa1; part 2: 758a6ff)
 - [x] Build green (abf9f83, server + LiftCore rules; part 2: 5bbf6ec, activeWorkout(from:) and the screens)
-- [ ] Review
+- [x] Review (part 2: S-1, S-2, S-4 fixed; S-3 deferred to #56; follow-up should-fix fixed)
 - [ ] PR
