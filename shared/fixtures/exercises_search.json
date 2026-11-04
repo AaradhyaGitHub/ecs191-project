@@ -1,0 +1,15 @@
+{
+  "exercises": [
+    {
+      "id": "barbell_bench_press",
+      "name": "Bench Press",
+      "aliases": ["bench", "BP"],
+      "load_type": "barbell",
+      "bodyweight_fraction": null,
+      "muscles": [
+        {"muscle_id": "chest_sternal", "role": "primary", "weight": 1.0},
+        {"muscle_id": "triceps_long", "role": "secondary", "weight": 0.5}
+      ]
+    }
+  ]
+}

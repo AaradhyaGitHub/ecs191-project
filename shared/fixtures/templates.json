@@ -1,0 +1,18 @@
+{
+  "templates": [
+    {
+      "id": "tpl_push1",
+      "name": "Push 1",
+      "focus": "tricep focus",
+      "exercises": [
+        {"exercise_id": "barbell_bench_press", "target_sets": 4, "target_reps": 6, "rest_s": 180}
+      ],
+      "last_done_at": "2026-11-03T17:00:00Z",
+      "top_muscles": [
+        {"muscle_id": "chest", "level": 4},
+        {"muscle_id": "delts", "level": 4},
+        {"muscle_id": "triceps", "level": 3}
+      ]
+    }
+  ]
+}

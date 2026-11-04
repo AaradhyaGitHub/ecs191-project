@@ -6,10 +6,11 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 
 ## Conventions
 - **Base URL:** `http://localhost:5000/api/v1` locally; `https://<PROJECT_ID>.<REGION_ID>.r.appspot.com/api/v1` deployed.
-- **JSON** in and out, keys in `snake_case`. Timestamps are ISO 8601 in UTC (`2026-11-02T17:02:00Z`).
+- **JSON** in and out, keys in `snake_case`. Timestamps are ISO 8601 in UTC. The app sends `2026-11-02T17:02:00Z`; it also accepts fractional seconds and `+00:00` (Python's `isoformat()`), so the server may send either.
+- **Examples as files:** every example below is also in `shared/fixtures/`. The iOS tests decode them, and server tests should produce the same shapes, so the two sides can't drift apart.
 - **Auth:** every endpoint except sign-in requires `Authorization: Bearer <token>`.
 - **Weights** are always kg, sent and stored at full precision (157.5 lb → 71.4408 kg), never rounded. The app converts to the user's units and rounds only for display. Dumbbell weights are one dumbbell's weight (pending team agreement).
-- **IDs** for workouts, sets and saved workouts (templates) are UUIDs made on the phone. Sending the same thing twice changes nothing.
+- **IDs** for workouts, sets and saved workouts (templates) are UUIDs made on the phone, always **lowercase** (Datastore keys are case-sensitive, so a retry must match exactly). Sending the same thing twice changes nothing.
 - **Lists are wrapped** in an object, e.g. `{"templates": [...]}`, never a bare array, so fields such as `next_cursor` can be added later without breaking the app (decided).
 - **Errors** use one shape, with the matching HTTP status:
   ```json

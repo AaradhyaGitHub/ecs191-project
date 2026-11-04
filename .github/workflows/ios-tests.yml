@@ -5,10 +5,10 @@ name: iOS logic tests
 
 on:
   pull_request:
-    paths: ["ios/MuscleMapKit/**", ".github/workflows/ios-tests.yml"]
+    paths: ["ios/MuscleMapKit/**", "shared/**", ".github/workflows/ios-tests.yml"]
   push:
     branches: [main]
-    paths: ["ios/MuscleMapKit/**", ".github/workflows/ios-tests.yml"]
+    paths: ["ios/MuscleMapKit/**", "shared/**", ".github/workflows/ios-tests.yml"]
 
 permissions:
   contents: read
