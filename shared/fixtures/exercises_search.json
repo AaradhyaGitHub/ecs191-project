@@ -9,7 +9,24 @@
       "muscles": [
         {"muscle_id": "chest_sternal", "role": "primary", "weight": 1.0},
         {"muscle_id": "triceps_long", "role": "secondary", "weight": 0.5}
-      ]
+      ],
+      "groups": ["chest"],
+      "primary_muscles": ["Chest"]
+    },
+    {
+      "id": "deadlift",
+      "name": "Deadlift",
+      "aliases": ["conventional deadlift", "dl"],
+      "load_type": "barbell",
+      "bodyweight_fraction": null,
+      "muscles": [
+        {"muscle_id": "glutes_max", "role": "primary", "weight": 1.0},
+        {"muscle_id": "lower_back_erectors", "role": "primary", "weight": 0.9},
+        {"muscle_id": "hamstrings", "role": "primary", "weight": 0.8},
+        {"muscle_id": "quads", "role": "secondary", "weight": 0.5}
+      ],
+      "groups": ["legs", "back"],
+      "primary_muscles": ["Glutes", "Lower back", "Hamstrings"]
     }
   ]
 }

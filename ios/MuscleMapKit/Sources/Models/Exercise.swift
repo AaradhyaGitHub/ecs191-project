@@ -31,15 +31,39 @@ public struct Exercise: Codable, Identifiable, Hashable, Sendable {
     public var loadType: LoadType
     public var bodyweightFraction: Double?
     public var muscles: [ExerciseMuscle]
+    /// Group IDs of its primary muscles, strongest first ("legs", "back"). Set by the server.
+    public var groups: [String]
+    /// Display names of its primary muscles' parents, strongest first ("Glutes", "Lower back").
+    public var primaryMuscles: [String]
 
     public init(id: String, name: String, aliases: [String] = [], loadType: LoadType,
-                bodyweightFraction: Double? = nil, muscles: [ExerciseMuscle] = []) {
+                bodyweightFraction: Double? = nil, muscles: [ExerciseMuscle] = [],
+                groups: [String] = [], primaryMuscles: [String] = []) {
         self.id = id
         self.name = name
         self.aliases = aliases
         self.loadType = loadType
         self.bodyweightFraction = bodyweightFraction
         self.muscles = muscles
+        self.groups = groups
+        self.primaryMuscles = primaryMuscles
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, aliases, loadType, bodyweightFraction, muscles, groups, primaryMuscles
+    }
+
+    /// `groups` and `primary_muscles` may be missing (an older server); they decode as [].
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        aliases = try c.decode([String].self, forKey: .aliases)
+        loadType = try c.decode(LoadType.self, forKey: .loadType)
+        bodyweightFraction = try c.decodeIfPresent(Double.self, forKey: .bodyweightFraction)
+        muscles = try c.decode([ExerciseMuscle].self, forKey: .muscles)
+        groups = try c.decodeIfPresent([String].self, forKey: .groups) ?? []
+        primaryMuscles = try c.decodeIfPresent([String].self, forKey: .primaryMuscles) ?? []
     }
 }
 
