@@ -7,6 +7,8 @@ import LiftCore
 /// exercise picker; its Add starts the workout (`LiftSession.start`). While a workout is open,
 /// a Resume card shows it and Empty workout is disabled (D-16). Finished workouts that aren't
 /// on the server yet show in a banner (plan, "Empty and error states").
+/// Saved workouts (#43) follow CREATE: Start opens one through `LiftSession.start`, and Finish
+/// offers "Save as a workout" (specs/saved-workouts.llm.md).
 struct LiftView: View {
     @Environment(\.apiClient) private var apiClient
     @Environment(LiftSession.self) private var session
@@ -17,6 +19,12 @@ struct LiftView: View {
     @State private var deleting: OutboxItem?
     /// The user's unit for the picker; lb until `GET /users/me` answers.
     @State private var unit: WeightUnit = .lb
+    /// Saved workouts (#43); made on first appear with the shared API client.
+    @State private var saved: SavedWorkoutsModel?
+
+    init(saved: SavedWorkoutsModel? = nil) {
+        _saved = State(initialValue: saved)
+    }
 
     var body: some View {
         ScrollView {
@@ -34,13 +42,21 @@ struct LiftView: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.s) {
                     SectionHeader(title: "Create")
                     emptyWorkoutTile
+                    CustomPlanTile()
+                }
+                if let saved {
+                    SavedWorkoutsSection(model: saved, isStartDisabled: session.isWorkoutOpen,
+                                         onStart: open)
                 }
             }
             .padding(.horizontal, Theme.Spacing.gutter)
             .padding(.top, Theme.Spacing.l)
         }
         .background(Theme.Colors.background)
+        .refreshable { await saved?.load() }
         .task {
+            if saved == nil { saved = SavedWorkoutsModel(source: apiClient) }
+            await saved?.load()
             await session.outbox.sendPending()
             if apiClient.isSignedIn, let user = try? await apiClient.me() { unit = user.units }
         }
@@ -52,8 +68,11 @@ struct LiftView: View {
         }) {
             ExercisePickerView(model: ExercisePickerModel(source: apiClient, unit: unit), onAdd: start)
         }
-        .fullScreenCover(isPresented: $showsWorkout) {
-            ActiveWorkoutView(session: session) { _ in }
+        .fullScreenCover(isPresented: $showsWorkout, onDismiss: { saved?.showPendingOffer() }) {
+            ActiveWorkoutView(session: session) { saved?.finished($0) }
+        }
+        .sheet(item: Binding(get: { saved?.offer }, set: { if $0 == nil { saved?.dismissOffer() } })) { workout in
+            if let saved { SaveAsWorkoutSheet(workout: workout, model: saved) }
         }
         .confirmationDialog("Delete this workout?", isPresented: Binding(
             get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible,
@@ -72,6 +91,11 @@ struct LiftView: View {
         if session.start(workout) {
             opensAfterPicker = true
         }
+    }
+
+    /// Start on a saved workout: opens the workout it made (disabled while one is open, D18).
+    private func open(_ workout: ActiveWorkout) {
+        if session.start(workout) { showsWorkout = true }
     }
 
     private func resumeCard(_ active: ActiveWorkout) -> some View {
@@ -188,6 +212,12 @@ private struct OutboxBanner: View {
 #if DEBUG
 #Preview("Start") {
     LiftView()
+        .environment(PreviewData.liftSession(open: false))
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Saved workouts") {
+    LiftView(saved: .preview())
         .environment(PreviewData.liftSession(open: false))
         .preferredColorScheme(.dark)
 }
