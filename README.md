@@ -11,7 +11,7 @@ An iOS workout tracker that shows which muscles you've trained. ECS 191 group pr
 **Prerequisites**
 - **Python 3.13.** With [uv](https://docs.astral.sh/uv/): `uv python install 3.13`. Or install it from python.org.
 - **Google Cloud CLI** (`gcloud`): [install guide](https://cloud.google.com/sdk/docs/install). Then `gcloud components install cloud-firestore-emulator`.
-- **Java 21 or newer**, which the database emulator runs on.
+- **Java 25 or newer**, which the database emulator runs on (it refuses older Java). With Homebrew: `brew install openjdk`, then put it first on your PATH: `export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"` (add that line to `~/.zshrc` to keep it).
 
 ```sh
 # one time, from the repo root
