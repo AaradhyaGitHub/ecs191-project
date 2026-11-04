@@ -8,8 +8,7 @@ enum AppConfig {
     /// localhost; a real phone needs this Mac's network address instead.
     static let apiBaseURL = URL(string: "http://localhost:5000")!
     #else
-    /// Set to the App Engine URL after the first deploy (issue #10). `.invalid` never
-    /// resolves, so a Release build fails clearly until then instead of hitting a wrong server.
-    static let apiBaseURL = URL(string: "https://set-after-first-deploy.invalid")!
+    /// The live server on App Engine (project musclemap-ecs191, region us-west2).
+    static let apiBaseURL = URL(string: "https://musclemap-ecs191.wl.r.appspot.com")!
     #endif
 }
