@@ -131,4 +131,4 @@ A *lane* is a second checkout of the repo in its own folder (a [git worktree](ht
 2. Start the lane's own database emulator on the port it prints (lane 1: `8082`, lane 2: `8083`). Server tests wipe the emulator, so two lanes must never share one.
 3. Give the lane a feature, from the lane folder: `git fetch origin && git switch -c feat/<issue>-<slug> origin/main`.
 4. A branch can be checked out in only one folder at a time. To try a lane's PR in the main folder, check out its commit: `git checkout --detach origin/feat/<issue>-<slug>`.
-5. With Claude Code: run it in the main folder and use `/add-dir ../ecs191-impl-1` once, so it can work in the lane. The guards in `.claude/hooks/` check the folder each action happens in.
+5. With Claude Code: run it in the main folder and use `/add-dir ../ecs191-impl-1` once, so it can work in the lane. The guards in `.claude/hooks/` check the folder each action happens in. `lane_guard.py` also keeps each agent in one checkout: the first lane an agent changes is its own, and it can't change another (it can still read them).
