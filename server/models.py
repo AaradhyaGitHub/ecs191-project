@@ -112,5 +112,21 @@ def session_user_id(token_hash: str) -> str | None:
     return entity["user_id"] if entity else None
 
 
+# --- UserExercise (User/{id}/UserExercise/{slug}; server_architecture.llm.md) -------------
+# SCAFFOLD: both helpers are stubs. Build mode reads and writes the entities.
+
+USER_EXERCISE = "UserExercise"
+
+
+def user_exercises(user_id: str) -> list[dict]:
+    """This user's history with each exercise, one dict per UserExercise (`exercise_id` = slug)."""
+    return []
+
+
+def put_user_exercise(user_id: str, slug: str, data: dict) -> None:
+    """Creates or replaces one UserExercise. Only tests use it until POST /workouts exists."""
+    return None
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
