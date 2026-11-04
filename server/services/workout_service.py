@@ -11,6 +11,7 @@ import re
 from datetime import date
 
 import models
+from services import template_service
 from services.errors import ApiError
 from services.timestamps import iso, parse
 
@@ -324,11 +325,22 @@ def save_workout(user_id: str, body: dict) -> tuple[dict, bool]:
     if isinstance(body, dict) and is_client_id(body.get("id")):
         stored = models.get_workout(user_id, body["id"])
         if stored is not None:
+            _record_template_done(user_id, stored[0])
             return to_detail(*stored), False
     clean = validate_workout(body, _known_exercise_ids(body))
     workout, sets, created = models.save_workout(user_id, clean["workout"], clean["sets"],
                                                  merge_user_exercise)
+    _record_template_done(user_id, workout)
     return to_detail(workout, sets), created
+
+
+def _record_template_done(user_id: str, workout: dict) -> None:
+    """Moves the saved workout's "last done" to this workout's start (saved-workouts plan, D13).
+
+    Runs on every request, first save or repeat; record_done is safe to repeat.
+    """
+    if workout.get("template_id"):
+        template_service.record_done(user_id, workout["template_id"], workout["started_at"])
 
 
 def get_workout(user_id: str, workout_id: str) -> dict:
