@@ -56,9 +56,7 @@ struct LiftView: View {
         .refreshable { await saved?.load() }
         .task {
             if saved == nil { saved = SavedWorkoutsModel(source: apiClient) }
-            await saved?.load()
-            await session.outbox.sendPending()
-            if apiClient.isSignedIn, let user = try? await apiClient.me() { unit = user.units }
+            await refresh()
         }
         .sheet(isPresented: $isPicking, onDismiss: {
             if opensAfterPicker {
@@ -91,6 +89,19 @@ struct LiftView: View {
         if session.start(workout) {
             opensAfterPicker = true
         }
+    }
+
+    /// On appear: the upload, the saved workouts and the user's unit load at the same time,
+    /// the upload started first; none waits for another (review S-4, Sasa, Nov 4, 2026).
+    private func refresh() async {
+        let outbox = session.outbox
+        let model = saved
+        let client = apiClient
+        async let upload: Void = outbox.sendPending()
+        async let templates: Void? = model?.load()
+        async let user: User? = client.isSignedIn ? (try? await client.me()) : nil
+        if let user = await user { unit = user.units }
+        _ = await (upload, templates)
     }
 
     /// Start on a saved workout: opens the workout it made (disabled while one is open, D18).
