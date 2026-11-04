@@ -2,7 +2,7 @@ import SwiftUI
 import Models
 import LiftCore
 
-/// SAVED WORKOUTS · n on Lift home (plan: specs/saved-workouts.llm.md, "What the user sees"):
+/// SAVED WORKOUTS on Lift home (no count, #63) (plan: specs/saved-workouts.llm.md, "What the user sees"):
 /// the cards with UP NEXT first, and the empty, error and no-token states. A long press on a
 /// card offers Rename and Delete (D11). Start is disabled while a workout is open (D18).
 struct SavedWorkoutsSection: View {
@@ -20,7 +20,7 @@ struct SavedWorkoutsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            SectionHeader(title: "Saved workouts", count: model.state == .loaded ? model.templates.count : nil)
+            SectionHeader(title: "Saved workouts")
             if let errorText = model.errorText {
                 NoticeLine(text: errorText)
             }
