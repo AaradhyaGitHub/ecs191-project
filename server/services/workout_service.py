@@ -6,6 +6,7 @@ saved in one transaction by models.save_workout. Daily stats and totals come lat
 """
 from __future__ import annotations
 
+import math
 import re
 from datetime import date
 
@@ -19,6 +20,18 @@ MAX_SETS = 300
 MAX_EXERCISES = 30
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 100
+
+# Value limits (D-25, Sasa, Nov 4, 2026). The app keeps entries inside them; the server checks.
+REPS = (1, 1000)
+DURATION_S = (1, 3600)
+REST_BEFORE_S = (0, 3600)          # 0 is allowed: no rest between superset exercises
+WEIGHT_KG = (0, 1000)
+ADDED_LOAD_KG = (-500, 500)
+MAX_BODYWEIGHT_KG = 500            # bodyweight must be above 0 and at most this
+ORDER = (1, MAX_SETS)
+MAX_NAME = 60
+MAX_SUPERSET_GROUP = 60
+MAX_TIMEZONE = 64
 
 SET_TYPES = ("warmup", "working", "dropset", "failure")
 TIME_SOURCES = ("rest_timer", "manual", "camera", "none")
@@ -60,6 +73,26 @@ def _is_number(value) -> bool:
 
 def _is_int(value) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _whole(low: int, high: int):
+    """A check: a whole number from low to high."""
+    return lambda v: _is_int(v) and low <= v <= high
+
+
+def _number(low: float, high: float):
+    """A check: a finite number from low to high (NaN and infinity fail)."""
+    return lambda v: _is_number(v) and math.isfinite(v) and low <= v <= high
+
+
+def _text(high: int):
+    """A check: text of 1 to high characters."""
+    return lambda v: isinstance(v, str) and 1 <= len(v) <= high
+
+
+def is_bodyweight(value) -> bool:
+    """A body weight: a finite number above 0 and at most MAX_BODYWEIGHT_KG."""
+    return _is_number(value) and math.isfinite(value) and 0 < value <= MAX_BODYWEIGHT_KG
 
 
 def _optional(data: dict, key: str, check, what: str, where: str):
@@ -126,25 +159,27 @@ def _clean_set(raw, index: int, known_exercise_ids: set[str]) -> dict:
     exercise_id = raw.get("exercise_id")
     if not isinstance(exercise_id, str) or exercise_id not in known_exercise_ids:
         raise _bad(f"{where}unknown exercise_id {exercise_id!r}.")
-    if not _is_int(raw.get("order")):
-        raise _bad(f"{where}order must be a whole number.")
+    if not _whole(*ORDER)(raw.get("order")):
+        raise _bad(f"{where}order must be a whole number from {ORDER[0]} to {ORDER[1]}.")
 
     clean = {
         "id": raw["id"],
         "exercise_id": exercise_id,
         "order": raw["order"],
-        "superset_group": _optional(raw, "superset_group", lambda v: isinstance(v, str), "text", where),
+        "superset_group": _optional(raw, "superset_group", _text(MAX_SUPERSET_GROUP),
+                                    f"text of 1 to {MAX_SUPERSET_GROUP} characters", where),
         "set_type": _choice(raw, "set_type", SET_TYPES, where, required=True),
-        "reps": _optional(raw, "reps", _is_int, "a whole number", where),
-        "duration_s": _optional(raw, "duration_s", _is_int, "a whole number", where),
-        "weight_kg": _optional(raw, "weight_kg", lambda v: _is_number(v) and v >= 0,
-                               "a number of 0 or more", where),
-        "added_load_kg": _optional(raw, "added_load_kg", _is_number, "a number", where),
-        "effort_pct": _optional(raw, "effort_pct", lambda v: _is_number(v) and 0 <= v <= 100,
-                                "a number from 0 to 100", where),
+        "reps": _optional(raw, "reps", _whole(*REPS), "a whole number from 1 to 1000", where),
+        "duration_s": _optional(raw, "duration_s", _whole(*DURATION_S),
+                                "a whole number from 1 to 3600", where),
+        "weight_kg": _optional(raw, "weight_kg", _number(*WEIGHT_KG), "a number from 0 to 1000", where),
+        "added_load_kg": _optional(raw, "added_load_kg", _number(*ADDED_LOAD_KG),
+                                   "a number from -500 to 500", where),
+        "effort_pct": _optional(raw, "effort_pct", _number(0, 100), "a number from 0 to 100", where),
         "started_at": _optional_time(raw, "started_at", where),
         "ended_at": _optional_time(raw, "ended_at", where),
-        "rest_before_s": _optional(raw, "rest_before_s", _is_int, "a whole number", where),
+        "rest_before_s": _optional(raw, "rest_before_s", _whole(*REST_BEFORE_S),
+                                   "a whole number from 0 to 3600", where),
         "time_source": _choice(raw, "time_source", TIME_SOURCES, where),
         "input": _choice(raw, "input", INPUTS, where),
     }
@@ -166,14 +201,19 @@ def validate_workout(body: dict, known_exercise_ids: set[str]) -> dict:
     workout = {
         "id": body["id"],
         "name": _required_text(body, "name"),
-        "template_id": _optional(body, "template_id", lambda v: isinstance(v, str), "text", ""),
+        "template_id": _optional(body, "template_id", is_client_id, "a lowercase UUID", ""),
         "status": FINISHED,
         "started_at": _required_time(body, "started_at"),
         "ended_at": _required_time(body, "ended_at"),
         "timezone": _required_text(body, "timezone"),
         "local_date": _local_date(body),
-        "bodyweight_kg": _optional(body, "bodyweight_kg", _is_number, "a number", ""),
+        "bodyweight_kg": _optional(body, "bodyweight_kg", is_bodyweight,
+                                   f"a number above 0 and at most {MAX_BODYWEIGHT_KG}", ""),
     }
+    if len(workout["name"]) > MAX_NAME:
+        raise _bad(f"name must be 1 to {MAX_NAME} characters.")
+    if len(workout["timezone"]) > MAX_TIMEZONE:
+        raise _bad(f"timezone must be at most {MAX_TIMEZONE} characters.")
     if workout["ended_at"] < workout["started_at"]:
         raise _bad("ended_at is before started_at.")
 

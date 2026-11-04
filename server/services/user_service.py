@@ -4,6 +4,7 @@ No Flask here; api/users.py has the endpoints.
 from __future__ import annotations
 
 import models
+from services import workout_service
 from services.errors import ApiError
 from services.timestamps import iso
 
@@ -12,10 +13,6 @@ EDITABLE_FIELDS = ("display_name", "sex", "birth_year", "bodyweight_kg", "units"
 UNITS = ("lb", "kg")
 EXPERIENCE = ("beginner", "intermediate", "advanced")
 DEFAULT_UNITS = "lb"
-
-
-def _is_number(value) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
 def _text_or_null(value) -> bool:
@@ -31,7 +28,8 @@ _RULES = {
     "display_name": (_text_or_null, "text or null"),
     "sex": (_text_or_null, "text or null"),
     "birth_year": (_whole_number_or_null, "a whole number or null"),
-    "bodyweight_kg": (lambda v: _is_number(v) and v > 0, "a number above 0"),
+    "bodyweight_kg": (workout_service.is_bodyweight,
+                      f"a number above 0 and at most {workout_service.MAX_BODYWEIGHT_KG}"),
     "units": (lambda v: v in UNITS, "lb or kg"),
     "experience": (lambda v: v in EXPERIENCE, "beginner, intermediate or advanced"),
 }
