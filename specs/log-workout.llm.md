@@ -188,6 +188,6 @@ None.
 - [x] Plan approved (369fb8b)
 - [x] Scaffold (d8c220a)
 - [x] Tests red (5ab278d)
-- [ ] Build green
+- [x] Build green (b255580)
 - [ ] Review
 - [ ] PR
