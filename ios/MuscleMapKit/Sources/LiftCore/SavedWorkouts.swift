@@ -2,8 +2,7 @@ import Foundation
 import Models
 
 // Saved workouts on Lift home (specs/saved-workouts.llm.md): UP NEXT, card order and
-// texts, and turning a finished workout into a saved workout.
-// `activeWorkout(from:library:startedAt:)` comes after #42's `ActiveWorkout` exists.
+// texts, turning a finished workout into a saved workout, and starting one.
 
 /// The server's limits for a saved workout (API.md, "POST /templates").
 enum TemplateLimits {
@@ -119,6 +118,15 @@ public func templateInput(from workout: Workout, name: String, focus: String?) -
             supersetGroup: logged.first?.supersetGroup)
     }
     return TemplateInput(name: name, focus: focus.isEmpty ? nil : focus, exercises: exercises)
+}
+
+/// The active workout that Start opens ("Start → active workout"): named after the saved
+/// workout, with `templateId` set. Exercises go in template order; neighbours with the same
+/// `supersetGroup` form one superset block, which gets the targets of its first exercise.
+/// Exercises not in `library` are skipped.
+public func activeWorkout(from template: Template, library: [Exercise], startedAt: Date) -> ActiveWorkout {
+    // Scaffold: an empty workout. Build mode fills the blocks with ActiveWorkout.add.
+    ActiveWorkout(startedAt: startedAt)
 }
 
 // MARK: - Helpers
