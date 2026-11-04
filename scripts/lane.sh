@@ -42,6 +42,8 @@ cat <<EOF
 Lane $n is ready: $lane
   Database emulator for this lane (server tests wipe it, so lanes never share one):
     gcloud emulators firestore start --database-mode=datastore-mode --host-port=localhost:$port
+  Walkthroughs get their own emulator, which tests never touch (tests wipe theirs):
+    gcloud emulators firestore start --database-mode=datastore-mode --host-port=localhost:$((8091 + n))
   Server tests in this lane:
     cd $lane/server && DATASTORE_EMULATOR_HOST=localhost:$port .venv/bin/python -m pytest
   iOS package tests (the first run builds a cache, about 1-2 minutes):
