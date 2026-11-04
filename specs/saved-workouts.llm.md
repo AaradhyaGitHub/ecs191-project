@@ -179,6 +179,6 @@ None.
 - [x] Plan approved (369fb8b)
 - [x] Scaffold (9e214e9, server + LiftCore rules; part 2: fb75854, activeWorkout(from:) after merging main 81bbc49 and the record_done call 702c180)
 - [x] Tests red (75d4aa1; part 2: 758a6ff)
-- [x] Build green (abf9f83, server + LiftCore rules; activeWorkout(from:), screens and the record_done call after #42)
+- [x] Build green (abf9f83, server + LiftCore rules; part 2: 5bbf6ec, activeWorkout(from:) and the screens)
 - [ ] Review
 - [ ] PR
