@@ -61,13 +61,17 @@ public struct TemplateInput: Codable, Hashable, Sendable {
     public var name: String
     public var focus: String?
     public var exercises: [TemplateExercise]
+    /// `POST` only: the finished workout's start when saved from it, so it counts as done.
+    /// Left out of the JSON when nil; the server ignores it on `PUT`.
+    public var lastDoneAt: Date?
 
     public init(id: String = ClientID.make(), name: String, focus: String? = nil,
-                exercises: [TemplateExercise]) {
+                exercises: [TemplateExercise], lastDoneAt: Date? = nil) {
         self.id = id
         self.name = name
         self.focus = focus
         self.exercises = exercises
+        self.lastDoneAt = lastDoneAt
     }
 }
 
