@@ -81,7 +81,7 @@ struct ExerciseLimitTests {
         selection.toggle(Log.squat)
         selection.toggle(Log.pushUp)
         #expect(selection.fits(remaining: 2) == false)
-        #expect(selection.limitText(remaining: 2) == "A workout can have up to 30 exercises. You can add 0 more.")
+        #expect(selection.limitText(remaining: 2) == "A workout can have up to 30 exercises. You can add 2 more.")
     }
 
     @Test("Picker: with no slots left the line says the workout is full")

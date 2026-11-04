@@ -101,8 +101,7 @@ extension ExerciseSelection {
             return "This workout has \(ActiveWorkout.maxExercises) exercises, the most it can have."
         }
         guard !fits(remaining: remaining) else { return nil }
-        let more = max(0, remaining - picked.count)
-        return "A workout can have up to \(ActiveWorkout.maxExercises) exercises. You can add \(more) more."
+        return "A workout can have up to \(ActiveWorkout.maxExercises) exercises. You can add \(remaining) more."
     }
 }
 
