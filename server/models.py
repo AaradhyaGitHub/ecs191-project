@@ -151,39 +151,65 @@ def get_exercises(slugs) -> dict:
     """The library exercises with these slugs, as {slug: exercise}; unknown slugs are left out.
 
     #42 plans the same helper; whichever lands first adds it, the other reuses it.
-    SCAFFOLD: returns {} until build mode.
     """
-    return {}
+    keys = [exercise_key(slug) for slug in dict.fromkeys(slugs)]
+    if not keys:
+        return {}
+    return {e.key.name: _exercise_dict(e) for e in client().get_multi(keys)}
 
 
 # --- Template (User/{id}/Template/{uuid}; a saved workout, server_architecture.llm.md) ----
-# SCAFFOLD: these return valid but wrong values until build mode.
+# The service sorts by `created_at` in Python, so no index is needed (plan, "Card order").
 
 TEMPLATE = "Template"
+# The exercise list is embedded and never queried.
+_TEMPLATE_UNINDEXED = ("exercises",)
 
 
 def template_key(user_id: str, template_id: str) -> datastore.Key:
     return client().key(USER, user_id, TEMPLATE, template_id)
 
 
+def _template_entity(user_id: str, data: dict) -> datastore.Entity:
+    entity = datastore.Entity(key=template_key(user_id, data["id"]),
+                              exclude_from_indexes=_TEMPLATE_UNINDEXED)
+    fields = {k: v for k, v in data.items() if k != "id"}
+    exercises = []
+    for row in fields.pop("exercises", []):
+        embedded = datastore.Entity()
+        embedded.update(row)
+        exercises.append(embedded)
+    entity.update(fields)
+    entity["exercises"] = exercises
+    return entity
+
+
+def _template_dict(entity: datastore.Entity) -> dict:
+    data = {"id": entity.key.name, **dict(entity)}
+    data["exercises"] = [dict(row) for row in entity.get("exercises", [])]
+    return data
+
+
 def get_template(user_id: str, template_id: str) -> dict | None:
     """One of this user's saved workouts, or None."""
-    return None
+    entity = client().get(template_key(user_id, template_id))
+    return _template_dict(entity) if entity else None
 
 
 def user_templates(user_id: str) -> list[dict]:
     """All of this user's saved workouts, in no set order (the service sorts them)."""
-    return []
+    query = client().query(kind=TEMPLATE, ancestor=user_key(user_id))
+    return [_template_dict(e) for e in query.fetch()]
 
 
 def put_template(user_id: str, data: dict) -> None:
     """Creates or replaces one saved workout; `data["id"]` is its key."""
-    return None
+    client().put(_template_entity(user_id, data))
 
 
 def delete_template(user_id: str, template_id: str) -> None:
     """Deletes one saved workout. A missing one is no error."""
-    return None
+    client().delete(template_key(user_id, template_id))
 
 
 def change_template(user_id: str, template_id: str, change) -> dict | None:
@@ -191,7 +217,16 @@ def change_template(user_id: str, template_id: str, change) -> dict | None:
 
     Returns the written template, or None when the template is missing or nothing changed.
     """
-    return None
+    db = client()
+    with db.transaction():
+        entity = db.get(template_key(user_id, template_id))
+        if entity is None:
+            return None
+        new = change(_template_dict(entity))
+        if new is None:
+            return None
+        db.put(_template_entity(user_id, {**new, "id": template_id}))
+        return new
 
 
 def _now() -> datetime:
