@@ -72,9 +72,15 @@ public struct APIClient: Sendable {
 
     /// Search by name or alias; `nil` or empty returns the whole library.
     /// `group` is a group ID from shared/muscles.json ("chest"); `nil` means all groups.
-    /// SCAFFOLD: `group` is not sent yet, and a blank `query` is still sent.
+    /// A blank `query` (only spaces) is not sent.
     public func searchExercises(_ query: String? = nil, group: String? = nil) async throws -> [Exercise] {
-        let items = query.flatMap { $0.isEmpty ? nil : [URLQueryItem(name: "q", value: $0)] } ?? []
+        var items: [URLQueryItem] = []
+        if let text = query?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
+            items.append(URLQueryItem(name: "q", value: text))
+        }
+        if let group {
+            items.append(URLQueryItem(name: "group", value: group))
+        }
         let list: ExerciseList = try await send("GET", "/exercises", query: items)
         return list.exercises
     }
