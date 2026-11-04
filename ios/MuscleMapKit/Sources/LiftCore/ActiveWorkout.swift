@@ -119,6 +119,15 @@ public struct ActiveWorkout: Codable, Equatable, Sendable {
         return letters.first { !used.contains($0) } ?? "s\(used.count + 1)"
     }
 
+    /// The most sets a workout can hold (D-26).
+    public static let maxSets = WorkoutLimits.maxSets
+
+    /// How many more sets can be logged (never below 0).
+    public var remainingSetSlots: Int { max(0, Self.maxSets - sets.count) }
+
+    /// False at 300 sets: the set log disables Log and says why (D-26).
+    public var canLogSet: Bool { sets.count < Self.maxSets }
+
     /// The block with this id.
     public func block(_ blockID: String) -> WorkoutBlock? {
         blocks.first { $0.id == blockID }
@@ -148,6 +157,7 @@ public struct ActiveWorkout: Codable, Equatable, Sendable {
 
     /// Logs a set at `date` in a block: next `order`, `endedAt` = `date`, `restBeforeS` = seconds
     /// since the previous set (nil for the first), the block's `supersetGroup`.
+    /// At 300 sets nothing is logged and the returned set is not stored; check `canLogSet` first.
     @discardableResult
     public mutating func log(_ draft: SetDraft, in blockID: String, at date: Date) -> SetEntry {
         var entry = draft.entry(order: sets.count + 1)
@@ -157,6 +167,7 @@ public struct ActiveWorkout: Codable, Equatable, Sendable {
         entry.supersetGroup = block(blockID)?.supersetGroup
         entry.timeSource = restTimerRan ? .restTimer : .manual
         entry.input = .manual
+        guard canLogSet else { return entry }
         sets.append(entry)
         blockIDBySet[entry.id] = blockID
         restTimerRan = false

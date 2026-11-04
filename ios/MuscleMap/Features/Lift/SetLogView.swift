@@ -142,6 +142,17 @@ struct SetLogView: View {
     }
 
     private var bottomBar: some View {
+        VStack(spacing: Theme.Spacing.s) {
+            if let limit = model.setLimitText {
+                NoticeLine(text: limit, systemImage: "info.circle")
+            }
+            bottomControls
+        }
+        .padding(.horizontal, Theme.Spacing.gutter)
+        .padding(.vertical, Theme.Spacing.m)
+    }
+
+    private var bottomControls: some View {
         HStack(spacing: Theme.Spacing.m) {
             if let timer = model.active?.restTimer, timer.isRunning {
                 RestStrip(timer: timer, onAdjust: model.adjustRest, onSkip: model.skipRest)
@@ -156,11 +167,13 @@ struct SetLogView: View {
                     .background(Theme.Colors.accent, in: Circle())
             }
             .buttonStyle(.plain)
+            .disabled(!canLog)
+            .opacity(canLog ? 1 : 0.4)
             .accessibilityLabel("Log a set")
         }
-        .padding(.horizontal, Theme.Spacing.gutter)
-        .padding(.vertical, Theme.Spacing.m)
     }
+
+    private var canLog: Bool { model.active?.canLogSet ?? false }
 }
 
 #if DEBUG

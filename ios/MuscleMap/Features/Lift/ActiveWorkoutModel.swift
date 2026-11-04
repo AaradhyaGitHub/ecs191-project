@@ -109,6 +109,12 @@ final class ActiveWorkoutModel {
         return setCountText(active.sets(in: block.id).count)
     }
 
+    /// The line in the set log when Log is disabled at 300 sets (D-26).
+    var setLimitText: String? {
+        guard let active, !active.canLogSet else { return nil }
+        return "A workout can have up to \(ActiveWorkout.maxSets) sets."
+    }
+
     func setCountText(_ count: Int) -> String {
         count == 0 ? "No sets yet" : count == 1 ? "1 set" : "\(count) sets"
     }
@@ -125,7 +131,7 @@ final class ActiveWorkoutModel {
 
     /// A new set for the block's next exercise (A, B, A, B… in a superset).
     func newSetRequest(in blockID: String) -> SetSheetRequest? {
-        guard let active, let exercise = active.nextExercise(in: blockID) else { return nil }
+        guard let active, active.canLogSet, let exercise = active.nextExercise(in: blockID) else { return nil }
         let draft = SetDraft.prefill(for: exercise, block: active.block(blockID), previous: active.sets,
                                      lastSet: lastSets[exercise.id], unit: unit)
         let earlier = active.sets.filter { $0.exerciseId == exercise.id && $0.setType != .warmup }
