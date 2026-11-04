@@ -23,7 +23,7 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 | Method and path | Purpose | Needed for | Status |
 |---|---|---|---|
 | `GET /health` | Server is up: `{"status": "ok"}`. No auth | Deploy checks, the app's connection test | **built** |
-| `POST /auth/sms/start`, `POST /auth/sms/verify` | Sign in by phone code, return a token | Everything | agreed; shapes follow the course SMS example |
+| `POST /auth/sms/start`, `POST /auth/sms/verify` | Sign in by phone code, return a token. No auth | Everything | **built** |
 | `GET /users/me`, `PUT /users/me` | Read or update the profile | Onboarding | agreed; shapes proposed |
 | `GET /exercises?q=bench` | Search exercises by name or alias | Adding exercises to a workout | agreed; shapes proposed |
 | `GET /exercises/mine` | This user's exercises: recent, most used, last set | Exercise picker | agreed; shapes proposed |
@@ -37,8 +37,26 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 
 ---
 
-### `POST /auth/sms/start` and `POST /auth/sms/verify`
-Reuse the course's SMS authentication example. Request and response shapes will be copied from it once it's in the repo. `verify` returns the bearer token the app stores in the Keychain.
+### Sign-in: `POST /auth/sms/start` and `POST /auth/sms/verify`  (built)
+Our server passes these through to the course's SMS sign-in service, so we run no SMS provider of our own. **For development, use the test number `+15305550000` with code `123456`**: no text is sent and no setup is needed. Real phone numbers need the course `app_token` on the server (`SMS_APP_TOKEN`); until it's set they get `403 forbidden`.
+
+`POST /auth/sms/start` texts a 6-digit code:
+```json
+{"phone_number": "+15305550000"}
+```
+→ `200 {"sent": true}`. Phone numbers are E.164 (`+` and digits, no spaces). Errors: `400 bad_request` (bad format, or the course service refused the number), `403 forbidden` (real number, no app token yet), `500 internal` (course service unreachable).
+
+`POST /auth/sms/verify` checks the code and signs in:
+```json
+{"phone_number": "+15305550000", "code": "123456"}
+```
+→ `200`
+```json
+{"token": "example-session-token-not-real", "user_id": "5642800292954112"}
+```
+The app stores `token` in the Keychain and sends it on every other request as `Authorization: Bearer <token>`. Signing in again returns a new token for the same `user_id`; older tokens keep working. Tokens don't expire for now; logout comes later. Errors: `401 unauthorized` (wrong or expired code), `400 bad_request` (missing code).
+
+Any endpoint that needs sign-in answers `401 unauthorized` when the header is missing or the token isn't valid; the app then shows the sign-in screen.
 
 ### `GET /users/me`  (proposed shape)
 ```json

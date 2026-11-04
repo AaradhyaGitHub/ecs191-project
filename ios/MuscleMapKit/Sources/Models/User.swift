@@ -55,3 +55,14 @@ public struct UserUpdate: Codable, Hashable, Sendable {
 public struct Health: Codable, Hashable, Sendable {
     public var status: String
 }
+
+/// The result of `POST /auth/sms/verify`: the token to send as `Authorization: Bearer`.
+public struct SignIn: Codable, Hashable, Sendable {
+    public var token: String
+    public var userId: String
+
+    public init(token: String, userId: String) {
+        self.token = token
+        self.userId = userId
+    }
+}

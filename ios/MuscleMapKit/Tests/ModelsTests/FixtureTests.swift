@@ -101,6 +101,13 @@ struct FixtureTests {
         #expect(firstSet["time_source"] as? String == "rest_timer")
     }
 
+    @Test("The sign-in response decodes")
+    func signIn() throws {
+        let signIn = try Self.decode(SignIn.self, "auth_verify_response")
+        #expect(signIn.userId == "5642800292954112")
+        #expect(!signIn.token.isEmpty)
+    }
+
     @Test("Phone-made IDs are lowercase UUIDs, so retries match exactly")
     func clientIDs() {
         let id = ClientID.make()

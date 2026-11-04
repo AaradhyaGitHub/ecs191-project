@@ -5,6 +5,7 @@ Locally: `flask --app main run --port 5000` from server/.
 """
 from flask import Flask
 
+from api.auth import bp as auth_bp
 from api.errors import register_error_handlers
 from api.health import bp as health_bp
 
@@ -15,6 +16,7 @@ def create_app() -> Flask:
     app = Flask(__name__)
     register_error_handlers(app)
     app.register_blueprint(health_bp, url_prefix=f"{API_PREFIX}/health")
+    app.register_blueprint(auth_bp, url_prefix=f"{API_PREFIX}/auth")
     return app
 
 

@@ -33,6 +33,34 @@ public struct APIClient: Sendable {
         try await send("GET", "/health", authorized: false)
     }
 
+    // MARK: Sign-in (API.md "Sign-in"). Development: +15305550000, code 123456.
+
+    /// The course's test number and code: no text is sent and no setup is needed.
+    public static let testPhoneNumber = "+15305550000"
+    public static let testCode = "123456"
+
+    /// Whether a sign-in token is saved.
+    public var isSignedIn: Bool { tokens.token() != nil }
+
+    /// Texts a 6-digit code to `phoneNumber` (E.164, e.g. "+15305550000").
+    public func startSignIn(phoneNumber: String) async throws {
+        struct Body: Encodable { let phoneNumber: String }
+        struct Sent: Decodable { let sent: Bool }
+        let _: Sent = try await send("POST", "/auth/sms/start", body: Body(phoneNumber: phoneNumber),
+                                     authorized: false)
+    }
+
+    /// Checks the code; on success the token is saved, so later requests are signed in.
+    @discardableResult
+    public func verifySignIn(phoneNumber: String, code: String) async throws -> SignIn {
+        struct Body: Encodable { let phoneNumber: String; let code: String }
+        let result: SignIn = try await send("POST", "/auth/sms/verify",
+                                            body: Body(phoneNumber: phoneNumber, code: code),
+                                            authorized: false)
+        try tokens.save(result.token)
+        return result
+    }
+
     public func me() async throws -> User {
         try await send("GET", "/users/me")
     }

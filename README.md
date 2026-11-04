@@ -30,6 +30,17 @@ flask --app main run --port 5000
 curl http://localhost:5000/api/v1/health   # → {"status": "ok"}
 ```
 
+## Signing in during development
+Use the course's **test number `+15305550000` with code `123456`**: no text message is sent and nothing needs setting up. Real phone numbers only work once the course `app_token` is configured on the server.
+
+To get a token for trying endpoints by hand (server running locally):
+```sh
+curl -s -X POST localhost:5000/api/v1/auth/sms/verify -H 'Content-Type: application/json' \
+  -d '{"phone_number": "+15305550000", "code": "123456"}'
+# → {"token": "...", "user_id": "..."}; then send: -H "Authorization: Bearer <token>"
+```
+In server tests, the `signed_in` fixture gives you a signed-in user in one line, and `course_auth` fakes the course service so tests never touch the network.
+
 ## Run the app
 Requires **Xcode 27.2 or newer**: the project uses Xcode 27's project format, which older Xcode versions can't open. The app itself runs on iOS 17 and later, iPhone only.
 
