@@ -207,6 +207,21 @@ def put_template(user_id: str, data: dict) -> None:
     client().put(_template_entity(user_id, data))
 
 
+def add_template(user_id: str, data: dict) -> tuple[dict, bool]:
+    """In one transaction: writes `data` as a new saved workout unless its id is taken.
+
+    Returns (stored, created). When the id is already there, nothing changes and `stored` is
+    the saved one, so two POSTs with the same id write once (API.md, "POST /templates").
+    """
+    db = client()
+    with db.transaction():
+        entity = db.get(template_key(user_id, data["id"]))
+        if entity is not None:
+            return _template_dict(entity), False
+        db.put(_template_entity(user_id, data))
+        return data, True
+
+
 def delete_template(user_id: str, template_id: str) -> None:
     """Deletes one saved workout. A missing one is no error."""
     client().delete(template_key(user_id, template_id))

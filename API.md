@@ -206,7 +206,7 @@ This user's saved workouts, oldest-created first. A new user gets `{"templates":
 The body (`POST` and `PUT`):
 - `name`: required, 1–60 characters after trimming spaces. Names may repeat.
 - `focus`: optional, up to 60 characters after trimming; empty or left out is `null`.
-- `exercises`: 1–30 items. `exercise_id` must be in the library. `target_sets` 1–20. `target_reps` 1–100, or `null` or left out. `rest_s` 0–600. `superset_group` may be left out.
+- `exercises`: 1–30 items. `exercise_id` must be in the library. `target_sets` 1–20. `target_reps` 1–100, or `null` or left out. `rest_s` 0–600. `superset_group` is text or `null`, at most 60 characters, and may be left out.
 
 Errors: `400 bad_request` when `id` isn't a lowercase UUID or any rule above is broken. `404 not_found` for `PUT` with an unknown id, or another user's.
 

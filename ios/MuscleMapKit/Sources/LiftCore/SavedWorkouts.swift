@@ -9,6 +9,8 @@ import Models
 enum TemplateLimits {
     static let maxName = 60
     static let maxFocus = 60
+    /// The server takes at most this many exercises in one saved workout.
+    static let maxExercises = 30
     static let sets = 1...20
     static let reps = 1...100
     static let rest = 0...600
@@ -86,6 +88,9 @@ public func canSaveAsTemplate(_ workout: Workout) -> Bool {
 /// `targetSets` = the other sets; `targetReps` = the most common reps (ties to the first
 /// logged, `nil` for timed holds); `restS` = the median rest before the 2nd and later sets,
 /// rounded to 15 s, else 90 s; `supersetGroup` is copied.
+///
+/// Only the first 30 exercises (in first-set order) are kept, because the server takes no more.
+/// A workout can't have more than 30 exercises, so this is only a safety net.
 public func templateInput(from workout: Workout, name: String, focus: String?) -> TemplateInput? {
     guard let name = cleanName(name) else { return nil }
     let focus = (focus ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -104,7 +109,7 @@ public func templateInput(from workout: Workout, name: String, focus: String?) -
     }
     guard !exerciseOrder.isEmpty else { return nil }
 
-    let exercises = exerciseOrder.map { id in
+    let exercises = exerciseOrder.prefix(TemplateLimits.maxExercises).map { id in
         let logged = setsByExercise[id] ?? []
         return TemplateExercise(
             exerciseId: id,

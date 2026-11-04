@@ -25,6 +25,7 @@ _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 MAX_NAME = 60
 MAX_FOCUS = 60
 MAX_EXERCISES = 30
+MAX_GROUP = 60
 SETS = (1, 20)
 REPS = (1, 100)
 REST = (0, 600)
@@ -107,6 +108,8 @@ def _clean_exercise(row, number: int, exercises: dict[str, dict]) -> dict:
     group = row.get("superset_group")
     if group is not None and not isinstance(group, str):
         raise _bad(f"{where}.superset_group must be text or null.")
+    if group is not None and len(group) > MAX_GROUP:
+        raise _bad(f"{where}.superset_group must be at most {MAX_GROUP} characters.")
     return {"exercise_id": slug, "target_sets": row["target_sets"], "target_reps": reps,
             "rest_s": row["rest_s"], "superset_group": group}
 
@@ -202,12 +205,10 @@ def create_template(user_id: str, body: dict) -> tuple[dict, bool]:
     """Creates a saved workout. Returns (template, created); a repeat id gives the stored one."""
     library = models.get_exercises(_body_slugs(body))
     cleaned = clean_input(body, library)
-    stored = models.get_template(user_id, cleaned["id"])
-    if stored is not None:
-        return _public(stored, _library_for([stored])), False
     template = {**cleaned, "last_done_at": None, "created_at": datetime.now(timezone.utc)}
-    models.put_template(user_id, template)
-    return _public(template, library), True
+    # One transaction, so two POSTs with the same id at the same moment write only once.
+    stored, created = models.add_template(user_id, template)
+    return _public(stored, library if created else _library_for([stored])), created
 
 
 def update_template(user_id: str, template_id: str, body: dict) -> dict:
@@ -227,7 +228,12 @@ def update_template(user_id: str, template_id: str, body: dict) -> dict:
 
 
 def delete_template(user_id: str, template_id: str) -> None:
-    """Deletes a saved workout. A missing one is no error."""
+    """Deletes a saved workout. A missing one is no error.
+
+    An id that isn't a lowercase UUID can't be a saved workout, so the database isn't asked.
+    """
+    if not is_template_id(template_id):
+        return
     models.delete_template(user_id, template_id)
 
 
