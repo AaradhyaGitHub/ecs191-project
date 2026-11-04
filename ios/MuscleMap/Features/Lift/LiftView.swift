@@ -15,6 +15,8 @@ struct LiftView: View {
     /// Set by the picker's Add; the workout opens once the picker has closed.
     @State private var opensAfterPicker = false
     @State private var deleting: OutboxItem?
+    /// The user's unit for the picker; lb until `GET /users/me` answers.
+    @State private var unit: WeightUnit = .lb
 
     var body: some View {
         ScrollView {
@@ -38,14 +40,17 @@ struct LiftView: View {
             .padding(.top, Theme.Spacing.l)
         }
         .background(Theme.Colors.background)
-        .task { await session.outbox.sendPending() }
+        .task {
+            await session.outbox.sendPending()
+            if apiClient.isSignedIn, let user = try? await apiClient.me() { unit = user.units }
+        }
         .sheet(isPresented: $isPicking, onDismiss: {
             if opensAfterPicker {
                 opensAfterPicker = false
                 showsWorkout = true
             }
         }) {
-            ExercisePickerView(model: ExercisePickerModel(source: apiClient), onAdd: start)
+            ExercisePickerView(model: ExercisePickerModel(source: apiClient, unit: unit), onAdd: start)
         }
         .fullScreenCover(isPresented: $showsWorkout) {
             ActiveWorkoutView(session: session) { _ in }
@@ -82,7 +87,7 @@ struct LiftView: View {
                         .font(Theme.Fonts.cardTitle)
                         .foregroundStyle(Theme.Colors.textPrimary)
                     TimelineView(.periodic(from: .now, by: 1)) { context in
-                        Text(elapsed(since: active.startedAt, at: context.date))
+                        Text(workoutClockText(since: active.startedAt, at: context.date))
                             .font(Theme.Fonts.secondary.monospacedDigit())
                             .foregroundStyle(Theme.Colors.textSecondary)
                     }
@@ -99,12 +104,6 @@ struct LiftView: View {
                 .buttonStyle(.plain)
             }
         }
-    }
-
-    private func elapsed(since start: Date, at date: Date) -> String {
-        let seconds = max(0, Int(date.timeIntervalSince(start)))
-        if seconds < 3600 { return clockText(seconds: seconds) }
-        return String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
     }
 
     private var emptyWorkoutTile: some View {

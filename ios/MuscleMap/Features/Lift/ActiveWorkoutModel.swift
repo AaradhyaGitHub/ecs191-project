@@ -122,9 +122,7 @@ final class ActiveWorkoutModel {
     /// The workout clock: "12:34", or "1:02:03" after an hour.
     func clock(at date: Date) -> String {
         guard let start = active?.startedAt else { return "0:00" }
-        let seconds = max(0, Int(date.timeIntervalSince(start)))
-        if seconds < 3600 { return clockText(seconds: seconds) }
-        return String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
+        return workoutClockText(since: start, at: date)
     }
 
     // MARK: The set sheet

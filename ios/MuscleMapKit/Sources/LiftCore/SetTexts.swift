@@ -74,6 +74,14 @@ public func clockText(seconds: Int) -> String {
     return String(format: "%d:%02d", s / 60, s % 60)
 }
 
+/// The workout clock: time since `start`, "12:34", or "1:02:03" after an hour. Shared by the
+/// workout screen and Lift's Resume card.
+public func workoutClockText(since start: Date, at date: Date) -> String {
+    let seconds = max(0, Int(date.timeIntervalSince(start)))
+    if seconds < 3600 { return clockText(seconds: seconds) }
+    return String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
+}
+
 /// The rest column: "2:30 rest", or "First set · 6:02 PM" for a set with no rest before it
 /// (the time is its `endedAt` in `timeZone`).
 public func restText(for set: SetEntry, timeZone: TimeZone = .current) -> String {

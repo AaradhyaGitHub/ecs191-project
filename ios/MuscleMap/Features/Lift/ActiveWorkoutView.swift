@@ -50,7 +50,8 @@ struct ActiveWorkoutView: View {
         .task { await model.load(using: apiClient) }
         .sheet(isPresented: $isPicking) {
             ExercisePickerView(model: ExercisePickerModel(
-                source: apiClient, remainingExercises: model.active?.remainingExerciseSlots ?? 0)) { picks in
+                source: apiClient, remainingExercises: model.active?.remainingExerciseSlots ?? 0,
+                unit: model.unit)) { picks in
                 model.add(picks)
             }
         }

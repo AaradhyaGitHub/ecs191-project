@@ -13,8 +13,8 @@ import LiftCore
 final class ExercisePickerModel {
     typealias SearchState = ExerciseSearch.State
 
-    /// Weights show in lb until `GET /users/me` gives the user's units (plan, "Scope").
-    let unit: WeightUnit = .lb
+    /// Weights show in the user's unit; lb until `GET /users/me` says otherwise (Sasa, Nov 4, 2026).
+    let unit: WeightUnit
 
     /// The search box. Each change sends one request after `typingDelay`.
     var text = "" {
@@ -46,10 +46,11 @@ final class ExercisePickerModel {
 
     /// `results`, `mine` and `state` let previews start with data on screen.
     init(source: any ExerciseSource, remainingExercises: Int = ActiveWorkout.maxExercises,
-         now: @escaping () -> Date = Date.init,
+         unit: WeightUnit = .lb, now: @escaping () -> Date = Date.init,
          results: [Exercise] = [], mine: [UserExercise] = [], state: SearchState = .loading) {
         self.source = source
         self.remainingExercises = remainingExercises
+        self.unit = unit
         self.now = now
         self.searcher = ExerciseSearch(source: source, results: results, state: state)
         self.mine = mine
