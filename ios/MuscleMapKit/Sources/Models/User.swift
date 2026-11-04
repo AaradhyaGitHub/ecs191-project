@@ -15,6 +15,19 @@ public struct User: Codable, Identifiable, Hashable, Sendable {
     public var units: WeightUnit
     public var experience: Experience?
     public var createdAt: Date
+
+    public init(id: String, displayName: String, sex: String? = nil, birthYear: Int? = nil,
+                bodyweightKg: Double? = nil, units: WeightUnit, experience: Experience? = nil,
+                createdAt: Date) {
+        self.id = id
+        self.displayName = displayName
+        self.sex = sex
+        self.birthYear = birthYear
+        self.bodyweightKg = bodyweightKg
+        self.units = units
+        self.experience = experience
+        self.createdAt = createdAt
+    }
 }
 
 /// A partial profile update (`PUT /users/me`): only the fields that are set are sent.

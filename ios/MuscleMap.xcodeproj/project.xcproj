@@ -10,6 +10,12 @@
       "Base",
     ],
   },
+  "packages": [
+    {
+      "kind": "local",
+      "path": "MuscleMapKit",
+    },
+  ],
   "files": [
     { "kind": "folder", "path": "MuscleMap", "target-membership": [ "MuscleMap" ] },
     { "kind": "folder", "path": "MuscleMapTests", "target-membership": [ "MuscleMapTests" ] },
@@ -34,6 +40,18 @@
         "compile-sources",
         "frameworks",
         "resources",
+      ],
+      "package-product-members": [
+        {
+          "product-name": "LiftCore",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "product-name": "Models",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "product-name": "Networking",
+          "build-phase": { "build-phase": "frameworks" },
+        },
       ],
       "build-settings": {
         "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",

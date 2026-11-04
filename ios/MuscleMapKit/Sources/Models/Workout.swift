@@ -104,6 +104,18 @@ public struct WorkoutSummary: Codable, Identifiable, Hashable, Sendable {
     public var localDate: String
     public var setCount: Int
     public var exerciseCount: Int
+
+    public init(id: String, name: String, templateId: String? = nil, startedAt: Date,
+                endedAt: Date? = nil, localDate: String, setCount: Int, exerciseCount: Int) {
+        self.id = id
+        self.name = name
+        self.templateId = templateId
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+        self.localDate = localDate
+        self.setCount = setCount
+        self.exerciseCount = exerciseCount
+    }
 }
 
 public struct WorkoutList: Codable, Sendable {
