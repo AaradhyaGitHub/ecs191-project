@@ -21,6 +21,10 @@ struct LiftView: View {
     @State private var unit: WeightUnit = .lb
     /// Saved workouts (#43); made on first appear with the shared API client.
     @State private var saved: SavedWorkoutsModel?
+    /// Finish on the Resume card (#63): the confirm, then the same alerts as inside the workout.
+    @State private var asksToFinish = false
+    @State private var asksToDiscardEmpty = false
+    @State private var finishProblem: SaveProblem?
 
     init(saved: SavedWorkoutsModel? = nil) {
         _saved = State(initialValue: saved)
@@ -80,7 +84,39 @@ struct LiftView: View {
         } message: { _ in
             Text("It was not saved on the server. Deleting it can't be undone.")
         }
+        .alert("Finish this workout?", isPresented: $asksToFinish) {
+            Button("Finish", action: finishOpenWorkout)
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("No sets logged. Discard this workout?", isPresented: $asksToDiscardEmpty) {
+            Button("Discard", role: .destructive) { session.discard() }
+            Button("Keep going", role: .cancel) {}
+        }
+        .alert(finishProblem.map(ActiveWorkoutModel.finishText) ?? "", isPresented: Binding(
+            get: { finishProblem != nil }, set: { if !$0 { finishProblem = nil } })) {
+            Button("OK", role: .cancel) {}
+        }
     }
+
+    /// Finish on the Resume card does what Finish inside the workout does: upload and offer
+    /// "Save as a workout", or ask to discard a workout with no sets (#63). The next sheet or
+    /// alert waits for the confirm alert to leave, because SwiftUI ignores one presented while
+    /// another is still animating out.
+    private func finishOpenWorkout() {
+        let result = ActiveWorkoutModel(session: session).finish()
+        if case .finished(let workout) = result { saved?.finished(workout) }
+        Task {
+            try? await Task.sleep(for: .seconds(Self.alertCloseTime))
+            switch result {
+            case .finished: saved?.showPendingOffer()
+            case .noSets: asksToDiscardEmpty = true
+            case .notSaved(let problem): finishProblem = problem
+            }
+        }
+    }
+
+    /// About how long an alert takes to animate out.
+    private static let alertCloseTime: TimeInterval = 0.5
 
     /// "Add" in the picker: a new workout with the picks, opened at once.
     private func start(_ picks: ExerciseSelection) {
@@ -109,36 +145,47 @@ struct LiftView: View {
         if session.start(workout) { showsWorkout = true }
     }
 
+    /// The open workout: name and clock, then Resume and Finish (#63).
     private func resumeCard(_ active: ActiveWorkout) -> some View {
         CardView(isHighlighted: true) {
-            HStack(spacing: Theme.Spacing.m) {
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    Text("Resume workout")
-                        .textCase(.uppercase)
-                        .font(Theme.Fonts.sectionHeader)
-                        .tracking(Theme.Fonts.sectionHeaderTracking)
-                        .foregroundStyle(Theme.Colors.accent)
-                    Text(active.name)
-                        .font(Theme.Fonts.cardTitle)
-                        .foregroundStyle(Theme.Colors.textPrimary)
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.m) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Resume workout")
+                            .textCase(.uppercase)
+                            .font(Theme.Fonts.sectionHeader)
+                            .tracking(Theme.Fonts.sectionHeaderTracking)
+                            .foregroundStyle(Theme.Colors.accent)
+                        Text(active.name)
+                            .font(Theme.Fonts.cardTitle)
+                            .foregroundStyle(Theme.Colors.textPrimary)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: Theme.Spacing.s)
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         Text(workoutClockText(since: active.startedAt, at: context.date))
                             .font(Theme.Fonts.secondary.monospacedDigit())
                             .foregroundStyle(Theme.Colors.textSecondary)
                     }
                 }
-                Spacer()
-                Button { showsWorkout = true } label: {
-                    Text("Resume")
-                        .font(Theme.Fonts.rowTitle.weight(.bold))
-                        .foregroundStyle(Theme.Colors.onAccent)
-                        .padding(.horizontal, Theme.Spacing.m)
-                        .frame(minHeight: Theme.Size.minTouchTarget)
-                        .background(Theme.Colors.accent, in: RoundedRectangle(cornerRadius: Theme.Radius.smallButton))
+                HStack(spacing: Theme.Spacing.s) {
+                    cardButton("Resume", isPrimary: true) { showsWorkout = true }
+                    cardButton("Finish", isPrimary: false) { asksToFinish = true }
                 }
-                .buttonStyle(.plain)
             }
         }
+    }
+
+    private func cardButton(_ title: String, isPrimary: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(Theme.Fonts.rowTitle.weight(.bold))
+                .foregroundStyle(isPrimary ? Theme.Colors.onAccent : Theme.Colors.textPrimary)
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.minTouchTarget)
+                .background(isPrimary ? Theme.Colors.accent : Theme.Colors.surfaceRaised,
+                            in: RoundedRectangle(cornerRadius: Theme.Radius.smallButton))
+        }
+        .buttonStyle(.plain)
     }
 
     private var emptyWorkoutTile: some View {
