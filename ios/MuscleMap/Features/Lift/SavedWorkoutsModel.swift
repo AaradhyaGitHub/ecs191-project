@@ -4,15 +4,14 @@ import Models
 import Networking
 import LiftCore
 
-/// What Lift home's saved workouts need from the server: the `/templates` endpoints and the
-/// public exercise library (for Start). `APIClient` in the app; a stub in previews.
+/// What Lift home's saved workouts need from the server: the `/templates` endpoints.
+/// `APIClient` in the app; a stub in previews. Start uses the bundled exercise library.
 protocol SavedWorkoutsSource: Sendable {
     var isSignedIn: Bool { get }
     func templates() async throws -> [Template]
     func createTemplate(_ template: TemplateInput) async throws -> Template
     func updateTemplate(_ template: TemplateInput) async throws -> Template
     func deleteTemplate(id: String) async throws
-    func searchExercises(_ query: String?, group: String?) async throws -> [Exercise]
 }
 
 extension APIClient: SavedWorkoutsSource {}
@@ -36,15 +35,12 @@ final class SavedWorkoutsModel {
     private(set) var state: LoadState
     /// A short error line above a list that is already on screen.
     private(set) var errorText: String?
-    /// True while Start gets the exercise library.
-    private(set) var isStarting = false
-
     /// A finished workout to offer "Save as a workout" for, once the workout screen has closed.
     private(set) var offer: Workout?
     @ObservationIgnored private var pendingOffer: Workout?
 
-    /// The public exercise library, loaded once per launch (D5).
-    @ObservationIgnored private var library: [Exercise] = []
+    /// The exercise library the app ships (Sasa, Nov 4, 2026); Lift never downloads it.
+    @ObservationIgnored private let library: [Exercise]
     /// "Last done" times set on the phone right after Finish (D19). They stay until the server
     /// has the same time or a later one, so a reload doesn't move UP NEXT back.
     @ObservationIgnored private var doneOnPhone: [String: Date] = [:]
@@ -53,8 +49,10 @@ final class SavedWorkoutsModel {
 
     /// `templates` and `state` let previews start with data on screen.
     init(source: any SavedWorkoutsSource, now: @escaping () -> Date = Date.init,
+         library: [Exercise] = bundledExerciseLibrary(),
          templates: [Template] = [], state: LoadState = .loading, errorText: String? = nil) {
         self.source = source
+        self.library = library
         self.now = now
         self.templates = templates
         self.state = state
@@ -81,7 +79,6 @@ final class SavedWorkoutsModel {
             templates = merged(loaded)
             state = .loaded
             errorText = nil
-            await loadLibraryIfNeeded()
         } catch APIError.server(status: 401, _, _) {
             state = .signedOut
         } catch {
@@ -91,15 +88,6 @@ final class SavedWorkoutsModel {
                 state = .failed
             }
         }
-    }
-
-    /// Gets the library once; a failure leaves it empty so the next Start tries again.
-    @discardableResult
-    private func loadLibraryIfNeeded() async -> Bool {
-        guard library.isEmpty else { return true }
-        guard let loaded = try? await source.searchExercises(nil, group: nil) else { return false }
-        library = loaded
-        return true
     }
 
     /// The server's list with the phone's newer "last done" times on top.
@@ -118,16 +106,9 @@ final class SavedWorkoutsModel {
 
     // MARK: Start
 
-    /// The workout Start opens, or nil when the library couldn't load (an error line says so).
-    func workout(for template: Template) async -> ActiveWorkout? {
-        isStarting = true
-        defer { isStarting = false }
-        guard await loadLibraryIfNeeded() else {
-            errorText = "Couldn't load the exercises. Check your connection and try again."
-            return nil
-        }
-        errorText = nil
-        return activeWorkout(from: template, library: library, startedAt: now())
+    /// The workout Start opens. Exercises missing from the bundled library are skipped.
+    func workout(for template: Template) -> ActiveWorkout {
+        activeWorkout(from: template, library: library, startedAt: now())
     }
 
     // MARK: Finish
@@ -237,7 +218,6 @@ extension SavedWorkoutsModel {
     struct PreviewSource: SavedWorkoutsSource {
         var isSignedIn: Bool
         var templateList: [Template]
-        var library: [Exercise]
         var fails: Bool
 
         func templates() async throws -> [Template] {
@@ -257,9 +237,6 @@ extension SavedWorkoutsModel {
         func deleteTemplate(id: String) async throws {
             if fails { throw APIError.transport(.notConnectedToInternet) }
         }
-        func searchExercises(_ query: String?, group: String?) async throws -> [Exercise] {
-            library
-        }
     }
 
     /// A model already showing `state`, with the preview clock.
@@ -269,9 +246,9 @@ extension SavedWorkoutsModel {
                         fails: Bool = false) -> SavedWorkoutsModel {
         let templates = templates ?? PreviewData.templates
         return SavedWorkoutsModel(
-            source: PreviewSource(isSignedIn: signedIn, templateList: templates,
-                                  library: PreviewData.exercises, fails: fails),
-            now: { PreviewData.now }, templates: templates, state: state, errorText: errorText)
+            source: PreviewSource(isSignedIn: signedIn, templateList: templates, fails: fails),
+            now: { PreviewData.now }, library: PreviewData.exercises, templates: templates,
+            state: state, errorText: errorText)
     }
 }
 #endif

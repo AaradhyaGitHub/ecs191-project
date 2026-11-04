@@ -2,8 +2,8 @@ import SwiftUI
 import Models
 import LiftCore
 
-/// One saved workout on Lift home: name, "Tricep focus · 5 exercises", "6 days ago", up to
-/// three muscle chips and Start. The UP NEXT card has an accent border, an UP NEXT badge and
+/// One saved workout on Lift home: name, "Tricep focus · 5 exercises", "Last done 6 days ago"
+/// (left out when never done, Sasa, Nov 4, 2026), up to three muscle chips and Start. The UP NEXT card has an accent border, an UP NEXT badge and
 /// an accent Start button (client_architecture.llm.md, "Lift screens").
 struct SavedWorkoutCard: View {
     let template: Template
@@ -26,7 +26,10 @@ struct SavedWorkoutCard: View {
                 }
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     Text(cardSubtitle(template))
-                    Text(lastDoneText(template.lastDoneAt, now: now, calendar: .current))
+                    if let done = template.lastDoneAt {
+                        // "Last done today", "Last done 6 days ago".
+                        Text("Last done \(lastDoneText(done, now: now, calendar: .current).lowercased())")
+                    }
                 }
                 .font(Theme.Fonts.secondary)
                 .foregroundStyle(Theme.Colors.textSecondary)

@@ -81,8 +81,8 @@ struct SavedWorkoutsSection: View {
         return VStack(spacing: Theme.Spacing.m) {
             ForEach(model.cards) { template in
                 SavedWorkoutCard(template: template, isUpNext: template.id == upNext, now: now,
-                                 isStartDisabled: isStartDisabled || model.isStarting) {
-                    start(template)
+                                 isStartDisabled: isStartDisabled) {
+                    onStart(model.workout(for: template))
                 }
                 .contextMenu {
                     Button("Rename", systemImage: "pencil") { askRename(template) }
@@ -101,12 +101,6 @@ struct SavedWorkoutsSection: View {
     }
 
     // MARK: Actions
-
-    private func start(_ template: Template) {
-        Task {
-            if let workout = await model.workout(for: template) { onStart(workout) }
-        }
-    }
 
     private func askRename(_ template: Template) {
         renaming = template
