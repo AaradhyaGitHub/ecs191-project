@@ -2,7 +2,7 @@
 
 The contract between the iOS app and the Flask server. A new or changed endpoint lands here first, with example JSON in `shared/fixtures/`, in its own small PR (see `CLAUDE.md`, "Contract first").
 
-**Status of each endpoint:** **agreed** = taken from the team's setup guide; **proposed** = drafted to fill a gap, needs a team OK before it's built.
+**Status of each endpoint:** **agreed** = taken from the team's setup guide, or settled in an approved plan (`specs/*.llm.md`); **proposed** = drafted to fill a gap, needs a team OK before it's built.
 
 ## Conventions
 - **Base URL:** `http://localhost:5001/api/v1` locally; `https://<PROJECT_ID>.<REGION_ID>.r.appspot.com/api/v1` deployed.
@@ -24,14 +24,14 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 |---|---|---|---|
 | `GET /health` | Server is up: `{"status": "ok"}`. No auth | Deploy checks, the app's connection test | **built** |
 | `POST /auth/sms/start`, `POST /auth/sms/verify` | Sign in by phone code, return a token. No auth | Everything | **built** |
-| `GET /users/me`, `PUT /users/me` | Read or update the profile | Onboarding | agreed; shapes proposed |
+| `GET /users/me`, `PUT /users/me` | Read or update the profile | Onboarding | agreed |
 | `GET /exercises?q=bench&group=chest` | Search exercises by name or alias, optionally in one muscle group. No auth | Adding exercises to a workout | agreed |
 | `GET /exercises/mine` | This user's exercises: recent, most used, last set | Exercise picker | agreed; shapes proposed |
 | `GET /templates` | Saved workouts, with last-done time | Lift home | agreed; shapes proposed |
 | `POST /templates`, `PUT /templates/{id}`, `DELETE /templates/{id}` | Create, edit or delete a saved workout | Lift home | agreed; shapes proposed |
 | `POST /workouts` | Save a finished workout and all its sets | Finishing a workout | agreed |
-| `GET /workouts?limit=20` | Recent workouts, newest first | History on Home | agreed; shapes proposed |
-| `GET /workouts/{id}` | One workout with its sets | Workout detail | agreed; shapes proposed |
+| `GET /workouts?limit=20` | Recent workouts, newest first | History on Home | agreed (`before` comes with Home) |
+| `GET /workouts/{id}` | One workout with its sets | Workout detail | agreed |
 
 **Next, once Lift works:** `GET /muscle-map?window=7d` (Home), `GET` and `POST /goals`, `POST /smart-log/parse` (the AI feature). Home must also show where your muscles were at any past point, so the muscle map will need an end date as well as a window (for example `?window=7d&end=2026-10-01`); to be designed with Home.
 
@@ -58,7 +58,7 @@ The app stores `token` in the Keychain and sends it on every other request as `A
 
 Any endpoint that needs sign-in answers `401 unauthorized` when the header is missing or the token isn't valid; the app then shows the sign-in screen.
 
-### `GET /users/me`  (proposed shape)
+### `GET /users/me`  (agreed)
 ```json
 {
   "id": "u_123",
@@ -71,12 +71,26 @@ Any endpoint that needs sign-in answers `401 unauthorized` when the header is mi
   "created_at": "2026-11-01T18:00:00Z"
 }
 ```
+Every field is always present. `units` is `lb` or `kg` (display only); `experience` is `beginner`, `intermediate`, `advanced` or `null`. A new user has `display_name: null`, `units: "lb"`, and `null` for every other field except `id` and `created_at` (`shared/fixtures/user_new.json`):
+```json
+{
+  "id": "u_456",
+  "display_name": null,
+  "sex": null,
+  "birth_year": null,
+  "bodyweight_kg": null,
+  "units": "lb",
+  "experience": null,
+  "created_at": "2026-11-03T18:00:00Z"
+}
+```
 
-### `PUT /users/me`  (decided: partial update)
+### `PUT /users/me`  (agreed: partial update)
 Send only the fields to change; fields left out stay as they are. The response is the full user, as in `GET /users/me`.
 ```json
 {"bodyweight_kg": 81.5, "units": "kg"}
 ```
+Errors: `400 bad_request`, and nothing changes, when `units` is not `lb` or `kg`, `bodyweight_kg` is not a number above 0, `experience` is not one of the three values, or the body has any other field. Only `display_name`, `sex`, `birth_year`, `bodyweight_kg`, `units` and `experience` can be changed.
 
 ### `GET /exercises?q=bench&group=chest`
 No auth: the library is the same for everyone. Both parameters are optional.
@@ -167,7 +181,7 @@ The app sorts by `last_used_at` for Recent and by `use_count` for Most used.
 Request: `name`, `focus` and `exercises` as above. Response: the full template, `201` for create and `200` for update. `DELETE /templates/{id}` returns `204` with no body.
 
 ### `POST /workouts`  (agreed)
-Saves the workout and its sets, adds to that day's DailyStats and updates the running totals in one transaction. The `id` fields are UUIDs made on the phone; repeating the request with the same IDs changes nothing.
+Saves the workout, its sets and this user's history for each exercise in it (UserExercise), in one transaction. The `id` fields are UUIDs made on the phone; repeating the request with the same IDs changes nothing. Daily stats and running totals are not saved; they come later with Home and Goals.
 ```json
 {
   "id": "6f1c2b1e-4b7a-4c3e-9d2a-0a1b2c3d4e5f",
@@ -191,11 +205,32 @@ Saves the workout and its sets, adds to that day's DailyStats and updates the ru
   ]
 }
 ```
-Decided: this body is the setup guide's example plus the fields its data model adds ("Fields to add to the kinds above"): the workout's and each set's phone-made `id`, `timezone` and `local_date`. `local_date` is the user's own day, so streaks and daily stats don't shift at midnight UTC. `rep_offsets_ms` (optional, per set) comes later with the camera. Response (decided): `201` with the saved workout in the `GET /workouts/{id}` shape. A repeated request with the same `id` saves nothing and returns `200` with the same body; the app treats both as success.
+Decided: this body is the setup guide's example plus the fields its data model adds ("Fields to add to the kinds above"): the workout's and each set's phone-made `id`, `timezone` and `local_date`. `local_date` is the user's own day, so streaks and daily stats don't shift at midnight UTC. `rep_offsets_ms` (optional, per set) comes later with the camera. Response (decided): `201` with the saved workout in the `GET /workouts/{id}` shape. A repeated request with the same `id` saves nothing and returns `200` with the saved workout, even if the new body is different; the app treats both as success.
 
-### `GET /workouts?limit=20&before=<timestamp>`  (proposed shape)
-Newest first. A summary per workout, without its sets.
-- `limit` (default 20) is built first.
+The fields:
+- **Workout:** `id`, `name`, `started_at`, `ended_at`, `timezone` and `local_date` (`YYYY-MM-DD`) are required. `template_id` (the saved workout it started from) and `bodyweight_kg` may be `null` or left out.
+- **Set:** `id`, `exercise_id`, `order`, `set_type`, and `reps` or `duration_s` (or both) are required. The rest may be `null` or left out. `set_type` is `warmup`, `working`, `dropset` or `failure`. `time_source` is `rest_timer`, `manual`, `camera` or `none`. `input` is `manual`, `text`, `voice`, `photo`, `camera` or `import`. `added_load_kg` is for bodyweight exercises: above 0 is added weight, below 0 is assistance.
+
+Errors: `400 bad_request`, and nothing is saved, when:
+- the workout's or a set's `id` is not a lowercase UUID, or two sets have the same `id` or the same `order`;
+- an `exercise_id` is not in the library;
+- `set_type`, `time_source` or `input` has a value not listed above;
+- `effort_pct` is outside 0–100, or `weight_kg` is below 0;
+- a set has neither `reps` nor `duration_s`;
+- there are no sets, or more than 300;
+- `ended_at` is before `started_at`, or `local_date` is not `YYYY-MM-DD`;
+- `name`, `started_at`, `ended_at`, `timezone` or `local_date` is missing.
+
+**History for each exercise.** A saved workout updates one UserExercise per exercise in it, as `GET /exercises/mine` shows:
+- `use_count` goes up by 1 per workout, not per set.
+- `last_used_at` becomes the workout's `ended_at`.
+- `last_set` becomes the workout's last working or failure set of that exercise (highest `order`). With none, it is the exercise's last set.
+- A workout that ended before the stored `last_used_at` (logged late) only adds to `use_count`; `last_used_at` and `last_set` stay.
+- `best_e1rm_kg` and `best_e1rm_at` stay `null` until History and Goals are built.
+
+### `GET /workouts?limit=20&before=<timestamp>`  (agreed: `limit`; `before` comes with Home)
+Newest `started_at` first. A summary per workout, without its sets. No workouts gives `{"workouts": []}`.
+- `limit` (default 20) is built first. It must be 1–100; anything else is `400 bad_request`.
 - `before` is **required by Home** and built with it: it returns workouts that started before that time, so the app can page back through all of history or jump to any date. Home's history is the core of the app ("where you are now, where you've been, where your muscles were"), so it must reach any point in time.
 ```json
 {
@@ -207,5 +242,5 @@ Newest first. A summary per workout, without its sets.
 }
 ```
 
-### `GET /workouts/{id}`  (proposed shape)
-The workout with every set, in the same fields as the `POST /workouts` body, plus `status`.
+### `GET /workouts/{id}`  (agreed)
+The workout with every set, in the same fields as the `POST /workouts` body, plus `status` (always `finished` for now). Every workout and set field is present, `null` when it wasn't sent. Sets are sorted by `order`. Weights come back exactly as sent. An unknown id, or another user's, is `404 not_found`. Example: `shared/fixtures/workout_detail.json`.

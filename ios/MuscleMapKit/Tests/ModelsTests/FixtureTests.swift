@@ -35,6 +35,15 @@ struct FixtureTests {
         #expect(user.bodyweightKg == 82.1)
     }
 
+    @Test("AC-11 (#42): a new user decodes with no name and lb")
+    func newUser() throws {
+        let user = try Self.decode(User.self, "user_new")
+        #expect(user.displayName == nil)
+        #expect(user.units == .lb)
+        #expect(user.bodyweightKg == nil)
+        #expect(user.experience == nil)
+    }
+
     @Test("A partial user update sends only the fields that are set")
     func userUpdate() throws {
         let update = UserUpdate(bodyweightKg: 81.5, units: .kg)
