@@ -135,6 +135,6 @@ None.
 - [x] Plan approved (ff83fa6)
 - [x] Scaffold (638e175)
 - [x] Tests red (23209ef)
-- [ ] Build green
+- [x] Build green (1bf8126)
 - [ ] Review
 - [ ] PR
