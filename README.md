@@ -75,7 +75,28 @@ The app's few UI smoke tests run from Xcode (⌘U).
 - `shared/`: files both sides use, such as `muscles.json` and the API example JSON.
 - Why it's laid out this way: see `client_architecture.md` and `server_architecture.md`.
 
+## Google Cloud access
+You only need this to deploy or read the live server's logs. Day-to-day development uses the local emulator and needs no Cloud access.
+
+1. **Ask Sasa to add you** as an Editor on the project `musclemap-ecs191`. Send the Google account you'll use, privately, not in an Issue (this repo is public).
+2. **Sign in and select the project** (one time):
+   ```sh
+   gcloud auth login                            # opens the browser; use the account Sasa added
+   gcloud config set project musclemap-ecs191
+   gcloud app describe                          # should show us-west2 and SERVING
+   ```
+3. **Only if you'll run server code against the real database** (rare; normally use the emulator):
+   ```sh
+   gcloud auth application-default login
+   gcloud auth application-default set-quota-project musclemap-ecs191
+   ```
+
+If `gcloud` says you don't have permission and you used a UC Davis account, the university's Google settings may block outside Cloud projects. Use a personal Gmail instead and ask Sasa to add that one.
+
+To see the live server's logs: `gcloud app logs tail -s default`, or App Engine → Logs in the [Cloud Console](https://console.cloud.google.com/appengine?project=musclemap-ecs191).
+
 ## Deploy
+Needs [Google Cloud access](#google-cloud-access). Deploy from an up-to-date `main`, never from a feature branch:
 ```sh
 cd server && gcloud app deploy app.yaml index.yaml
 ```
@@ -89,7 +110,7 @@ No keys are in this repo, and none should ever be committed (a secret scan runs 
 | What | Needed for | Where it lives | Get it from |
 |---|---|---|---|
 | Course SMS `app_token` | Signing in with **real** phone numbers (not the test number) | Server environment `SMS_APP_TOKEN` (never in the app) | ECS 191 course staff |
-| Google Cloud access | Deploying, reading server logs | Your own Google login (`gcloud auth login`) | Ask Sasa to add you as an editor on `musclemap-ecs191` |
+| Google Cloud access | Deploying, reading server logs | Your own Google login (`gcloud auth login`) | Ask Sasa to add you as an editor on `musclemap-ecs191`; see [Google Cloud access](#google-cloud-access) |
 | Local Google credentials | Running server code against the real database (rare; normally use the emulator) | `gcloud auth application-default login` | Your own Google login |
 
 **Test sign-in:** phone `+15305550000`, code `123456` (shared and public; see above).
