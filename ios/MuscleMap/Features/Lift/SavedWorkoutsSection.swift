@@ -117,13 +117,21 @@ struct SavedWorkoutsSection: View {
     }
 
     /// The alert closes on any tap; if the server fails it opens again with the error and
-    /// Try again, keeping what was typed.
+    /// Try again, keeping what was typed. It waits for the closing alert to leave first, because
+    /// SwiftUI ignores a new alert while the old one is still animating out.
     private func rename(_ template: Template) {
         Task {
+            let started = Date()
             renameError = await model.rename(template, name: newName, focus: newFocus)
-            if renameError != nil { showsRename = true }
+            guard renameError != nil, model.state != .signedOut else { return }
+            let left = Self.alertCloseTime - Date().timeIntervalSince(started)
+            if left > 0 { try? await Task.sleep(for: .seconds(left)) }
+            showsRename = true
         }
     }
+
+    /// About how long an alert takes to animate out.
+    private static let alertCloseTime: TimeInterval = 0.5
 }
 
 /// "Custom plan · A multi-week program" with a "Soon" pill; disabled until programs exist.

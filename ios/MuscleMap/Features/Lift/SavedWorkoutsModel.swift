@@ -174,7 +174,7 @@ final class SavedWorkoutsModel {
             offer = nil
             return nil
         } catch {
-            return Self.problemText(error, doing: "save")
+            return problemText(error, doing: "save")
         }
     }
 
@@ -194,7 +194,7 @@ final class SavedWorkoutsModel {
             await load()
             return nil
         } catch {
-            return Self.problemText(error, doing: "rename")
+            return problemText(error, doing: "rename")
         }
     }
 
@@ -209,16 +209,25 @@ final class SavedWorkoutsModel {
             await load()
         } catch {
             templates.insert(removed, at: min(index, templates.count))
-            errorText = "Couldn't delete \(template.name). Try again."
+            errorText = problemText(error, doing: "delete") == Self.signInText
+                ? Self.signInText : "Couldn't delete \(template.name). Try again."
         }
     }
 
-    /// The server's message for invalid input, else a short connection message.
-    static func problemText(_ error: Error, doing action: String) -> String {
-        if case APIError.server(status: 400, _, let message) = error, !message.isEmpty {
+    static let signInText = "Sign in again to change your saved workouts."
+
+    /// The server's message for invalid input; for a sign-in the server no longer accepts,
+    /// the signed-out state (no more requests); else a short connection message.
+    private func problemText(_ error: Error, doing action: String) -> String {
+        switch error {
+        case APIError.server(status: 401, _, _):
+            state = .signedOut
+            return Self.signInText
+        case APIError.server(status: 400, _, let message) where !message.isEmpty:
             return message
+        default:
+            return "Couldn't \(action). Check your connection and try again."
         }
-        return "Couldn't \(action). Check your connection and try again."
     }
 }
 
