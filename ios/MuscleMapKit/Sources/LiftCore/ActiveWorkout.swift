@@ -56,6 +56,9 @@ public struct ActiveWorkout: Codable, Equatable, Sendable {
     public private(set) var blockIDBySet: [String: String] = [:]
     /// The rest countdown. Stored here, so it survives an app restart.
     public private(set) var restTimer = RestTimer()
+    /// The block the user chose to do next (D-24), or nil for the planned order.
+    /// Stored, so the choice survives a restart.
+    public private(set) var chosenBlockID: String?
     /// Whether a rest timer was started since the last set was logged. The next set then gets
     /// `timeSource` "rest_timer", else "manual" (D-12).
     public private(set) var restTimerRan = false
@@ -137,13 +140,42 @@ public struct ActiveWorkout: Codable, Equatable, Sendable {
     public mutating func markDone(blockID: String) {
         guard let index = blocks.firstIndex(where: { $0.id == blockID }) else { return }
         blocks[index].isDone = true
+        if chosenBlockID == blockID { chosenBlockID = nil }
     }
 
-    /// The first block that is not done.
-    public var upNext: WorkoutBlock? { blocks.first { !$0.isDone } }
+    /// UP NEXT: the block the user chose (D-24), else the first block that is not done.
+    public var upNext: WorkoutBlock? {
+        if let chosenBlockID, let chosen = block(chosenBlockID), !chosen.isDone { return chosen }
+        return blocks.first { !$0.isDone }
+    }
 
-    /// The block after `upNext` that is not done ("then").
-    public var then: WorkoutBlock? { blocks.filter { !$0.isDone }.dropFirst().first }
+    /// The first block, in planned order, that is not done and not `upNext`.
+    public var then: WorkoutBlock? { remaining.first }
+
+    /// REMAINING (D-24): every block that is not done and not `upNext`, in planned order.
+    public var remaining: [WorkoutBlock] {
+        let next = upNext?.id
+        return blocks.filter { !$0.isDone && $0.id != next }
+    }
+
+    /// Makes a block UP NEXT (one tap on a REMAINING row, D-24). A superset is one unit.
+    /// The block it replaces goes back to REMAINING with its sets. Returns false, and changes
+    /// nothing, for an unknown or done block.
+    @discardableResult
+    public mutating func choose(blockID: String) -> Bool {
+        guard let chosen = block(blockID), !chosen.isDone else { return false }
+        chosenBlockID = blockID
+        return true
+    }
+
+    /// How far a block is: non-warm-up sets (a plain block) or full rounds (a superset), and
+    /// its target sets if it has one ("1 of 3").
+    public func progress(of blockID: String) -> (done: Int, target: Int?) {
+        guard let block = block(blockID) else { return (0, nil) }
+        let counted = sets(in: blockID).filter { $0.setType != .warmup }
+        let perExercise = block.exercises.map { exercise in counted.filter { $0.exerciseId == exercise.id }.count }
+        return (perExercise.min() ?? 0, block.targetSets)
+    }
 
     /// Blocks that are done, in block order.
     public var done: [WorkoutBlock] { blocks.filter(\.isDone) }
@@ -191,7 +223,7 @@ public struct ActiveWorkout: Codable, Equatable, Sendable {
         let reached = blocks[index].exercises.allSatisfy { exercise in
             counted.filter { $0.exerciseId == exercise.id }.count >= target
         }
-        if reached { blocks[index].isDone = true }
+        if reached { markDone(blockID: blockID) }
     }
 
     /// Replaces the set with the same id (an edit). Keeps its id, order and times.

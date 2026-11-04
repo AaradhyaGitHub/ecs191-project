@@ -3,7 +3,8 @@ import Models
 import LiftCore
 
 /// The open workout (client_architecture.llm.md, "Lift screens", 3): the clock, the name, a
-/// segmented progress bar, UP NEXT with Start, "then", DONE, and Add exercise and Finish.
+/// segmented progress bar, UP NEXT with Start, REMAINING (tap one to do it next, D-24), DONE,
+/// and Add exercise and Finish.
 /// "‹ Lift" closes the screen and keeps the workout open (the Resume card brings it back).
 /// Finish calls `onFinished`; Discard does not (plan, "Starting a workout").
 struct ActiveWorkoutView: View {
@@ -123,10 +124,12 @@ struct ActiveWorkoutView: View {
                             .font(Theme.Fonts.secondary)
                             .foregroundStyle(Theme.Colors.textSecondary)
                     }
-                    if let then = active.then {
+                    if !active.remaining.isEmpty {
                         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                            SectionHeader(title: "Then")
-                            blockRow(then, detail: model.detail(of: then))
+                            SectionHeader(title: "Remaining", count: active.remaining.count)
+                            ForEach(active.remaining) { block in
+                                remainingRow(block)
+                            }
                         }
                     }
                     if !active.done.isEmpty {
@@ -168,7 +171,28 @@ struct ActiveWorkoutView: View {
         }
     }
 
-    /// A "then" or DONE row; tapping opens its set log (a done block can take more sets).
+    /// A REMAINING row: one tap makes it UP NEXT (D-24). A superset is one row.
+    private func remainingRow(_ block: WorkoutBlock) -> some View {
+        Button { model.choose(block.id) } label: {
+            HStack {
+                Text(model.title(of: block))
+                    .font(Theme.Fonts.rowTitle)
+                    .foregroundStyle(Theme.Colors.textPrimary)
+                Spacer()
+                Text(model.progressText(of: block))
+                    .font(Theme.Fonts.secondary.monospacedDigit())
+                    .foregroundStyle(Theme.Colors.textSecondary)
+            }
+            .padding(Theme.Spacing.m)
+            .frame(minHeight: Theme.Size.minTouchTarget)
+            .background(Theme.Colors.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.smallButton))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Makes this up next")
+    }
+
+    /// A DONE row; tapping opens its set log (a done block can take more sets).
     private func blockRow(_ block: WorkoutBlock, detail: String) -> some View {
         Button { open(block.id, sheet: false) } label: {
             HStack {

@@ -192,6 +192,19 @@ final class ActiveWorkoutModel {
         session.update { $0.markDone(blockID: blockID) }
     }
 
+    /// A tap on a REMAINING row makes that block UP NEXT (D-24).
+    func choose(_ blockID: String) {
+        session.update { $0.choose(blockID: blockID) }
+    }
+
+    /// A REMAINING row's progress: "1 of 3" with a target, else "2 sets" or "No sets yet".
+    func progressText(of block: WorkoutBlock) -> String {
+        guard let active else { return "" }
+        let progress = active.progress(of: block.id)
+        if let target = progress.target { return "\(progress.done) of \(target)" }
+        return setCountText(progress.done)
+    }
+
     // MARK: Rest timer
 
     func adjustRest(by seconds: Int) {
