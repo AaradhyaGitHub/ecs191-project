@@ -13,6 +13,30 @@ public protocol WorkoutSending: Sendable {
 
 extension APIClient: WorkoutSending {}
 
+/// Why a change was not saved on the phone.
+public enum SaveProblem: Error, Equatable, Sendable {
+    /// A value is out of range (a safety net; the set sheet keeps entries in range, D-25).
+    case outOfRange
+    /// The phone's storage refused the write, for example because the disk is full.
+    case storageFailed
+}
+
+/// What Finish did.
+public enum FinishResult: Equatable, Sendable {
+    /// The workout is in the outbox.
+    case finished(Workout)
+    /// No sets were logged; nothing changed.
+    case noSets
+    /// It could not be saved on the phone; the workout stays open.
+    case notSaved(SaveProblem)
+
+    /// The finished workout, or nil.
+    public var workout: Workout? {
+        if case .finished(let workout) = self { return workout }
+        return nil
+    }
+}
+
 /// The outbox: finished workouts kept on the phone until the server has them.
 /// Success removes an item. No connection, 401 and 5xx keep it for the next try.
 /// A 400 keeps it, marked rejected with the server's message; only `retry(id:)` sends it again.
@@ -39,16 +63,22 @@ public final class WorkoutOutbox {
     public var pending: [OutboxItem] { items.filter { !$0.isRejected } }
 
     /// Moves the workout to the outbox and clears the open one. Returns the `Workout` to send,
-    /// or nil (and changes nothing) when it has no sets.
+    /// or nil (and changes nothing) when it has no sets or can't be saved (see `finishResult`).
     @discardableResult
     public func finish(_ workout: ActiveWorkout, at date: Date) -> Workout? {
-        guard let finished = workout.finished(at: date) else { return nil }
+        finishResult(workout, at: date).workout
+    }
+
+    /// Finish, and say why it didn't happen. Nothing changes unless the result is `.finished`.
+    public func finishResult(_ workout: ActiveWorkout, at date: Date) -> FinishResult {
+        guard let finished = workout.finished(at: date) else { return .noSets }
+        guard WorkoutLimits.isValid(finished) else { return .notSaved(.outOfRange) }
         let item = OutboxItem(workout: finished, addedAt: date)
         storage.saveOutboxItem(item)
         storage.clearActive()
         items.removeAll { $0.id == item.id }
         items.append(item)
-        return finished
+        return .finished(finished)
     }
 
     /// Sends every item that is not rejected, oldest first, each with the same id and body every time.

@@ -164,8 +164,11 @@ public struct ActiveWorkout: Codable, Equatable, Sendable {
         return entry
     }
 
+    /// Seconds between two Log taps, kept in 0…3600 (D-25). A longer rest is still in `endedAt`.
     private static func seconds(from previous: Date?, to date: Date) -> Int? {
-        previous.map { max(0, Int(date.timeIntervalSince($0).rounded())) }
+        previous.map {
+            WorkoutLimits.clamp(Int(date.timeIntervalSince($0).rounded()), to: WorkoutLimits.restS)
+        }
     }
 
     /// A block with `targetSets` is done when each of its exercises has that many

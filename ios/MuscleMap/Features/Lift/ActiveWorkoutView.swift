@@ -14,6 +14,7 @@ struct ActiveWorkoutView: View {
     @State private var opensSheetFor: String?
     @State private var isPicking = false
     @State private var asksToDiscardEmpty = false
+    @State private var finishProblem: SaveProblem?
     @State private var asksToDiscard = false
     @Environment(\.apiClient) private var apiClient
     @Environment(\.dismiss) private var dismiss
@@ -52,6 +53,10 @@ struct ActiveWorkoutView: View {
                 source: apiClient, remainingExercises: model.active?.remainingExerciseSlots ?? 0)) { picks in
                 model.add(picks)
             }
+        }
+        .alert(finishProblem.map(ActiveWorkoutModel.finishText) ?? "", isPresented: Binding(
+            get: { finishProblem != nil }, set: { if !$0 { finishProblem = nil } })) {
+            Button("OK", role: .cancel) {}
         }
         .alert("No sets logged. Discard this workout?", isPresented: $asksToDiscardEmpty) {
             Button("Discard", role: .destructive, action: discard)
@@ -106,6 +111,9 @@ struct ActiveWorkoutView: View {
                             .font(Theme.Fonts.largeTitle)
                             .foregroundStyle(Theme.Colors.textPrimary)
                         ProgressSegments(blocks: active.blocks)
+                    }
+                    if let problem = model.saveProblemText {
+                        NoticeLine(text: problem)
                     }
                     if let next = active.upNext {
                         upNextCard(next, active: active)
@@ -212,12 +220,15 @@ struct ActiveWorkoutView: View {
     }
 
     private func finish() {
-        guard let workout = model.finish() else {
+        switch model.finish() {
+        case .finished(let workout):
+            onFinished(workout)
+            dismiss()
+        case .noSets:
             asksToDiscardEmpty = true
-            return
+        case .notSaved(let problem):
+            finishProblem = problem
         }
-        onFinished(workout)
-        dismiss()
     }
 
     private func discard() {

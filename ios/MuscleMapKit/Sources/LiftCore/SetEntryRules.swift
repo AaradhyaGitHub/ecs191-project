@@ -100,7 +100,7 @@ public struct SetDraft: Equatable, Sendable {
         }
         if let targetReps = block?.targetReps { draft.reps = targetReps }
         if let restS = block?.restS { draft.restAfterS = restS }
-        return draft
+        return draft.clamped()
     }
 
     /// Takes the values a set has; the others stay. Used by pre-fill and "Same as last set".
@@ -110,6 +110,54 @@ public struct SetDraft: Equatable, Sendable {
         if let reps = last.reps { self.reps = reps }
         if let seconds = last.durationS { durationS = seconds }
         if let effort = last.effortPct, setType != .failure { effortPct = effort }
+        self = clamped()
+    }
+
+    // MARK: Limits (D-25)
+
+    /// The same values, each moved inside its limit (NaN and infinity included).
+    public func clamped() -> SetDraft {
+        var draft = self
+        draft.reps = WorkoutLimits.clamp(reps, to: WorkoutLimits.reps)
+        draft.durationS = WorkoutLimits.clamp(durationS, to: WorkoutLimits.durationS)
+        draft.restAfterS = WorkoutLimits.clamp(restAfterS, to: WorkoutLimits.restS)
+        draft.effortPct = WorkoutLimits.clamp(effortPct, to: WorkoutLimits.effortPct)
+        draft.weight = WorkoutLimits.clamp(weight, to: WorkoutLimits.weightKg)
+        draft.addedLoad = WorkoutLimits.clamp(addedLoad, to: WorkoutLimits.addedLoadKg)
+        return draft
+    }
+
+    /// The REPS stepper: `steps` of 1, kept in 1…1000.
+    public mutating func stepReps(by steps: Int) {
+        reps = WorkoutLimits.clamp(reps + steps * SetSteps.reps, to: WorkoutLimits.reps)
+    }
+
+    /// The seconds stepper (timed holds): `steps` of 5 s, kept in 1…3600.
+    public mutating func stepDuration(by steps: Int) {
+        durationS = WorkoutLimits.clamp(durationS + steps * SetSteps.seconds, to: WorkoutLimits.durationS)
+    }
+
+    /// REST AFTER: `steps` of 30 s, kept in 0…3600.
+    public mutating func stepRestAfter(by steps: Int) {
+        restAfterS = WorkoutLimits.clamp(restAfterS + steps * SetSteps.rest, to: WorkoutLimits.restS)
+    }
+
+    /// The weight stepper: `steps` of 5 lb or 2.5 kg on that grid, kept in 0…1000 kg.
+    public mutating func stepWeight(by steps: Int, unit: WeightUnit) {
+        weight = WorkoutLimits.clamp(Self.stepped(weight, by: steps, unit: unit), to: WorkoutLimits.weightKg)
+    }
+
+    /// The BW ± load stepper: `steps` of 5 lb or 2.5 kg, kept in −500…500 kg.
+    public mutating func stepAddedLoad(by steps: Int, unit: WeightUnit) {
+        addedLoad = WorkoutLimits.clamp(Self.stepped(addedLoad, by: steps, unit: unit),
+                                        to: WorkoutLimits.addedLoadKg)
+    }
+
+    private static func stepped(_ weight: Weight, by steps: Int, unit: WeightUnit) -> Weight {
+        let step = SetSteps.weight(in: unit)
+        let value = weight.value(in: unit)
+        let onGrid = value.isFinite ? (value / step).rounded() : 0
+        return Weight((onGrid + Double(steps)) * step, unit)
     }
 
     /// The set to log. Only the fields for this load type are set: bodyweight has nil `weightKg`

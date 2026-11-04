@@ -13,8 +13,6 @@ struct SetEntrySheet: View {
 
     @State private var draft: SetDraft
     @State private var plates: PlateLoad
-    @State private var typedWeight = ""
-    @FocusState private var isTyping: Bool
     @Environment(\.dismiss) private var dismiss
 
     init(request: SetSheetRequest, unit: WeightUnit, onUnitChange: @escaping (WeightUnit) -> Void,
@@ -23,14 +21,16 @@ struct SetEntrySheet: View {
         self.unit = unit
         self.onUnitChange = onUnitChange
         self.onSubmit = onSubmit
-        _draft = State(initialValue: request.draft)
-        _plates = State(initialValue: Self.plates(for: request.draft.weight, unit: unit))
+        // Every value starts inside its limit (D-25); the steppers keep it there.
+        let draft = request.draft.clamped()
+        _draft = State(initialValue: draft)
+        _plates = State(initialValue: Self.plates(for: draft.weight, unit: unit))
     }
 
     private var kind: EntryKind { entryKind(for: draft.loadType) }
 
-    /// Plate taps set the weight to the bar's total. Other plate changes (a typed weight,
-    /// "Same as last set", the unit switch) only redraw the bar and keep the exact weight.
+    /// Plate taps set the weight to the bar's total. Other plate changes ("Same as last set",
+    /// the unit switch) only redraw the bar and keep the exact weight.
     private var plateTaps: Binding<PlateLoad> {
         Binding(get: { plates }, set: { load in
             plates = load
@@ -49,18 +49,16 @@ struct SetEntrySheet: View {
                 }
                 if kind != .seconds {
                     StepperRow(title: "Reps", value: "\(draft.reps)",
-                               onMinus: { draft.reps = max(0, draft.reps - SetSteps.reps) },
-                               onPlus: { draft.reps += SetSteps.reps })
+                               onMinus: { draft.stepReps(by: -1) }, onPlus: { draft.stepReps(by: 1) })
                 }
                 if request.editing == nil {
                     StepperRow(title: "Rest after", value: clockText(seconds: draft.restAfterS),
-                               onMinus: { draft.restAfterS = max(0, draft.restAfterS - SetSteps.rest) },
-                               onPlus: { draft.restAfterS += SetSteps.rest })
+                               onMinus: { draft.stepRestAfter(by: -1) },
+                               onPlus: { draft.stepRestAfter(by: 1) })
                 }
                 effortPicker
                 PrimaryButton(title: LocalizedStringKey(primaryTitle)) {
-                    commitTypedWeight()
-                    onSubmit(draft)
+                    onSubmit(draft.clamped())
                     dismiss()
                 }
             }
@@ -126,28 +124,19 @@ struct SetEntrySheet: View {
             switch kind {
             case .plates, .perDumbbell, .weight:
                 HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.s) {
-                    TextField("", text: $typedWeight)
+                    Text(weightNumberText(draft.weight, unit: unit))
                         .font(Theme.Fonts.hero)
                         .foregroundStyle(Theme.Colors.textPrimary)
-                        .keyboardType(.decimalPad)
-                        .focused($isTyping)
-                        .fixedSize()
-                        .onSubmit(commitTypedWeight)
-                        .accessibilityLabel("Weight")
+                        .accessibilityLabel("Weight \(weightText(draft.weight, unit: unit))")
                     Text(kind == .perDumbbell ? "\(unit.rawValue) per dumbbell" : unit.rawValue)
                         .font(Theme.Fonts.rowTitle)
                         .foregroundStyle(Theme.Colors.textSecondary)
                     Spacer()
                     if kind != .plates {
-                        stepperButtons(minus: { stepWeight(-1) }, plus: { stepWeight(1) })
+                        stepperButtons(minus: { draft.stepWeight(by: -1, unit: unit) },
+                                       plus: { draft.stepWeight(by: 1, unit: unit) })
                     }
                 }
-                .onAppear { typedWeight = weightNumberText(draft.weight, unit: unit) }
-                .onChange(of: draft.weight) { _, weight in
-                    if !isTyping { typedWeight = weightNumberText(weight, unit: unit) }
-                }
-                .onChange(of: unit) { _, newUnit in typedWeight = weightNumberText(draft.weight, unit: newUnit) }
-                .onChange(of: isTyping) { _, typing in if !typing { commitTypedWeight() } }
                 if kind == .plates {
                     Text(plates.breakdown)
                         .font(Theme.Fonts.secondary)
@@ -159,7 +148,8 @@ struct SetEntrySheet: View {
                         .font(Theme.Fonts.hero)
                         .foregroundStyle(Theme.Colors.textPrimary)
                     Spacer()
-                    stepperButtons(minus: { stepAddedLoad(-1) }, plus: { stepAddedLoad(1) })
+                    stepperButtons(minus: { draft.stepAddedLoad(by: -1, unit: unit) },
+                                   plus: { draft.stepAddedLoad(by: 1, unit: unit) })
                 }
             case .seconds:
                 HStack(alignment: .firstTextBaseline) {
@@ -167,8 +157,8 @@ struct SetEntrySheet: View {
                         .font(Theme.Fonts.hero)
                         .foregroundStyle(Theme.Colors.textPrimary)
                     Spacer()
-                    stepperButtons(minus: { draft.durationS = max(0, draft.durationS - SetSteps.seconds) },
-                                   plus: { draft.durationS += SetSteps.seconds })
+                    stepperButtons(minus: { draft.stepDuration(by: -1) },
+                                   plus: { draft.stepDuration(by: 1) })
                 }
             }
             if let last = request.lastSet {
@@ -186,31 +176,6 @@ struct SetEntrySheet: View {
     /// The plates for a weight: the nearest load the plates can make, not above it.
     private static func plates(for weight: Weight, unit: WeightUnit) -> PlateLoad {
         PlateLoad.nearestLoad(to: weight.value(in: unit), with: .standard(for: unit))
-    }
-
-    /// Takes the typed weight. Unchanged text keeps the exact weight, so nothing drifts.
-    /// On a barbell, a weight the plates can't make shows the nearest lower load on the bar.
-    private func commitTypedWeight() {
-        let text = typedWeight.replacingOccurrences(of: ",", with: ".")
-        guard let value = Double(text), value >= 0 else {
-            typedWeight = weightNumberText(draft.weight, unit: unit)
-            return
-        }
-        guard text != weightNumberText(draft.weight, unit: unit) else { return }
-        draft.weight = Weight(value, unit)
-        if kind == .plates { plates = Self.plates(for: draft.weight, unit: unit) }
-    }
-
-    private func stepWeight(_ direction: Double) {
-        let step = SetSteps.weight(in: unit)
-        let value = max(0, ((draft.weight.value(in: unit) / step).rounded() + direction) * step)
-        draft.weight = Weight(value, unit)
-    }
-
-    private func stepAddedLoad(_ direction: Double) {
-        let step = SetSteps.weight(in: unit)
-        let value = ((draft.addedLoad.value(in: unit) / step).rounded() + direction) * step
-        draft.addedLoad = Weight(value, unit)
     }
 
     private func stepperButtons(minus: @escaping () -> Void, plus: @escaping () -> Void) -> some View {

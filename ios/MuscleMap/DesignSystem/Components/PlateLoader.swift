@@ -21,6 +21,8 @@ struct PlateLoader: View {
                                         in: RoundedRectangle(cornerRadius: Theme.Radius.chip))
                     }
                     .buttonStyle(.plain)
+                    .disabled(!load.canAdd(plate))
+                    .opacity(load.canAdd(plate) ? 1 : 0.4)
                     .accessibilityLabel("Add a pair of \(numberText(plate)) \(load.plateSet.unit.rawValue) plates")
                 }
             }

@@ -213,13 +213,33 @@ final class ActiveWorkoutModel {
 
     // MARK: Finish
 
-    /// Moves the workout to the outbox and starts sending it. Nil when it has no sets.
-    func finish(at date: Date = Date()) -> Workout? {
-        restTask?.cancel()
-        guard let workout = session.finish(at: date) else { return nil }
-        let outbox = session.outbox
-        Task { await outbox.sendPending() }
-        return workout
+    /// Moves the workout to the outbox and starts sending it. Anything but `.finished` leaves
+    /// the workout open.
+    func finish(at date: Date = Date()) -> FinishResult {
+        let result = session.finishResult(at: date)
+        if case .finished = result {
+            restTask?.cancel()
+            let outbox = session.outbox
+            Task { await outbox.sendPending() }
+        }
+        return result
+    }
+
+    /// The alert when Finish couldn't save the workout on the phone.
+    static func finishText(_ problem: SaveProblem) -> String {
+        switch problem {
+        case .storageFailed: "Couldn't save this workout on your phone. Free some space and tap Finish again."
+        case .outOfRange: "A value in this workout is out of range. Check its sets and tap Finish again."
+        }
+    }
+
+    /// The line on the workout screens when the last change wasn't saved on the phone.
+    var saveProblemText: String? {
+        switch session.saveProblem {
+        case .storageFailed?: "Couldn't save on your phone. Free some space."
+        case .outOfRange?: "A value is out of range, so the change wasn't saved."
+        case nil: nil
+        }
     }
 
     func discard() {

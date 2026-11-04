@@ -26,6 +26,11 @@ struct SetLogView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if let problem = model.saveProblemText {
+                NoticeLine(text: problem)
+                    .padding(.horizontal, Theme.Spacing.gutter)
+                    .padding(.top, Theme.Spacing.s)
+            }
             if let block, block.exercises.count > 1 {
                 chips(for: block)
             }

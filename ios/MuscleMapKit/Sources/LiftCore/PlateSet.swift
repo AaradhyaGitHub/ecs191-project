@@ -33,9 +33,15 @@ public struct PlateLoad: Equatable, Sendable {
         self.pairs = pairs
     }
 
-    /// Adds a pair of `plate` (one per side).
+    /// Adds a pair of `plate` (one per side), unless the bar would go over 1000 kg (D-25).
     public mutating func add(_ plate: Double) {
+        guard canAdd(plate) else { return }
         pairs.append(plate)
+    }
+
+    /// Whether a pair of `plate` keeps the bar at or under 1000 kg.
+    public func canAdd(_ plate: Double) -> Bool {
+        Weight(total + 2 * plate, plateSet.unit).kilograms <= WorkoutLimits.weightKg.upperBound
     }
 
     /// Removes the last pair added (tapping the bar). The empty bar stays.

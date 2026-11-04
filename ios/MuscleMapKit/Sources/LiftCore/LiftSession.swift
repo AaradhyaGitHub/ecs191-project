@@ -15,6 +15,9 @@ public final class LiftSession {
     /// True while a workout is open; Lift disables Empty workout and Start meanwhile.
     public var isWorkoutOpen: Bool { active != nil }
 
+    /// Why the last change was not saved on the phone; nil after a change that was saved.
+    public private(set) var saveProblem: SaveProblem?
+
     @ObservationIgnored private let storage: any WorkoutStorage
     @ObservationIgnored public let outbox: WorkoutOutbox
 
@@ -26,30 +29,49 @@ public final class LiftSession {
     }
 
     /// Opens `workout` and saves it to storage. Returns false, and changes nothing,
-    /// when a workout is already open.
+    /// when a workout is already open or a value is out of range (D-25).
     @discardableResult
     public func start(_ workout: ActiveWorkout) -> Bool {
         guard active == nil else { return false }
+        guard WorkoutLimits.isValid(workout) else {
+            saveProblem = .outOfRange
+            return false
+        }
         active = workout
         storage.saveActive(workout)
         return true
     }
 
     /// Changes the open workout and saves it to storage (after every change).
-    public func update(_ change: (inout ActiveWorkout) -> Void) {
-        guard var workout = active else { return }
+    /// A change that puts a value out of range is refused (a safety net, D-25): it returns false
+    /// and sets `saveProblem`.
+    @discardableResult
+    public func update(_ change: (inout ActiveWorkout) -> Void) -> Bool {
+        guard var workout = active else { return false }
         change(&workout)
+        guard WorkoutLimits.isValid(workout) else {
+            saveProblem = .outOfRange
+            return false
+        }
         active = workout
         storage.saveActive(workout)
+        saveProblem = nil
+        return true
     }
 
     /// Moves the open workout to the outbox (`WorkoutOutbox.finish`) and closes it.
-    /// Returns the `Workout` for `onFinished`, or nil when it has no sets.
+    /// Returns the `Workout` for `onFinished`, or nil when it has no sets or wasn't saved.
     @discardableResult
     public func finish(at date: Date) -> Workout? {
-        guard let workout = active, let finished = outbox.finish(workout, at: date) else { return nil }
-        active = nil
-        return finished
+        finishResult(at: date).workout
+    }
+
+    /// Finish, and say why it didn't happen. The workout stays open unless it is `.finished`.
+    public func finishResult(at date: Date) -> FinishResult {
+        guard let workout = active else { return .noSets }
+        let result = outbox.finishResult(workout, at: date)
+        if case .finished = result { active = nil }
+        return result
     }
 
     /// Closes the open workout without sending anything.
