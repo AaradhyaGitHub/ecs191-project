@@ -72,20 +72,20 @@ enum PreviewData {
         id: "8b1f0c2e-1d4a-4f6b-9c3e-1a2b3c4d5e6f", name: "Legs 1",
         exercises: [TemplateExercise(exerciseId: "back_squat", targetSets: 5, targetReps: 5, restS: 180)],
         lastDoneAt: daysAgo(6),
-        topMuscles: [TopMuscle(muscleId: "quads", level: 4), TopMuscle(muscleId: "glutes", level: 3),
-                     TopMuscle(muscleId: "hamstrings", level: 3)])
+        topMuscles: [TopMuscle(muscleId: "quads", name: "Quads", level: 4), TopMuscle(muscleId: "glutes", name: "Glutes", level: 3),
+                     TopMuscle(muscleId: "hamstrings", name: "Hamstrings", level: 3)])
     static let push = Template(
         id: "3c9d7e1a-5b2f-4c8d-a6e4-7f8a9b0c1d2e", name: "Push 1", focus: "Tricep focus",
         exercises: [TemplateExercise(exerciseId: "barbell_bench_press", targetSets: 4, targetReps: 6, restS: 180)],
         lastDoneAt: daysAgo(0.2),
-        topMuscles: [TopMuscle(muscleId: "chest", level: 4), TopMuscle(muscleId: "delts", level: 4),
-                     TopMuscle(muscleId: "triceps", level: 3)])
+        topMuscles: [TopMuscle(muscleId: "chest", name: "Chest", level: 4), TopMuscle(muscleId: "delts", name: "Delts", level: 4),
+                     TopMuscle(muscleId: "triceps", name: "Triceps", level: 3)])
     static let pull = Template(
         id: "e4f5a6b7-c8d9-4e0f-8a1b-2c3d4e5f6a7b", name: "Pull 1",
         exercises: [TemplateExercise(exerciseId: "inverted_row", targetSets: 3, targetReps: 12, restS: 90)],
         lastDoneAt: daysAgo(1),
-        topMuscles: [TopMuscle(muscleId: "lats", level: 4), TopMuscle(muscleId: "biceps", level: 3),
-                     TopMuscle(muscleId: "delts", level: 2)])
+        topMuscles: [TopMuscle(muscleId: "lats", name: "Lats", level: 4), TopMuscle(muscleId: "biceps", name: "Biceps", level: 3),
+                     TopMuscle(muscleId: "delts", name: "Delts", level: 2)])
 
     static let templates = [legs, push, pull]
 
