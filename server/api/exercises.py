@@ -1,22 +1,25 @@
 """Exercise endpoints (API.md, "GET /exercises" and "GET /exercises/mine").
 
 `GET ""` is public. `GET "/mine"` needs sign-in (@require_user).
-
-SCAFFOLD: both handlers answer 200 with an empty list, and "/mine" doesn't check sign-in
-yet. Build mode adds the service calls and @require_user.
 """
 from __future__ import annotations
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
+
+from api.auth import require_user
+from services import exercise_service
 
 bp = Blueprint("exercises", __name__)
 
 
 @bp.get("")
 def search_exercises():
-    return jsonify({"exercises": []})
+    q = request.args.get("q")
+    group = request.args.get("group") or None
+    return jsonify({"exercises": exercise_service.find_exercises(q, group)})
 
 
 @bp.get("/mine")
-def my_exercises():
-    return jsonify({"exercises": []})
+@require_user
+def my_exercises(user_id):
+    return jsonify({"exercises": exercise_service.my_exercises(user_id)})
