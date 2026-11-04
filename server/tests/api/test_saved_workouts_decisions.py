@@ -2,7 +2,8 @@
 
 - S-1: `record_done` never fails `POST /workouts`, first save or repeat.
 - A saved workout made from a finished workout counts as done: `POST /templates` takes an
-  optional `last_done_at` (not in the future beyond a small clock skew). `PUT` ignores it.
+  optional `last_done_at`; a future time is stored as the server's current time. `PUT` drops
+  the field before checking, so it never causes a 400 there.
 """
 from __future__ import annotations
 
@@ -122,10 +123,17 @@ def test_post_with_null_last_done_at_is_null(client, library, signed_in):
     assert client.post(TEMPLATES, json=body, headers=signed_in["headers"]).get_json()["last_done_at"] is None
 
 
-def test_post_accepts_a_phone_clock_slightly_ahead(client, library, signed_in):
-    ahead = datetime.now(timezone.utc) + timedelta(minutes=2)
-    body = template_body(last_done_at=iso(ahead))
+def stored_last_done(client, headers, template_id) -> datetime:
+    text = listed(client, headers, template_id)["last_done_at"]
+    return datetime.fromisoformat(text.replace("Z", "+00:00"))
+
+
+def test_post_with_a_phone_clock_slightly_ahead_stores_server_now(client, library, signed_in):
+    before = datetime.now(timezone.utc)
+    body = template_body(last_done_at=iso(before + timedelta(minutes=2)))
     assert client.post(TEMPLATES, json=body, headers=signed_in["headers"]).status_code == 201
+    stored = stored_last_done(client, signed_in["headers"], body["id"])
+    assert before - timedelta(seconds=2) <= stored <= datetime.now(timezone.utc) + timedelta(seconds=2)
 
 
 @pytest.mark.parametrize("value", ["yesterday", "2026-13-01T00:00:00Z", 42, True, ""])
@@ -135,11 +143,27 @@ def test_post_rejects_a_last_done_at_that_isnt_a_timestamp(client, library, sign
     assert response.get_json()["error"]["code"] == "bad_request"
 
 
-def test_post_rejects_a_last_done_at_in_the_future(client, library, signed_in):
-    later = datetime.now(timezone.utc) + timedelta(hours=1)
-    response = client.post(TEMPLATES, json=template_body(last_done_at=iso(later)), headers=signed_in["headers"])
-    assert response.status_code == 400
-    assert response.get_json()["error"]["code"] == "bad_request"
+def test_a_phone_clock_1_hour_ahead_gives_201_and_server_now(client, library, signed_in):
+    before = datetime.now(timezone.utc)
+    body = template_body(last_done_at=iso(before + timedelta(hours=1)))
+    response = client.post(TEMPLATES, json=body, headers=signed_in["headers"])
+    after = datetime.now(timezone.utc)
+    assert response.status_code == 201
+    answered = datetime.fromisoformat(response.get_json()["last_done_at"].replace("Z", "+00:00"))
+    assert before - timedelta(seconds=2) <= answered <= after + timedelta(seconds=2)
+    assert stored_last_done(client, signed_in["headers"], body["id"]) == answered
+
+
+@pytest.mark.parametrize("value", ["yesterday", 42, True, {"at": DAY2}])
+def test_put_ignores_an_invalid_last_done_at(client, library, signed_in, value):
+    headers = signed_in["headers"]
+    body = template_body(last_done_at=DAY2)
+    client.post(TEMPLATES, json=body, headers=headers)
+    response = client.put(f"{TEMPLATES}/{body['id']}", json={**body, "name": "Push B", "last_done_at": value},
+                          headers=headers)
+    assert response.status_code == 200
+    assert response.get_json()["name"] == "Push B"
+    assert response.get_json()["last_done_at"] == DAY2
 
 
 def test_put_ignores_last_done_at(client, library, signed_in):

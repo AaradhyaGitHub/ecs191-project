@@ -209,7 +209,7 @@ The body (`POST` and `PUT`):
 - `name`: required, 1–60 characters after trimming spaces. Names may repeat.
 - `focus`: optional, up to 60 characters after trimming; empty or left out is `null`.
 - `exercises`: 1–30 items. `exercise_id` must be in the library. `target_sets` 1–20. `target_reps` 1–100, or `null` or left out. `rest_s` 0–600. `superset_group` is text or `null`, at most 60 characters, and may be left out.
-- `last_done_at` (`POST` only): optional. An ISO 8601 timestamp, or `null` or left out. It may be at most 5 minutes ahead of the server's clock (phone clocks drift); later is `400 bad_request`.
+- `last_done_at` (`POST` only): optional. An ISO 8601 timestamp, or `null` or left out; anything else is `400 bad_request`. A time later than the server's clock (a phone clock running ahead) is stored as the server's current time. `PUT` ignores this field, even an invalid one.
 
 Errors: `400 bad_request` when `id` isn't a lowercase UUID or any rule above is broken. `404 not_found` for `PUT` with an unknown id, or another user's.
 

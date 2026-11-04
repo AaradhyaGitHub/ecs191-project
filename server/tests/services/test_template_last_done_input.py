@@ -37,20 +37,20 @@ def test_a_timestamp_becomes_a_utc_datetime(library):
     assert cleaned["last_done_at"] == datetime(2026, 11, 4, 19, 30, tzinfo=timezone.utc)
 
 
-def test_up_to_the_clock_skew_ahead_is_accepted(library):
-    edge = (NOW + template_service.CLOCK_SKEW).isoformat()
-    assert template_service.clean_input(body(last_done_at=edge), library, now=NOW)["last_done_at"] is not None
+def test_a_time_up_to_now_is_kept(library):
+    cleaned = template_service.clean_input(body(last_done_at=NOW.isoformat()), library, now=NOW)
+    assert cleaned["last_done_at"] == NOW
 
 
-def test_past_the_clock_skew_is_bad_request(library):
-    late = (NOW + template_service.CLOCK_SKEW + timedelta(seconds=1)).isoformat()
-    with pytest.raises(ApiError) as caught:
-        template_service.clean_input(body(last_done_at=late), library, now=NOW)
-    assert caught.value.code == "bad_request"
+@pytest.mark.parametrize("ahead", [timedelta(seconds=1), timedelta(minutes=5), timedelta(hours=1), timedelta(days=400)])
+def test_a_future_time_becomes_the_servers_now(library, ahead):
+    """A phone clock running ahead is no error; the server's time is stored (Sasa, Nov 4, 2026)."""
+    late = (NOW + ahead).isoformat()
+    assert template_service.clean_input(body(last_done_at=late), library, now=NOW)["last_done_at"] == NOW
 
 
-def test_the_clock_skew_is_small():
-    assert timedelta(0) < template_service.CLOCK_SKEW <= timedelta(minutes=10)
+def test_there_is_no_clock_skew_limit_any_more():
+    assert not hasattr(template_service, "CLOCK_SKEW")
 
 
 @pytest.mark.parametrize("value", ["soon", 1793725200, False, "", []])

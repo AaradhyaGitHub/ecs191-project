@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import math
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from functools import lru_cache
 
 import models
@@ -31,8 +31,6 @@ REPS = (1, 100)
 REST = (0, 600)
 TOP_COUNT = 3
 TOP_LEVEL = 4
-# How far a phone's clock may run ahead of the server's for `last_done_at` on POST.
-CLOCK_SKEW = timedelta(minutes=5)
 
 
 @lru_cache(maxsize=1)
@@ -117,15 +115,14 @@ def _clean_exercise(row, number: int, exercises: dict[str, dict]) -> dict:
 
 
 def _clean_last_done(value, now: datetime) -> datetime | None:
-    """The optional `last_done_at` of a POST: an ISO timestamp, not later than now + CLOCK_SKEW."""
+    """The optional `last_done_at` of a POST: an ISO timestamp. A time later than `now` (a phone
+    clock running ahead) becomes `now`, so it is never in the future (Sasa, Nov 4, 2026)."""
     if value is None:
         return None
     done = parse(value)
     if done is None:
         raise _bad("last_done_at must be an ISO 8601 timestamp or null.")
-    if done > now + CLOCK_SKEW:
-        raise _bad("last_done_at can't be in the future.")
-    return done
+    return min(done, now)
 
 
 def clean_input(body: dict, exercises: dict[str, dict], now: datetime | None = None) -> dict:
@@ -241,7 +238,11 @@ def update_template(user_id: str, template_id: str, body: dict) -> dict:
     if not is_template_id(template_id):
         raise ApiError("not_found", "No saved workout with that id.")
     library = models.get_exercises(_body_slugs(body))
-    cleaned = clean_input({**body, "id": template_id} if isinstance(body, dict) else body, library)
+    # PUT ignores `last_done_at`, so it is dropped before checking: a bad value never gives 400.
+    if isinstance(body, dict):
+        body = {key: value for key, value in body.items() if key != "last_done_at"}
+        body["id"] = template_id
+    cleaned = clean_input(body, library)
     fields = {k: cleaned[k] for k in ("name", "focus", "exercises")}
     changed = models.change_template(user_id, template_id, lambda old: {**old, **fields})
     if changed is None:
