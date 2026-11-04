@@ -33,8 +33,8 @@ gcloud emulators firestore start --database-mode=datastore-mode --host-port=loca
 # terminal 2, from server/ with the venv active
 export DATASTORE_EMULATOR_HOST=localhost:8081
 python -m seed.load_exercises   # loads the 45 starter exercises (safe to re-run; the emulator forgets them when it stops)
-flask --app main run --port 5000
-curl http://localhost:5000/api/v1/health   # → {"status": "ok"}
+flask --app main run --port 5001   # not 5000: macOS AirPlay Receiver holds it
+curl http://localhost:5001/api/v1/health   # → {"status": "ok"}
 ```
 
 ## Signing in during development
@@ -44,7 +44,7 @@ Use the course's **test number `+15305550000` with code `123456`**: no text mess
 
 To get a token for trying endpoints by hand (server running locally):
 ```sh
-curl -s -X POST localhost:5000/api/v1/auth/sms/verify -H 'Content-Type: application/json' \
+curl -s -X POST localhost:5001/api/v1/auth/sms/verify -H 'Content-Type: application/json' \
   -d '{"phone_number": "+15305550000", "code": "123456"}'
 # → {"token": "...", "user_id": "..."}; then send: -H "Authorization: Bearer <token>"
 ```
@@ -53,7 +53,7 @@ In server tests, the `signed_in` fixture gives you a signed-in user in one line,
 ## Run the app
 Requires **Xcode 27.2 or newer**: the project uses Xcode 27's project format, which older Xcode versions can't open. The app itself runs on iOS 17 and later, iPhone only.
 
-Open `ios/MuscleMap.xcodeproj` in Xcode and run on a simulator. If no simulators are listed, install the matching iOS simulator in Xcode → Settings → Components. Debug builds talk to `http://localhost:5000`. On a real phone, use your laptop's network address instead.
+Open `ios/MuscleMap.xcodeproj` in Xcode and run on a simulator. If no simulators are listed, install the matching iOS simulator in Xcode → Settings → Components. Debug builds talk to `http://localhost:5001`. On a real phone, use your laptop's network address instead.
 
 ## Tests
 ```sh

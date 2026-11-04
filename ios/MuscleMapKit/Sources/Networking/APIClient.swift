@@ -20,7 +20,7 @@ public struct APIClient: Sendable {
     private let session: URLSession
     private let tokens: any TokenStore
 
-    /// - Parameter baseURL: the server root, e.g. `http://localhost:5000`; `/api/v1` is added here.
+    /// - Parameter baseURL: the server root, e.g. `http://localhost:5001`; `/api/v1` is added here.
     public init(baseURL: URL, session: URLSession = .shared, tokens: any TokenStore = InMemoryTokenStore()) {
         self.baseURL = baseURL
         self.session = session

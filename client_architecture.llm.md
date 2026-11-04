@@ -19,7 +19,7 @@ The app's logic lives in `ios/MuscleMapKit/`, not in the app target, so its test
 | Module | Holds |
 |---|---|
 | `Models` | `Codable` structs that mirror the API JSON exactly: `Exercise`, `Template`, `Workout`, `SetEntry`, `User`. Decoded with `.convertFromSnakeCase` and ISO 8601 dates. Unit conversion (exact kg; round only for display) |
-| `Networking` | `APIClient`: one async client, a method per endpoint. Base URL from the build configuration: `http://localhost:5000` for Debug, the App Engine URL for Release. Sign-in token in the Keychain, never UserDefaults |
+| `Networking` | `APIClient`: one async client, a method per endpoint. Base URL from the build configuration: `http://localhost:5001` for Debug, the App Engine URL for Release. Sign-in token in the Keychain, never UserDefaults |
 | `LiftCore` | Lift logic: plate maths (lb and kg plate sets), rest timer, set ordering and supersets, Up Next |
 | later `HomeCore`, `GoalsCore` | The other tabs' logic |
 
