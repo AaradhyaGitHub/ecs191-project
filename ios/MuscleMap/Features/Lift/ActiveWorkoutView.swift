@@ -12,7 +12,6 @@ struct ActiveWorkoutView: View {
 
     @State private var model: ActiveWorkoutModel
     @State private var path: [String] = []
-    @State private var opensSheetFor: String?
     @State private var isPicking = false
     @State private var asksToDiscardEmpty = false
     @State private var finishProblem: SaveProblem?
@@ -45,7 +44,7 @@ struct ActiveWorkoutView: View {
             .toolbarBackground(Theme.Colors.background, for: .navigationBar)
             .navigationBarBackButtonHidden()
             .navigationDestination(for: String.self) { blockID in
-                SetLogView(model: model, blockID: blockID, opensSheet: opensSheetFor == blockID)
+                SetLogView(model: model, blockID: blockID)
             }
         }
         .task { await model.load(using: apiClient) }
@@ -239,11 +238,8 @@ struct ActiveWorkoutView: View {
 
     // MARK: Actions
 
-    /// Opens a block's set log. A block with no sets opens the set sheet at once, once per
-    /// visit (#63).
+    /// Opens a block's set log; a block with no sets also opens the set sheet (`SetLogView`, #63).
     private func open(_ blockID: String) {
-        let isEmpty = model.active?.sets(in: blockID).isEmpty ?? false
-        opensSheetFor = isEmpty ? blockID : nil
         path.append(blockID)
     }
 

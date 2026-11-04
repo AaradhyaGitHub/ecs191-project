@@ -8,8 +8,6 @@ import LiftCore
 struct SetLogView: View {
     let model: ActiveWorkoutModel
     let blockID: String
-    /// Opens the sheet on arrival (a block with no sets, #63).
-    var opensSheet = false
 
     @State private var filter: String?
     @State private var sheet: SetSheetRequest?
@@ -57,9 +55,10 @@ struct SetLogView: View {
         }
         .sensoryFeedback(.warning, trigger: model.restEndedCount)
         .task {
-            // Once per visit (#63). Wait for the push to finish first: a sheet presented while
-            // the screen is still sliding in is sometimes dropped (seen on the Simulator).
-            guard opensSheet, !didOpenSheet else { return }
+            // A block with no sets opens the set sheet on arrival, once per visit (#63). This
+            // screen decides by itself, so it doesn't depend on a flag from the push. It waits
+            // for the push to finish: a sheet presented mid-push is sometimes dropped.
+            guard !didOpenSheet, model.active?.sets(in: blockID).isEmpty == true else { return }
             didOpenSheet = true
             try? await Task.sleep(for: .seconds(Self.pushTime))
             guard !Task.isCancelled, sheet == nil, model.active?.sets(in: blockID).isEmpty == true else { return }
