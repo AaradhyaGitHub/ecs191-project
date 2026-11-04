@@ -134,7 +134,7 @@ None.
 ## Progress
 - [x] Plan approved (ff83fa6)
 - [x] Scaffold (638e175)
-- [ ] Tests red
+- [x] Tests red (23209ef)
 - [ ] Build green
 - [ ] Review
 - [ ] PR
