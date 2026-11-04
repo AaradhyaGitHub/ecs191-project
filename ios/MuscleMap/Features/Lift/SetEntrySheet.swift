@@ -194,7 +194,10 @@ struct SetEntrySheet: View {
                 ForEach(SetSteps.effortRange, id: \.self) { pct in
                     Button { draft.effortPct = pct } label: {
                         VStack(spacing: Theme.Spacing.xs) {
-                            EffortBattery(effortPct: pct)
+                            // Traffic-light colors; the chip's text color when selected, so
+                            // the failure flame stays visible on the accent (#63).
+                            EffortBattery(effortPct: pct,
+                                          tint: draft.effortPct == pct ? Theme.Colors.onAccent : nil)
                             Text("\(pct)%")
                                 .font(Theme.Fonts.secondary.monospacedDigit())
                         }
