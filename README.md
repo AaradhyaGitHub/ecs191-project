@@ -124,3 +124,11 @@ No keys are in this repo, and none should ever be committed (a secret scan runs 
 - **Human-written docs:** `overview.md`, `client_architecture.md`, `server_architecture.md`, `specs/*.md` and the user-research files must be written by people (course rule). Claude Code is blocked from editing them; it can help in chat.
 - **Design decisions** made so far, and who made them, are in [llm.md](llm.md) → Decisions. If you disagree with one, say so in an Issue.
 - Keep personal notes and keys in `.private/` (gitignored).
+
+### Optional: lanes (build several features at once)
+A *lane* is a second checkout of the repo in its own folder (a [git worktree](https://git-scm.com/docs/git-worktree)), so one feature can build while you review another. The main folder is for planning, reviewing PRs and running the app; the lanes are for building.
+1. Make a lane: `scripts/lane.sh 1`. It creates `../ecs191-impl-1`, its Python environment, and prints its commands. Lane 2 is `scripts/lane.sh 2`.
+2. Start the lane's own database emulator on the port it prints (lane 1: `8082`, lane 2: `8083`). Server tests wipe the emulator, so two lanes must never share one.
+3. Give the lane a feature, from the lane folder: `git fetch origin && git switch -c feat/<issue>-<slug> origin/main`.
+4. A branch can be checked out in only one folder at a time. To try a lane's PR in the main folder, check out its commit: `git checkout --detach origin/feat/<issue>-<slug>`.
+5. With Claude Code: run it in the main folder and use `/add-dir ../ecs191-impl-1` once, so it can work in the lane. The guards in `.claude/hooks/` check the folder each action happens in.
