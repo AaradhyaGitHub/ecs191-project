@@ -19,29 +19,32 @@ enum TemplateLimits {
     static let restStep = 15.0
 }
 
-/// The id of the UP NEXT saved workout: never-done first, then the oldest `lastDoneAt`.
-/// Ties go to the one first in `templates`. `nil` for an empty list.
+/// UP NEXT needs at least this many saved workouts that were done before.
+public let upNextMinimumDone = 2
+
+/// The id of the UP NEXT saved workout, without a plan (Sasa, Nov 4, 2026): the one done longest
+/// ago among those with a `lastDoneAt`. Never-done saved workouts are never UP NEXT, and there
+/// is no UP NEXT until at least 2 have been done. Ties go to the one first in `templates`
+/// (server order, oldest-created first).
 public func upNextID(_ templates: [Template]) -> String? {
-    if let neverDone = templates.first(where: { $0.lastDoneAt == nil }) {
-        return neverDone.id
-    }
+    let done = templates.filter { $0.lastDoneAt != nil }
+    guard done.count >= upNextMinimumDone else { return nil }
     var best: Template?
-    for template in templates {
-        guard let done = template.lastDoneAt else { continue }
-        if let current = best?.lastDoneAt, current <= done { continue }
+    for template in done {
+        guard let date = template.lastDoneAt else { continue }
+        if let current = best?.lastDoneAt, current <= date { continue }
         best = template
     }
     return best?.id
 }
 
-/// The cards in screen order: the UP NEXT one first, then the others in server order.
+/// The cards in screen order: the UP NEXT one first (if any), then the others newest-created
+/// first. `templates` is in server order (oldest-created first), so the others are reversed.
 public func homeOrder(_ templates: [Template]) -> [Template] {
-    guard let upNext = upNextID(templates),
-          let index = templates.firstIndex(where: { $0.id == upNext }) else { return templates }
-    var ordered = templates
-    let first = ordered.remove(at: index)
-    ordered.insert(first, at: 0)
-    return ordered
+    let upNext = upNextID(templates)
+    let others = templates.filter { $0.id != upNext }.reversed()
+    let first = templates.filter { $0.id == upNext }
+    return first + others
 }
 
 /// "Today", "Yesterday", "6 days ago", "3 weeks ago", "2 months ago" or "Not done yet",
@@ -117,7 +120,9 @@ public func templateInput(from workout: Workout, name: String, focus: String?) -
             restS: medianRest(logged),
             supersetGroup: logged.first?.supersetGroup)
     }
-    return TemplateInput(name: name, focus: focus.isEmpty ? nil : focus, exercises: exercises)
+    // A saved workout made from a finished workout counts as done (Sasa, Nov 4, 2026).
+    return TemplateInput(name: name, focus: focus.isEmpty ? nil : focus, exercises: exercises,
+                         lastDoneAt: workout.startedAt)
 }
 
 /// The active workout that Start opens ("Start → active workout"): named after the saved
@@ -136,6 +141,25 @@ public func activeWorkout(from template: Template, library: [Exercise], startedA
                     targetReps: first.targetReps, restS: first.restS)
     }
     return workout
+}
+
+// MARK: - The bundled exercise library
+
+/// The exercise library the app ships (Resources/exercise_library.json, made by
+/// server/seed/export_library.py in `GET /exercises`' shape), A–Z. Start looks exercises up
+/// here, so Lift never downloads the whole library (Sasa, Nov 4, 2026). Read once per launch.
+public func bundledExerciseLibrary() -> [Exercise] {
+    BundledLibrary.exercises
+}
+
+private enum BundledLibrary {
+    /// Empty only if the file is missing or broken; a LiftCore test fails in that case.
+    static let exercises: [Exercise] = {
+        guard let url = Bundle.module.url(forResource: "exercise_library", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let list = try? APIJSON.decoder().decode(ExerciseList.self, from: data) else { return [] }
+        return list.exercises
+    }()
 }
 
 // MARK: - Helpers
