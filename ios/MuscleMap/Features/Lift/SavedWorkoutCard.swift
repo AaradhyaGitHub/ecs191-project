@@ -3,8 +3,9 @@ import Models
 import LiftCore
 
 /// One saved workout on Lift home: name, "Tricep focus · 5 exercises", "Last done 6 days ago"
-/// (left out when never done, Sasa, Nov 4, 2026), up to three muscle chips and Start. The UP NEXT card has an accent border, an UP NEXT badge and
-/// an accent Start button (client_architecture.llm.md, "Lift screens").
+/// (left out when never done, Sasa, Nov 4, 2026), up to three muscle chips and Start.
+/// The UP NEXT card has an accent border, an UP NEXT badge and an accent Start button
+/// (client_architecture.llm.md, "Lift screens").
 struct SavedWorkoutCard: View {
     let template: Template
     let isUpNext: Bool

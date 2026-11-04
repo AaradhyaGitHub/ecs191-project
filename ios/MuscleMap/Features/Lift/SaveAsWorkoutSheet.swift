@@ -61,7 +61,8 @@ struct SaveAsWorkoutSheet: View {
         .padding(.top, Theme.Spacing.s)
         .frame(maxHeight: .infinity, alignment: .top)
         .background(Theme.Colors.sheet)
-        .presentationDetents([.medium, .large])
+        // Full height, so the keyboard never covers Save (Sasa, Nov 4, 2026).
+        .presentationDetents([.large])
         .presentationBackground(Theme.Colors.sheet)
         .interactiveDismissDisabled(isSaving)
     }
