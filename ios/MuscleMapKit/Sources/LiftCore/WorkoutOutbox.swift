@@ -118,6 +118,10 @@ public final class WorkoutOutbox {
         do {
             _ = try await sender.saveWorkout(item.workout)
             delete(id: id)
+        } catch APIError.decoding {
+            // The server answered 2xx, so it has the workout; only its reply didn't decode.
+            // Keeping the item would resend it forever (Sasa, Nov 4, 2026).
+            delete(id: id)
         } catch {
             if let message = Self.rejection(error) {
                 var rejected = item

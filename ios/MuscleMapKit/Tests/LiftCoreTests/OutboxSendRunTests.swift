@@ -81,4 +81,16 @@ struct OutboxSendRunTests {
         #expect(sender.received.map(\.id) == [a.id, b.id])
         #expect(outbox.items.count == 2)
     }
+
+    @Test("A reply that doesn't decode after a 2xx counts as saved, so the item is removed")
+    func decodingErrorIsSuccess() async throws {
+        let storage = try SwiftDataWorkoutStorage(inMemory: true)
+        let sender = FakeSender([.fail(APIError.decoding("keyNotFound"))])
+        let outbox = WorkoutOutbox(storage: storage, sender: sender)
+        let workout = try #require(outbox.finish(workout("A"), at: Log.t0.addingTimeInterval(600)))
+        await outbox.sendPending()
+        #expect(sender.received.map(\.id) == [workout.id])
+        #expect(outbox.items.isEmpty)
+        #expect(storage.outboxItems().isEmpty)
+    }
 }
