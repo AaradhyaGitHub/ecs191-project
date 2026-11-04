@@ -1,24 +1,25 @@
-"""Profile endpoints (API.md, "GET /users/me" and "PUT /users/me"). Both need sign-in.
-
-SCAFFOLD: both endpoints answer 501. Build mode adds @require_user and calls
-services/user_service.py.
-"""
+"""Profile endpoints (API.md, "GET /users/me" and "PUT /users/me"). Both need sign-in."""
 from __future__ import annotations
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
+
+from api.auth import require_user
+from services import user_service
+from services.errors import ApiError
 
 bp = Blueprint("users", __name__)
 
 
-def _not_built():
-    return jsonify({"error": {"code": "internal", "message": "Not built yet."}}), 501
-
-
 @bp.get("/me")
-def get_me():
-    return _not_built()
+@require_user
+def get_me(user_id):
+    return jsonify(user_service.get_me(user_id))
 
 
 @bp.put("/me")
-def update_me():
-    return _not_built()
+@require_user
+def update_me(user_id):
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        raise ApiError("bad_request", "Send the changes as a JSON object.")
+    return jsonify(user_service.update_me(user_id, body))

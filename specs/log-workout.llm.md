@@ -186,7 +186,7 @@ None.
 ## Progress
 - [x] Plan approved (369fb8b)
 - [x] Scaffold (d8c220a)
-- [ ] Tests red
+- [x] Tests red (5ab278d)
 - [ ] Build green
 - [ ] Review
 - [ ] PR

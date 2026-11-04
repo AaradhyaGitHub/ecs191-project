@@ -10,12 +10,12 @@ Order: name starts with the text, then a later word of the name, then alias only
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 
 import models
 from services.errors import ApiError
+from services.timestamps import iso
 
 MUSCLES_PATH = Path(__file__).resolve().parents[1] / "muscles.json"
 
@@ -131,22 +131,13 @@ def find_exercises(q: str | None, group: str | None) -> list[dict]:
     return search(models.all_exercises(), q, group, muscles)
 
 
-def _iso(value) -> str | None:
-    """A UTC timestamp as API.md writes it: 2026-11-01T18:10:00Z."""
-    if not isinstance(value, datetime):
-        return value
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-
-
 def my_exercises(user_id: str) -> list[dict]:
     """This user's history, one item per UserExercise, in API.md's shape."""
     return [{
         "exercise_id": row["exercise_id"],
         "use_count": row.get("use_count", 0),
-        "last_used_at": _iso(row.get("last_used_at")),
+        "last_used_at": iso(row.get("last_used_at")),
         "last_set": row.get("last_set"),
         "best_e1rm_kg": row.get("best_e1rm_kg"),
-        "best_e1rm_at": _iso(row.get("best_e1rm_at")),
+        "best_e1rm_at": iso(row.get("best_e1rm_at")),
     } for row in models.user_exercises(user_id)]

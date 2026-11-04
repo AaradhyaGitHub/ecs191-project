@@ -135,28 +135,65 @@ def user_exercises(user_id: str) -> list[dict]:
 
 
 def put_user_exercise(user_id: str, slug: str, data: dict) -> None:
-    """Creates or replaces one UserExercise. Only tests use it until POST /workouts exists."""
-    entity = datastore.Entity(key=user_exercise_key(user_id, slug),
-                              exclude_from_indexes=_USER_EXERCISE_UNINDEXED)
+    """Creates or replaces one UserExercise. Tests use it to seed history; real writes
+    come from save_workout."""
+    client().put(_user_exercise_entity(user_exercise_key(user_id, slug), data))
+
+
+# --- Workout and SetEntry (User/{id}/Workout/{uuid}/SetEntry/{uuid}) ---------------------
+# Plan: specs/log-workout.llm.md. Workouts don't change after they are saved.
+
+WORKOUT = "Workout"
+SET_ENTRY = "SetEntry"
+
+
+def workout_key(user_id: str, workout_id: str) -> datastore.Key:
+    return client().key(USER, user_id, WORKOUT, workout_id)
+
+
+def _set_key(workout: datastore.Key, set_id: str) -> datastore.Key:
+    return client().key(SET_ENTRY, set_id, parent=workout)
+
+
+def get_exercises(slugs) -> dict:
+    """The library exercises with these slugs, as {slug: exercise}. Unknown slugs are left out."""
+    keys = [exercise_key(slug) for slug in sorted(set(slugs))]
+    found = {}
+    for start in range(0, len(keys), 1000):  # get_multi takes at most 1000 keys
+        for entity in client().get_multi(keys[start:start + 1000]):
+            found[entity.key.name] = _exercise_dict(entity)
+    return found
+
+
+def _workout_dict(entity: datastore.Entity) -> dict:
+    return {"id": entity.key.name, **dict(entity)}
+
+
+def _set_dict(entity: datastore.Entity) -> dict:
+    return {"id": entity.key.name, **dict(entity)}
+
+
+def _user_exercise_dict(entity: datastore.Entity) -> dict:
+    data = dict(entity)
+    if data.get("last_set") is not None:
+        data["last_set"] = dict(data["last_set"])
+    return data
+
+
+def _user_exercise_entity(key: datastore.Key, data: dict) -> datastore.Entity:
+    entity = datastore.Entity(key=key, exclude_from_indexes=_USER_EXERCISE_UNINDEXED)
     fields = dict(data)
     if fields.get("last_set") is not None:
         embedded = datastore.Entity()
         embedded.update(fields["last_set"])
         fields["last_set"] = embedded
     entity.update(fields)
-    client().put(entity)
+    return entity
 
 
-# --- Workout and SetEntry (User/{id}/Workout/{uuid}/SetEntry/{uuid}) ---------------------
-# Plan: specs/log-workout.llm.md. SCAFFOLD: these return valid but wrong values.
-
-WORKOUT = "Workout"
-SET_ENTRY = "SetEntry"
-
-
-def get_exercises(slugs) -> dict:
-    """The library exercises with these slugs, as {slug: exercise}. Unknown slugs are left out."""
-    return {}
+def _stored_sets(db: datastore.Client, key: datastore.Key) -> list[dict]:
+    sets = [_set_dict(e) for e in db.query(kind=SET_ENTRY, ancestor=key).fetch()]
+    return sorted(sets, key=lambda s: s["order"])
 
 
 def save_workout(user_id: str, workout: dict, sets: list[dict], merge) -> tuple[dict, list[dict], bool]:
@@ -167,22 +204,65 @@ def save_workout(user_id: str, workout: dict, sets: list[dict], merge) -> tuple[
     `merge(old_or_None, workout, sets_of_that_exercise)` for each, and writes everything.
     Returns (workout, sets, created).
     """
-    return {}, [], False
+    db = client()
+    key = workout_key(user_id, workout["id"])
+    by_exercise: dict[str, list[dict]] = {}
+    for s in sets:
+        by_exercise.setdefault(s["exercise_id"], []).append(s)
+
+    with db.transaction():
+        existing = db.get(key)
+        if existing is not None:
+            return _workout_dict(existing), _stored_sets(db, key), False
+
+        history_keys = [user_exercise_key(user_id, slug) for slug in sorted(by_exercise)]
+        old = {e.key.name: _user_exercise_dict(e) for e in db.get_multi(history_keys)}
+
+        entity = datastore.Entity(key=key)
+        entity.update({k: v for k, v in workout.items() if k != "id"})
+        entity["created_at"] = _now()
+        to_write = [entity]
+        for s in sets:
+            set_entity = datastore.Entity(key=_set_key(key, s["id"]))
+            set_entity.update({k: v for k, v in s.items() if k != "id"})
+            to_write.append(set_entity)
+        for history_key in history_keys:
+            slug = history_key.name
+            merged = merge(old.get(slug), workout, by_exercise[slug])
+            to_write.append(_user_exercise_entity(history_key, merged))
+        db.put_multi(to_write)
+
+    return dict(workout), sorted((dict(s) for s in sets), key=lambda s: s["order"]), True
 
 
 def get_workout(user_id: str, workout_id: str) -> tuple[dict, list[dict]] | None:
     """The stored workout and its sets, or None when this user has no workout with that id."""
-    return None
+    db = client()
+    key = workout_key(user_id, workout_id)
+    entity = db.get(key)
+    if entity is None:
+        return None
+    return _workout_dict(entity), _stored_sets(db, key)
 
 
 def list_workouts(user_id: str, limit: int) -> list[dict]:
     """This user's stored workouts (without sets), newest started_at first."""
-    return []
+    query = client().query(kind=WORKOUT, ancestor=user_key(user_id))
+    query.order = ["-started_at"]
+    return [_workout_dict(e) for e in query.fetch(limit=limit)]
 
 
 def update_user(user_id: str, fields: dict) -> dict:
     """Sets these fields on the User and returns the stored user."""
-    return {}
+    db = client()
+    with db.transaction():
+        entity = db.get(user_key(user_id))
+        if entity is None:
+            entity = datastore.Entity(key=user_key(user_id))
+            entity["created_at"] = _now()
+        entity.update(fields)
+        db.put(entity)
+    return {"id": entity.key.name, **dict(entity)}
 
 
 def _now() -> datetime:
