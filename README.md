@@ -7,6 +7,13 @@ An iOS workout tracker that shows which muscles you've trained. ECS 191 group pr
 
 > Work in progress: the server is deployed (health check only so far) and the app has its four tabs; the Lift tab is next.
 
+## Getting started (new teammates)
+1. **Install the tools:** Xcode **27.2+**; Python **3.13**; **Java 25+**; the **Google Cloud CLI** with its Firestore emulator. Details are under [Run the server locally](#run-the-server-locally) and [Run the app](#run-the-app).
+2. **Run the server and the app once** by following those two sections. Sign in with the test number (see [Signing in during development](#signing-in-during-development)).
+3. **Pick your work** from [GitHub Issues](https://github.com/AaradhyaGitHub/ecs191-project/issues) and assign yourself (see [Working on this repo](#working-on-this-repo)).
+4. **Building a tab** (Home, Goals, Camera): put its screens in `ios/MuscleMap/Features/<Tab>/` and its logic in `ios/MuscleMapKit` (see [Code layout](#code-layout)). Use `Theme` for every color, font and spacing value, the shared components in `DesignSystem/Components/`, and `PreviewData` for sample data in SwiftUI previews, so you don't need the server to design a screen.
+5. **Using Claude Code?** It reads [CLAUDE.md](CLAUDE.md) automatically. Claude's notes on decisions so far are in [llm.md](llm.md), and the API contract is in [API.md](API.md).
+
 ## Run the server locally
 **Prerequisites**
 - **Python 3.13.** With [uv](https://docs.astral.sh/uv/): `uv python install 3.13`. Or install it from python.org.
@@ -32,6 +39,8 @@ curl http://localhost:5000/api/v1/health   # → {"status": "ok"}
 
 ## Signing in during development
 Use the course's **test number `+15305550000` with code `123456`**: no text message is sent and nothing needs setting up. Real phone numbers only work once the course `app_token` is configured on the server.
+
+> ⚠️ **The test account is shared and public.** The number and code are in this README and in the course's docs, so anyone can sign in as that user, including on the live server. Everyone on the team is the *same* user with it. Treat its data as throwaway: never enter anything real or personal, and expect teammates' test workouts to show up.
 
 To get a token for trying endpoints by hand (server running locally):
 ```sh
@@ -75,10 +84,22 @@ Live server: **https://musclemap-ecs191.wl.r.appspot.com** (check: `/api/v1/heal
 Google Cloud project: `musclemap-ecs191` (App Engine and the Datastore-mode database in `us-west2`). To load the starter exercises into it: `python -m seed.load_exercises --project musclemap-ecs191`.
 
 ## Keys and test credentials
-No keys are in this repo. _To be listed here: which keys are needed and where to get them, plus test sign-in credentials._
+No keys are in this repo, and none should ever be committed (a secret scan runs on every PR).
+
+| What | Needed for | Where it lives | Get it from |
+|---|---|---|---|
+| Course SMS `app_token` | Signing in with **real** phone numbers (not the test number) | Server environment `SMS_APP_TOKEN` (never in the app) | ECS 191 course staff |
+| Google Cloud access | Deploying, reading server logs | Your own Google login (`gcloud auth login`) | Ask Sasa to add you as an editor on `musclemap-ecs191` |
+| Local Google credentials | Running server code against the real database (rare; normally use the emulator) | `gcloud auth application-default login` | Your own Google login |
+
+**Test sign-in:** phone `+15305550000`, code `123456` (shared and public; see above).
 
 ## Working on this repo
-- Work is claimed through GitHub Issues: assign yourself, then branch `feat/<issue>-<slug>`.
-- Every change goes through a PR; a teammate merges.
-- Claude Code users: the rules are in [CLAUDE.md](CLAUDE.md). Claude never edits the human-written docs (`overview.md`, the architecture docs, `specs/`).
+- **Claim work through GitHub Issues:** assign yourself, so everyone sees who's on what. New work gets a new Issue (there's a "Task" template).
+- **Branch per Issue:** `feat/<issue>-<slug>`, `fix/<issue>-<slug>`, `chore/<issue>-<slug>`. Never commit to `main`.
+- **Every change goes through a PR,** using the template. Someone other than the author merges. Checks run automatically: a secret scan, plus server and iOS tests for the parts you touched.
+- **New or changed endpoint? Contract first.** Open a small PR with the `API.md` entry and example JSON in `shared/fixtures/`. Once it's merged, the server side and the iOS side can be built in parallel. Home's `GET /muscle-map` and Goals' `/goals` still need this.
+- **Hot spots** that everyone touches: `server/main.py`, `server/models.py`, `server/index.yaml`, `ios/MuscleMap/App/`, `ios/MuscleMapKit/Package.swift`, `ios/MuscleMapKit/Sources/Models/`, `shared/`, `API.md`. Keep changes there small, and mention them in your Issue.
+- **Human-written docs:** `overview.md`, `client_architecture.md`, `server_architecture.md`, `specs/*.md` and the user-research files must be written by people (course rule). Claude Code is blocked from editing them; it can help in chat.
+- **Design decisions** made so far, and who made them, are in [llm.md](llm.md) → Decisions. If you disagree with one, say so in an Issue.
 - Keep personal notes and keys in `.private/` (gitignored).
