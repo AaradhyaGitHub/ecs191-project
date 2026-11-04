@@ -193,4 +193,4 @@ None.
 - [x] Tests red (5ab278d)
 - [x] Build green (b255580)
 - [x] Review (0 blockers; S1–S4 fixed and checked, N1 deferred)
-- [ ] PR
+- [x] PR (#50)
