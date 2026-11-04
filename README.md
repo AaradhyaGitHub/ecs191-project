@@ -5,7 +5,7 @@ An iOS workout tracker that shows which muscles you've trained. ECS 191 group pr
 - **App:** SwiftUI, iOS 17+ (`ios/`)
 - **Server:** Flask on Google App Engine, Firestore in Datastore mode (`server/`)
 
-> Work in progress: the server skeleton runs locally; the iOS app is next. Steps marked below are checked as each part is built.
+> Work in progress: the server is deployed (health check only so far) and the app has its four tabs; the Lift tab is next.
 
 ## Run the server locally
 **Prerequisites**
@@ -59,7 +59,9 @@ The app's few UI smoke tests run from Xcode (⌘U).
 ```sh
 cd server && gcloud app deploy app.yaml index.yaml
 ```
-Live URL: _not deployed yet_.
+Live server: **https://musclemap-ecs191.wl.r.appspot.com** (check: `/api/v1/health`). Release builds of the app use it.
+
+Google Cloud project: `musclemap-ecs191` (App Engine and the Datastore-mode database in `us-west2`). To load the starter exercises into it: `python -m seed.load_exercises --project musclemap-ecs191`.
 
 ## Keys and test credentials
 No keys are in this repo. _To be listed here: which keys are needed and where to get them, plus test sign-in credentials._
