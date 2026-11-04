@@ -147,5 +147,43 @@ def put_user_exercise(user_id: str, slug: str, data: dict) -> None:
     client().put(entity)
 
 
+# --- Workout and SetEntry (User/{id}/Workout/{uuid}/SetEntry/{uuid}) ---------------------
+# Plan: specs/log-workout.llm.md. SCAFFOLD: these return valid but wrong values.
+
+WORKOUT = "Workout"
+SET_ENTRY = "SetEntry"
+
+
+def get_exercises(slugs) -> dict:
+    """The library exercises with these slugs, as {slug: exercise}. Unknown slugs are left out."""
+    return {}
+
+
+def save_workout(user_id: str, workout: dict, sets: list[dict], merge) -> tuple[dict, list[dict], bool]:
+    """Saves a workout, its sets and its UserExercises in one transaction.
+
+    If the Workout already exists, nothing is written and the stored one comes back.
+    Otherwise reads this user's UserExercise for each exercise in `sets`, calls
+    `merge(old_or_None, workout, sets_of_that_exercise)` for each, and writes everything.
+    Returns (workout, sets, created).
+    """
+    return {}, [], False
+
+
+def get_workout(user_id: str, workout_id: str) -> tuple[dict, list[dict]] | None:
+    """The stored workout and its sets, or None when this user has no workout with that id."""
+    return None
+
+
+def list_workouts(user_id: str, limit: int) -> list[dict]:
+    """This user's stored workouts (without sets), newest started_at first."""
+    return []
+
+
+def update_user(user_id: str, fields: dict) -> dict:
+    """Sets these fields on the User and returns the stored user."""
+    return {}
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)

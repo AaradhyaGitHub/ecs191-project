@@ -20,3 +20,41 @@ public struct PlateSet: Equatable, Sendable {
         unit == .lb ? .pounds : .kilograms
     }
 }
+
+/// The plates on the bar in the plate loader (plan: specs/log-workout.llm.md, "Plates").
+/// Each plate is a pair, one per side. Values are in `plateSet.unit`.
+/// SCAFFOLD: the methods return valid but wrong values. Build mode fills them in.
+public struct PlateLoad: Equatable, Sendable {
+    public let plateSet: PlateSet
+    /// One entry per pair, in the order added.
+    public private(set) var pairs: [Double]
+
+    public init(plateSet: PlateSet, pairs: [Double] = []) {
+        self.plateSet = plateSet
+        self.pairs = pairs
+    }
+
+    /// Adds a pair of `plate` (one per side).
+    public mutating func add(_ plate: Double) {
+    }
+
+    /// Removes the last pair added (tapping the bar). The empty bar stays.
+    public mutating func removeLast() {
+    }
+
+    /// Back to the empty bar.
+    public mutating func reset() {
+    }
+
+    /// Bar plus both sides, in `plateSet.unit`.
+    public var total: Double { 0 }
+
+    /// "45 bar + 55 per side".
+    public var breakdown: String { "" }
+
+    /// The heaviest load the plates can make that is not above `target` (in `plateSet.unit`);
+    /// 157 lb gives 155 lb. Below the bar, the empty bar.
+    public static func nearestLoad(to target: Double, with plateSet: PlateSet) -> PlateLoad {
+        PlateLoad(plateSet: plateSet)
+    }
+}

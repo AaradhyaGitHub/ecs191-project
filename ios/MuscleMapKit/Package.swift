@@ -15,7 +15,7 @@ let package = Package(
     targets: [
         .target(name: "Models"),
         .target(name: "Networking", dependencies: ["Models"]),
-        .target(name: "LiftCore", dependencies: ["Models"]),
+        .target(name: "LiftCore", dependencies: ["Models", "Networking"]),
         .testTarget(name: "ModelsTests", dependencies: ["Models"]),
         .testTarget(name: "NetworkingTests", dependencies: ["Networking"]),
         .testTarget(name: "LiftCoreTests", dependencies: ["LiftCore"]),
