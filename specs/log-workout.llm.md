@@ -5,13 +5,13 @@ Branch: feat/42-log-workout
 LLM-written. This is the plan for Sasa's spec. The spec wins where they differ. "D-n" points to a decision at the end (Sasa, Nov 3, 2026). Plan B (`specs/saved-workouts.llm.md`, #43) relies on the parts marked "for #43".
 
 ## What the user sees (mockups: `client_architecture.llm.md`, "Lift screens")
-- **`ActiveWorkoutView`:** "‹ Lift" back button, workout clock, workout name, a segmented progress bar. An UP NEXT card: one exercise, or a superset ("Push-up + Inverted Row", "Round 2 · rest 90 s after round"), with Start. Below it, "then" and the next exercise. Then DONE · n, each finished exercise with its set count. At the bottom: Add exercise and Finish.
+- **`ActiveWorkoutView`:** "‹ Lift" back button, workout clock, workout name, a segmented progress bar. An UP NEXT card: one exercise, or a superset ("Push-up + Inverted Row", "Round 2 · rest 90 s after round"), with Start. Below it, REMAINING · n: every block not done, with its progress ("1 of 3"); one tap makes it UP NEXT (D-24). Then DONE · n, each finished exercise with its set count. At the bottom: Add exercise and Finish.
 - **`SetLogView`** (title is the exercise, or "Superset A"): chips All plus one per exercise; "7 sets · in the order you did them". Each row: badge (W warm-up, F failure, else a number), exercise, rest before ("2:30 rest", or "First set · 6:02 PM"), reps, load ("BW", "BW +10 lb", "155 lb", "45 s"), an effort battery. A rest strip (countdown, −30s, +30s, Skip) and a + button that opens the sheet.
 - **`SetEntrySheet`:** set number and type (Warm-up, Working, Drop set, Failure). A hero weight with "Same as last set" and "45 bar + 55 per side". The plate loader (barbells only), a REPS stepper (seconds for timed holds), REST AFTER ±30, EFFORT 60–100 %, and a primary button "Log 6 × 155 lb".
 
 ## Rules
 - **Blocks.** "Add" in the picker adds the picks as blocks (a *block* is one exercise, or one superset). Without the superset flag, each pick is its own block, in tap order. With it, all picks form one superset block. Superset groups get letters in the order they are added: "a", "b", …
-- **Up next.** UP NEXT is the first block that is not done. "then" is the block after it. A block is done when the user taps Done in its set log, or when each of its exercises has its target number of non-warm-up sets (templates only) (D-10). A done block can be opened again to log more.
+- **Up next.** UP NEXT is the block the user chose from REMAINING, else the first block that is not done (D-24). "then" is the first block in REMAINING. A block is done when the user taps Done in its set log, or when each of its exercises has its target number of non-warm-up sets (templates only) (D-10). A done block can be opened again to log more.
 - **Supersets and rounds.** In a superset, the sheet opens on the next exercise of the round: A, B, A, B… A *round* is one set of each exercise. The rest timer does not run between exercises in a round. It runs after the last one (D-11).
 - **Rest timer.** Logging a set starts the timer with the sheet's REST AFTER value. The timer keeps an end time, so it survives an app restart. −30s and +30s change it and never go below 0. Skip stops it. At 0 the phone vibrates (app open only).
 - **Set data.** `order` is 1, 2, 3… in the order sets are logged. Deleting a set renumbers the rest. `ended_at` is the time of the Log tap. `started_at` is null. `rest_before_s` is the time since the previous set's Log tap (null for the first set) (D-12).
@@ -32,7 +32,7 @@ LLM-written. This is the plan for Sasa's spec. The spec wins where they differ. 
 
 ## Scope for this feature
 - **In:** the three screens; edit a logged set (tap) and delete it (swipe) (D-18); phone storage and outbox; `POST /workouts` with UserExercise; `GET /workouts?limit=`, `GET /workouts/{id}`, `GET`/`PUT /users/me`; `template_id` passes through from `ActiveWorkout` to the server; block targets, the start entry point and `onFinished` for #43.
-- **Later:** start from a saved workout (#43 builds the `ActiveWorkout` with `templateId`, name and targets). `Template.last_done_at` (D-3): #43's decision 13 has `workout_service.save_workout` call `template_service.record_done` once after `models.save_workout` returns, on every request; whichever of #42 and #43 merges second adds that one line. Also later: DailyStats and Stats/totals (D-1); `best_e1rm` (D-2); `GET /workouts?before=` (Home); rename the workout; reorder or remove exercises; rest notification in the background; body-weight and units screens (D-15).
+- **Later:** start from a saved workout (#43 builds the `ActiveWorkout` with `templateId`, name and targets). `Template.last_done_at` (D-3): #43's decision 13 has `workout_service.save_workout` call `template_service.record_done` once after `models.save_workout` returns, on every request; whichever of #42 and #43 merges second adds that one line. Also later: DailyStats and Stats/totals (D-1); `best_e1rm` (D-2); `GET /workouts?before=` (Home); rename the workout; reorder or remove exercises; rest notification in the background; body-weight and units screens (D-15). "+ Add exercise" could move inside the REMAINING section (Sasa's idea, Nov 4, 2026). N1 from the review: Lift loads the user's unit late (deferred, Sasa, Nov 4, 2026).
 
 ## Filled in from design docs and decisions
 - Active workout on the phone (SwiftData), sent once on Finish; ids are lowercase UUIDs made on the phone: llm.md Decisions; API.md "Conventions".
@@ -179,14 +179,18 @@ Server: `require_user`, `ApiError`, `models.client()`, `user_key`, `get_user`; f
 20. **Phone storage format.** (a) One SwiftData row per workout holding its JSON. (b) A SwiftData model per field and set. **Decided: (a).** No migrations when fields change. Fallback: a JSON file, if SwiftData does not work under `swift test`.
 21. **Where the outbox lives.** (a) `LiftCore`, which then also depends on `Networking`. (b) A new module. **Decided: (a).** One line in `Package.swift`.
 22. **Dumbbell rule (the team still has to confirm it, llm.md).** Log one dumbbell's weight now, labelled "per dumbbell". Only `entryKind(for:)` and its label change if the team decides otherwise; `implement_count` belongs to volume (Home). **Decided: yes.**
+23. **D-23: at most 30 exercises per workout, enforced when adding (Sasa, Nov 4, 2026).** Each exercise of a superset counts; sets stay limited only by the 300-set rule. `ActiveWorkout.add` refuses picks that would go over 30 and `remainingExerciseSlots` says how many more fit. The picker disables Add and shows "A workout can have up to 30 exercises. You can add N more." (N = the remaining slots; changed by Sasa, Nov 4, 2026), or "This workout has 30 exercises, the most it can have." when none are left. `POST /workouts` with more than 30 different `exercise_id`s is `400 bad_request`.
+24. **D-24: choose any exercise next (Sasa, Nov 4, 2026).** "then" becomes a REMAINING list: every block that isn't done, in planned order, each with its progress ("1 of 3"). One tap makes a block UP NEXT, with no confirmation; the block it replaces goes back to REMAINING with its sets. A superset is one unit. When UP NEXT is done, the first block not done in planned order comes next. The choice is stored in `ActiveWorkout` (`chosenBlockID`), so it survives a restart. DONE works as before. The server doesn't change.
+25. **D-25: value limits, enforced in the app and on the server (Sasa, Nov 4, 2026).** `reps` 1–1000; `duration_s` 1–3600; `rest_before_s` 0–3600 or null for the first set (a longer rest is logged as 3600; `ended_at` keeps the real time); `weight_kg` 0–1000; `added_load_kg` −500 to 500; `bodyweight_kg` above 0 and at most 500 (workout and `PUT /users/me`); `order` 1–300; `name` and `superset_group` 1–60 characters; `timezone` at most 64 characters; `template_id` a lowercase UUID or null. NaN and infinity are refused. The server answers `400 bad_request`. The app has no free text for numbers: its steppers and the plate loader stop at the limits, and `WorkoutLimits.isValid` checks again before anything is saved on the phone.
+26. **D-26: at most 300 sets per workout, enforced when logging (Sasa, Nov 4, 2026).** At 300 sets `ActiveWorkout.canLogSet` is false, Log is disabled and the set log says "A workout can have up to 300 sets."
 
 ## Open questions
 None.
 
 ## Progress
-- [ ] Plan approved
-- [ ] Scaffold
-- [ ] Tests red
-- [ ] Build green
-- [ ] Review
-- [ ] PR
+- [x] Plan approved (369fb8b)
+- [x] Scaffold (d8c220a)
+- [x] Tests red (5ab278d)
+- [x] Build green (b255580)
+- [x] Review (0 blockers; S1–S4 fixed and checked, N1 deferred)
+- [x] PR (#50)

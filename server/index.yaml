@@ -7,3 +7,10 @@ indexes:
       - name: exercise_id
       - name: started_at
         direction: desc
+
+  # This user's workouts, newest first (GET /workouts).
+  - kind: Workout
+    ancestor: yes
+    properties:
+      - name: started_at
+        direction: desc

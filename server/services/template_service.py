@@ -17,7 +17,7 @@ from functools import lru_cache
 import models
 from services import exercise_service
 from services.errors import ApiError
-from services.exercise_service import _iso
+from services.timestamps import iso
 
 # Lowercase only: Datastore keys are case-sensitive, so a retry must match exactly (API.md, "IDs").
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
@@ -180,7 +180,7 @@ def _public(template: dict, exercises: dict[str, dict]) -> dict:
         "name": template["name"],
         "focus": template.get("focus"),
         "exercises": rows,
-        "last_done_at": _iso(template.get("last_done_at")),
+        "last_done_at": iso(template.get("last_done_at")),
         "top_muscles": top_muscles(rows, exercises, _muscles()),
     }
 

@@ -4,34 +4,21 @@ import Models
 import Networking
 import LiftCore
 
-/// Where the picker gets exercises. `APIClient` in the app; a stub in previews.
-protocol ExerciseSource: Sendable {
-    var isSignedIn: Bool { get }
-    func searchExercises(_ query: String?, group: String?) async throws -> [Exercise]
-    func myExercises() async throws -> [UserExercise]
-}
-
-extension APIClient: ExerciseSource {}
-
 /// The exercise picker's state (specs/exercise-search.llm.md). The rules for picking, the
-/// superset flag and "Your exercises" live in LiftCore; this class adds the server calls.
+/// superset flag, "Your exercises" and the search timing (`ExerciseSearch`, #44) live in
+/// LiftCore; this class wires them to the screen.
 /// A new model is made each time the sheet opens, so the picker forgets everything on close.
 @MainActor
 @Observable
 final class ExercisePickerModel {
-    enum SearchState: Equatable {
-        case loading, loaded, failed
-    }
+    typealias SearchState = ExerciseSearch.State
 
-    /// The wait after the last keystroke before a search is sent.
-    static let typingDelay: Duration = .milliseconds(300)
-
-    /// Weights show in lb until `GET /users/me` gives the user's units (plan, "Scope").
-    let unit: WeightUnit = .lb
+    /// Weights show in the user's unit; lb until `GET /users/me` says otherwise (Sasa, Nov 4, 2026).
+    let unit: WeightUnit
 
     /// The search box. Each change sends one request after `typingDelay`.
     var text = "" {
-        didSet { if text != oldValue { search(after: Self.typingDelay) } }
+        didSet { if text != oldValue { search(after: ExerciseSearch.typingDelay) } }
     }
 
     /// The chip; `nil` is All. A change searches at once.
@@ -42,31 +29,43 @@ final class ExercisePickerModel {
     var sort: MyExerciseSort = .recent
     var selection = ExerciseSelection()
 
-    private(set) var results: [Exercise]
+    /// How many more exercises the workout can take (D-23): 30 from "Empty workout",
+    /// fewer from Add exercise in an open workout.
+    let remainingExercises: Int
+
     private(set) var mine: [UserExercise]
-    private(set) var state: SearchState
+    private let searcher: ExerciseSearch
+
+    var results: [Exercise] { searcher.results }
+    var state: SearchState { searcher.state }
     /// The trimmed text of the results on screen, for the "no match" message.
-    private(set) var resultsText = ""
+    var resultsText: String { searcher.resultsText }
 
     private let source: any ExerciseSource
     private let now: () -> Date
-    private var searchTask: Task<Void, Never>?
-    private var latestRequest = 0
 
     /// `results`, `mine` and `state` let previews start with data on screen.
-    init(source: any ExerciseSource, now: @escaping () -> Date = Date.init,
+    init(source: any ExerciseSource, remainingExercises: Int = ActiveWorkout.maxExercises,
+         unit: WeightUnit = .lb, now: @escaping () -> Date = Date.init,
          results: [Exercise] = [], mine: [UserExercise] = [], state: SearchState = .loading) {
         self.source = source
+        self.remainingExercises = remainingExercises
+        self.unit = unit
         self.now = now
-        self.results = results
+        self.searcher = ExerciseSearch(source: source, results: results, state: state)
         self.mine = mine
-        self.state = state
     }
 
     // MARK: What the view shows
 
     /// "Your exercises", filtered by the current results. Empty hides the section.
     var myRows: [MyExerciseRow] { myExerciseRows(mine, in: results, sort: sort) }
+
+    /// "Add" needs picks that fit in the workout (D-23).
+    var canAdd: Bool { selection.canAdd && selection.fits(remaining: remainingExercises) }
+
+    /// The line under "Add" when the 30-exercise limit matters, else nil.
+    var limitText: String? { selection.limitText(remaining: remainingExercises) }
 
     /// "No exercises match 'xyz'" when a search found nothing.
     var noMatchMessage: String? {
@@ -95,31 +94,8 @@ final class ExercisePickerModel {
         search(after: .zero)
     }
 
-    /// Cancels the waiting search and starts a new one. Only the newest request may change
-    /// the screen, so a slow reply for older text never replaces newer results.
     private func search(after delay: Duration) {
-        searchTask?.cancel()
-        latestRequest += 1
-        let request = latestRequest
-        let query = text
-        let groupID = group?.rawValue
-        searchTask = Task { [weak self] in
-            if delay > .zero {
-                try? await Task.sleep(for: delay)
-            }
-            guard !Task.isCancelled, let self else { return }
-            state = .loading // the last results stay on screen meanwhile
-            do {
-                let found = try await source.searchExercises(query, group: groupID)
-                guard request == latestRequest else { return }
-                results = found
-                resultsText = query.trimmingCharacters(in: .whitespacesAndNewlines)
-                state = .loaded
-            } catch {
-                guard request == latestRequest else { return }
-                state = .failed
-            }
-        }
+        searcher.search(text, group: group?.rawValue, after: delay)
     }
 }
 
@@ -132,14 +108,15 @@ struct PreviewExerciseSource: ExerciseSource {
     func searchExercises(_ query: String?, group: String?) async throws -> [Exercise] {
         if fails { throw APIError.transport(.notConnectedToInternet) }
         let text = (query ?? "").trimmingCharacters(in: .whitespaces).lowercased()
-        return PreviewData.exercises.filter { exercise in
+        let all = await PreviewData.exercises
+        return all.filter { exercise in
             (group.map { exercise.groups.contains($0) } ?? true)
                 && (text.isEmpty || exercise.name.lowercased().contains(text))
         }
     }
 
     func myExercises() async throws -> [UserExercise] {
-        isSignedIn ? PreviewData.myExercises : []
+        isSignedIn ? await PreviewData.myExercises : []
     }
 }
 #endif

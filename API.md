@@ -90,7 +90,7 @@ Send only the fields to change; fields left out stay as they are. The response i
 ```json
 {"bodyweight_kg": 81.5, "units": "kg"}
 ```
-Errors: `400 bad_request`, and nothing changes, when `units` is not `lb` or `kg`, `bodyweight_kg` is not a number above 0, `experience` is not one of the three values, or the body has any other field. Only `display_name`, `sex`, `birth_year`, `bodyweight_kg`, `units` and `experience` can be changed.
+Errors: `400 bad_request`, and nothing changes, when `units` is not `lb` or `kg`, `bodyweight_kg` is not a number above 0 and at most 500 (D-25), `experience` is not one of the three values, or the body has any other field. Only `display_name`, `sex`, `birth_year`, `bodyweight_kg`, `units` and `experience` can be changed.
 
 ### `GET /exercises?q=bench&group=chest`
 No auth: the library is the same for everyone. Both parameters are optional.
@@ -248,6 +248,22 @@ Errors: `400 bad_request`, and nothing is saved, when:
 - `effort_pct` is outside 0–100, or `weight_kg` is below 0;
 - a set has neither `reps` nor `duration_s`;
 - there are no sets, or more than 300;
+- the sets use more than 30 different `exercise_id`s (D-23);
+- a value is outside its limit (D-25), or a number is NaN or infinity:
+
+  | Field | Limit |
+  |---|---|
+  | `reps` | 1–1000 |
+  | `duration_s` | 1–3600 |
+  | `rest_before_s` | 0–3600, or `null` for the first set (0 is allowed: supersets) |
+  | `weight_kg` | 0–1000 |
+  | `added_load_kg` | −500 to 500 |
+  | `bodyweight_kg` | above 0 and at most 500 |
+  | `order` | 1–300 |
+  | `name` | 1–60 characters |
+  | `superset_group` | 1–60 characters |
+  | `timezone` | at most 64 characters |
+  | `template_id` | a lowercase UUID, or `null` |
 - `ended_at` is before `started_at`, or `local_date` is not `YYYY-MM-DD`;
 - `name`, `started_at`, `ended_at`, `timezone` or `local_date` is missing.
 
