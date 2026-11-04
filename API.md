@@ -8,7 +8,7 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 - **Base URL:** `http://localhost:5000/api/v1` locally; `https://<PROJECT_ID>.<REGION_ID>.r.appspot.com/api/v1` deployed.
 - **JSON** in and out, keys in `snake_case`. Timestamps are ISO 8601 in UTC. The app sends `2026-11-02T17:02:00Z`; it also accepts fractional seconds and `+00:00` (Python's `isoformat()`), so the server may send either.
 - **Examples as files:** every example below is also in `shared/fixtures/`. The iOS tests decode them, and server tests should produce the same shapes, so the two sides can't drift apart.
-- **Auth:** every endpoint except sign-in requires `Authorization: Bearer <token>`.
+- **Auth:** every endpoint except sign-in, `GET /health` and `GET /exercises` requires `Authorization: Bearer <token>`.
 - **Weights** are always kg, sent and stored at full precision (157.5 lb → 71.4408 kg), never rounded. The app converts to the user's units and rounds only for display. Dumbbell weights are one dumbbell's weight (pending team agreement).
 - **IDs** for workouts, sets and saved workouts (templates) are UUIDs made on the phone, always **lowercase** (Datastore keys are case-sensitive, so a retry must match exactly). Sending the same thing twice changes nothing.
 - **Lists are wrapped** in an object, e.g. `{"templates": [...]}`, never a bare array, so fields such as `next_cursor` can be added later without breaking the app (decided).
@@ -25,7 +25,7 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 | `GET /health` | Server is up: `{"status": "ok"}`. No auth | Deploy checks, the app's connection test | **built** |
 | `POST /auth/sms/start`, `POST /auth/sms/verify` | Sign in by phone code, return a token. No auth | Everything | **built** |
 | `GET /users/me`, `PUT /users/me` | Read or update the profile | Onboarding | agreed; shapes proposed |
-| `GET /exercises?q=bench` | Search exercises by name or alias | Adding exercises to a workout | agreed; shapes proposed |
+| `GET /exercises?q=bench&group=chest` | Search exercises by name or alias, optionally in one muscle group. No auth | Adding exercises to a workout | agreed |
 | `GET /exercises/mine` | This user's exercises: recent, most used, last set | Exercise picker | agreed; shapes proposed |
 | `GET /templates` | Saved workouts, with last-done time | Lift home | agreed; shapes proposed |
 | `POST /templates`, `PUT /templates/{id}`, `DELETE /templates/{id}` | Create, edit or delete a saved workout | Lift home | agreed; shapes proposed |
@@ -78,8 +78,15 @@ Send only the fields to change; fields left out stay as they are. The response i
 {"bodyweight_kg": 81.5, "units": "kg"}
 ```
 
-### `GET /exercises?q=bench`  (proposed shape)
-Matches name and aliases. Without `q`, returns the whole library.
+### `GET /exercises?q=bench&group=chest`
+No auth: the library is the same for everyone. Both parameters are optional.
+- **`q`:** an exercise matches when a word in its name or in one of its aliases starts with `q`. A word starts at the beginning, or after a space or a hyphen. Case doesn't matter, and spaces around `q` are ignored. So `squat` matches "Bulgarian Split Squat", and `up` matches "Push-up". Without `q` (or with a blank one), the whole library is returned.
+- **Order:** first exercises whose name starts with `q`, then those where a later word of the name does, then those that match only through an alias. Ties are A–Z by name. Without `q`, everything is A–Z.
+- **`group`:** one of the group IDs in `shared/muscles.json` (`chest`, `back`, `shoulders`, `arms`, `legs`, `core`). Keeps only exercises whose `groups` contain it. An unknown group is `400 bad_request`.
+
+Each exercise also has two fields the server works out from `shared/muscles.json`:
+- **`groups`:** the groups of all its `primary` muscles, the strongest muscle's group first, no repeats. Deadlift is in both Legs and Back.
+- **`primary_muscles`:** the display names of the parent muscles of its `primary` muscles, strongest first, no repeats. The app shows them under the name: "Glutes, Lower back, Hamstrings · Barbell".
 ```json
 {
   "exercises": [
@@ -92,12 +99,29 @@ Matches name and aliases. Without `q`, returns the whole library.
       "muscles": [
         {"muscle_id": "chest_sternal", "role": "primary", "weight": 1.0},
         {"muscle_id": "triceps_long", "role": "secondary", "weight": 0.5}
-      ]
+      ],
+      "groups": ["chest"],
+      "primary_muscles": ["Chest"]
+    },
+    {
+      "id": "deadlift",
+      "name": "Deadlift",
+      "aliases": ["conventional deadlift", "dl"],
+      "load_type": "barbell",
+      "bodyweight_fraction": null,
+      "muscles": [
+        {"muscle_id": "glutes_max", "role": "primary", "weight": 1.0},
+        {"muscle_id": "lower_back_erectors", "role": "primary", "weight": 0.9},
+        {"muscle_id": "hamstrings", "role": "primary", "weight": 0.8},
+        {"muscle_id": "quads", "role": "secondary", "weight": 0.5}
+      ],
+      "groups": ["legs", "back"],
+      "primary_muscles": ["Glutes", "Lower back", "Hamstrings"]
     }
   ]
 }
 ```
-Muscle IDs come from `shared/muscles.json` (not agreed yet; the IDs above are examples).
+The example is in `shared/fixtures/exercises_search.json` (the muscle lists are shortened).
 
 ### `GET /exercises/mine`  (proposed shape)
 ```json
