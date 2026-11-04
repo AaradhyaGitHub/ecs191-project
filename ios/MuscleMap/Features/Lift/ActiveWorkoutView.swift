@@ -12,7 +12,6 @@ struct ActiveWorkoutView: View {
 
     @State private var model: ActiveWorkoutModel
     @State private var path: [String] = []
-    @State private var opensSheetFor: String?
     @State private var isPicking = false
     @State private var asksToDiscardEmpty = false
     @State private var finishProblem: SaveProblem?
@@ -45,7 +44,7 @@ struct ActiveWorkoutView: View {
             .toolbarBackground(Theme.Colors.background, for: .navigationBar)
             .navigationBarBackButtonHidden()
             .navigationDestination(for: String.self) { blockID in
-                SetLogView(model: model, blockID: blockID, opensSheet: opensSheetFor == blockID)
+                SetLogView(model: model, blockID: blockID)
             }
         }
         .task { await model.load(using: apiClient) }
@@ -118,7 +117,7 @@ struct ActiveWorkoutView: View {
                         NoticeLine(text: problem)
                     }
                     if let next = active.upNext {
-                        upNextCard(next, active: active)
+                        upNextCard(next)
                     } else if active.blocks.isEmpty {
                         Text("Add an exercise to start.")
                             .font(Theme.Fonts.secondary)
@@ -148,7 +147,7 @@ struct ActiveWorkoutView: View {
         }
     }
 
-    private func upNextCard(_ block: WorkoutBlock, active: ActiveWorkout) -> some View {
+    private func upNextCard(_ block: WorkoutBlock) -> some View {
         CardView(isHighlighted: true) {
             VStack(alignment: .leading, spacing: Theme.Spacing.m) {
                 Text("Up next")
@@ -165,7 +164,7 @@ struct ActiveWorkoutView: View {
                         .foregroundStyle(Theme.Colors.textSecondary)
                 }
                 PrimaryButton(title: "Start", systemImage: "play.fill") {
-                    open(block.id, sheet: active.sets(in: block.id).isEmpty)
+                    open(block.id)
                 }
             }
         }
@@ -194,7 +193,7 @@ struct ActiveWorkoutView: View {
 
     /// A DONE row; tapping opens its set log (a done block can take more sets).
     private func blockRow(_ block: WorkoutBlock, detail: String) -> some View {
-        Button { open(block.id, sheet: false) } label: {
+        Button { open(block.id) } label: {
             HStack {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     Text(model.title(of: block))
@@ -239,8 +238,8 @@ struct ActiveWorkoutView: View {
 
     // MARK: Actions
 
-    private func open(_ blockID: String, sheet: Bool) {
-        opensSheetFor = sheet ? blockID : nil
+    /// Opens a block's set log; a block with no sets also opens the set sheet (`SetLogView`, #63).
+    private func open(_ blockID: String) {
         path.append(blockID)
     }
 

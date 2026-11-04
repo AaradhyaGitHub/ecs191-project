@@ -133,7 +133,8 @@ struct ExercisePickerView: View {
                 .padding(.vertical, Theme.Spacing.l)
         }
         ForEach(model.results) { exercise in
-            PickerRow(title: exercise.name, subtitle: exerciseSubtitle(exercise),
+            let parts = exerciseSubtitleParts(exercise)
+            PickerRow(title: exercise.name, subtitle: parts.muscles, tag: parts.equipment,
                       isPicked: model.selection.contains(exercise.id), style: .plus) {
                 model.selection.toggle(exercise)
             }
@@ -228,6 +229,8 @@ private struct PickerRow: View {
 
     let title: String
     let subtitle: String
+    /// The equipment, shown as a tag after the subtitle (#63); nil shows none.
+    var tag: String? = nil
     let isPicked: Bool
     let style: Style
     let action: () -> Void
@@ -246,10 +249,15 @@ private struct PickerRow: View {
                     Text(title)
                         .font(Theme.Fonts.rowTitle)
                         .foregroundStyle(Theme.Colors.textPrimary)
-                    Text(subtitle)
-                        .font(Theme.Fonts.secondary)
-                        .foregroundStyle(Theme.Colors.textSecondary)
-                        .lineLimit(1)
+                    HStack(spacing: Theme.Spacing.s + Theme.Spacing.xs) {
+                        if !subtitle.isEmpty {
+                            Text(subtitle)
+                                .font(Theme.Fonts.secondary)
+                                .foregroundStyle(Theme.Colors.textSecondary)
+                                .lineLimit(1)
+                        }
+                        if let tag { TagLabel(text: tag) }
+                    }
                 }
                 Spacer(minLength: 0)
                 Image(systemName: icon)

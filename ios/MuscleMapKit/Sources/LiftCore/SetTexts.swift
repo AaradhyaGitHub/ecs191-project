@@ -45,6 +45,26 @@ public func badge(for set: SetEntry, in sets: [SetEntry]) -> String {
     }
 }
 
+/// The set log's badge (#63): like `badge`, but a drop set reads "D". Drop sets still count
+/// toward the numbers of later sets, as failure sets do.
+public func logBadge(for set: SetEntry, in sets: [SetEntry]) -> String {
+    set.setType == .dropset ? "D" : badge(for: set, in: sets)
+}
+
+/// The effort battery's traffic-light level (#63): `.low` (green) under 80 %, `.mid` (yellow)
+/// 80–89 %, `.high` (red) from 90 % (near failure and failure).
+public enum EffortLevel: Sendable, Equatable {
+    case low, mid, high
+
+    public init(effortPct: Int) {
+        switch effortPct {
+        case ..<80: self = .low
+        case 80..<90: self = .mid
+        default: self = .high
+        }
+    }
+}
+
 /// The load column: "BW", "BW +10 lb", "155 lb", "45 s". Weights in `unit`, rounded for display.
 public func loadText(for set: SetEntry, unit: WeightUnit) -> String {
     if let kg = set.weightKg {

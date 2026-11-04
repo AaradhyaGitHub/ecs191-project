@@ -62,6 +62,26 @@ public func lastDoneText(_ date: Date?, now: Date, calendar: Calendar) -> String
     }
 }
 
+/// The short last-done text on a saved-workout card (#63): "today", "1d ago" … "13d ago",
+/// "2w ago" … "8w ago", then "2mo ago" and up; nil when never done. Counted in calendar days
+/// of `calendar`'s time zone; a time in the future reads "today".
+public func lastDoneShort(_ date: Date?, now: Date, calendar: Calendar) -> String? {
+    guard let date else { return nil }
+    let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: date),
+                                       to: calendar.startOfDay(for: now)).day ?? 0
+    switch days {
+    case ...0: return "today"
+    case 1...13: return "\(days)d ago"
+    case 14..<63: return "\(days / 7)w ago"
+    default: return "\(days / 30)mo ago"
+    }
+}
+
+/// The exercise count on a saved-workout card: "3x" (#63).
+public func exerciseCountShort(_ template: Template) -> String {
+    "\(template.exercises.count)x"
+}
+
 /// "Tricep focus · 5 exercises": the focus (left out when empty), then the exercise count.
 public func cardSubtitle(_ template: Template) -> String {
     let count = template.exercises.count

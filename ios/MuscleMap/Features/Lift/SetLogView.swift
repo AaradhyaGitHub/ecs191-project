@@ -8,12 +8,12 @@ import LiftCore
 struct SetLogView: View {
     let model: ActiveWorkoutModel
     let blockID: String
-    /// Opens the sheet on arrival (Start on a block with no sets).
-    var opensSheet = false
 
     @State private var filter: String?
     @State private var sheet: SetSheetRequest?
     @State private var didOpenSheet = false
+    /// True once a set sheet has really appeared on this visit.
+    @State private var sheetAppeared = false
     @Environment(\.dismiss) private var dismiss
 
     private var block: WorkoutBlock? { model.active?.block(blockID) }
@@ -54,14 +54,32 @@ struct SetLogView: View {
             SetEntrySheet(request: request, unit: model.unit, onUnitChange: model.setUnit) { draft in
                 model.submit(request, draft: draft)
             }
+            .onAppear { sheetAppeared = true }
         }
         .sensoryFeedback(.warning, trigger: model.restEndedCount)
-        .onAppear {
-            guard opensSheet, !didOpenSheet else { return }
-            didOpenSheet = true
+        .task { await openFirstSheet() }
+    }
+
+    /// A block with no sets opens the set sheet on arrival, once per visit (#63). This screen
+    /// decides by itself, so it doesn't depend on a flag from the push. A sheet asked for while
+    /// the screen is still sliding in can be dropped, and the push takes longer with Reduce
+    /// Motion or on a slow phone. So it asks again, a few times, until the sheet has really
+    /// appeared (review S2). It stops when the user leaves, logs a set or opens a sheet.
+    private func openFirstSheet() async {
+        guard !didOpenSheet, isEmptyBlock else { return }
+        didOpenSheet = true
+        for _ in 0..<Self.sheetTries {
+            try? await Task.sleep(for: .seconds(Self.sheetRetryTime))
+            guard !Task.isCancelled, !sheetAppeared, isEmptyBlock else { return }
             sheet = model.newSetRequest(in: blockID)
         }
     }
+
+    private var isEmptyBlock: Bool { model.active?.sets(in: blockID).isEmpty == true }
+
+    /// The first try comes after about one push; tries at 0.4, 0.8, 1.2 and 1.6 s.
+    private static let sheetRetryTime: TimeInterval = 0.4
+    private static let sheetTries = 4
 
     private func chips(for block: WorkoutBlock) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -105,19 +123,27 @@ struct SetLogView: View {
         }
     }
 
+    /// Names on rows only when the log shows more than one exercise: a superset with the
+    /// All chip on (#63).
+    private var showsNames: Bool {
+        (block?.exercises.count ?? 0) > 1 && filter == nil
+    }
+
     private func row(_ set: SetEntry) -> some View {
         let all = model.active?.sets ?? []
         let name = block?.exercises.first { $0.id == set.exerciseId }?.name ?? ""
         return HStack(spacing: Theme.Spacing.m) {
-            Text(LiftCore.badge(for: set, in: all))
+            Text(logBadge(for: set, in: all))
                 .font(Theme.Fonts.secondary.weight(.bold).monospacedDigit())
                 .foregroundStyle(set.setType == .warmup ? Theme.Colors.textSecondary : Theme.Colors.textPrimary)
                 .frame(width: Theme.Size.minTouchTarget * 0.7, height: Theme.Size.minTouchTarget * 0.7)
                 .background(Theme.Colors.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.chip))
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text(name)
-                    .font(Theme.Fonts.rowTitle)
-                    .foregroundStyle(Theme.Colors.textPrimary)
+                if showsNames {
+                    Text(name)
+                        .font(Theme.Fonts.rowTitle)
+                        .foregroundStyle(Theme.Colors.textPrimary)
+                }
                 Text(restText(for: set))
                     .font(Theme.Fonts.secondary)
                     .foregroundStyle(Theme.Colors.textSecondary)

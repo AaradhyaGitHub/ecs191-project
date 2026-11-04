@@ -21,6 +21,12 @@ struct LiftView: View {
     @State private var unit: WeightUnit = .lb
     /// Saved workouts (#43); made on first appear with the shared API client.
     @State private var saved: SavedWorkoutsModel?
+    /// Finish on the Resume card (#63): the confirm, then the same alerts as inside the workout.
+    @State private var asksToFinish = false
+    /// What Finish did, shown once the confirm alert has closed (review S1).
+    @State private var afterConfirm: FinishResult?
+    @State private var asksToDiscardEmpty = false
+    @State private var finishProblem: SaveProblem?
 
     init(saved: SavedWorkoutsModel? = nil) {
         _saved = State(initialValue: saved)
@@ -80,6 +86,52 @@ struct LiftView: View {
         } message: { _ in
             Text("It was not saved on the server. Deleting it can't be undone.")
         }
+        .alert("Finish this workout?", isPresented: $asksToFinish) {
+            Button("Finish", action: finishOpenWorkout)
+            Button("Cancel", role: .cancel) {}
+        }
+        .onChange(of: asksToFinish) { _, isShown in
+            if !isShown { showAfterConfirm() }
+        }
+        .alert("No sets logged. Discard this workout?", isPresented: $asksToDiscardEmpty) {
+            Button("Discard", role: .destructive) { session.discard() }
+            Button("Keep going", role: .cancel) {}
+        }
+        .alert(finishProblem.map(ActiveWorkoutModel.finishText) ?? "", isPresented: Binding(
+            get: { finishProblem != nil }, set: { if !$0 { finishProblem = nil } })) {
+            Button("OK", role: .cancel) {}
+        }
+    }
+
+    /// Finish on the Resume card (#63). With no sets it asks only "Discard this workout?"
+    /// (Sasa, Nov 4, 2026); otherwise it asks "Finish this workout?" first.
+    private func askToFinish(_ active: ActiveWorkout) {
+        afterConfirm = nil
+        if active.sets.isEmpty {
+            asksToDiscardEmpty = true
+        } else {
+            asksToFinish = true
+        }
+    }
+
+    /// The confirm's Finish does what Finish inside the workout does. What comes next (the
+    /// "Save as a workout" sheet or an alert) waits until the confirm alert has closed.
+    private func finishOpenWorkout() {
+        let result = ActiveWorkoutModel(session: session).finish()
+        if case .finished(let workout) = result { saved?.finished(workout) }
+        afterConfirm = result
+        // SwiftUI may close the alert before or after running this action.
+        if !asksToFinish { showAfterConfirm() }
+    }
+
+    private func showAfterConfirm() {
+        guard let result = afterConfirm else { return }
+        afterConfirm = nil
+        switch result {
+        case .finished: saved?.showPendingOffer()
+        case .noSets: asksToDiscardEmpty = true
+        case .notSaved(let problem): finishProblem = problem
+        }
     }
 
     /// "Add" in the picker: a new workout with the picks, opened at once.
@@ -109,36 +161,50 @@ struct LiftView: View {
         if session.start(workout) { showsWorkout = true }
     }
 
+    /// The open workout: name and clock, then Resume and Finish (#63).
     private func resumeCard(_ active: ActiveWorkout) -> some View {
         CardView(isHighlighted: true) {
-            HStack(spacing: Theme.Spacing.m) {
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    Text("Resume workout")
-                        .textCase(.uppercase)
-                        .font(Theme.Fonts.sectionHeader)
-                        .tracking(Theme.Fonts.sectionHeaderTracking)
-                        .foregroundStyle(Theme.Colors.accent)
-                    Text(active.name)
-                        .font(Theme.Fonts.cardTitle)
-                        .foregroundStyle(Theme.Colors.textPrimary)
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.m) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Resume workout")
+                            .textCase(.uppercase)
+                            .font(Theme.Fonts.sectionHeader)
+                            .tracking(Theme.Fonts.sectionHeaderTracking)
+                            .foregroundStyle(Theme.Colors.accent)
+                        Text(active.name)
+                            .font(Theme.Fonts.cardTitle)
+                            .foregroundStyle(Theme.Colors.textPrimary)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: Theme.Spacing.s)
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         Text(workoutClockText(since: active.startedAt, at: context.date))
                             .font(Theme.Fonts.secondary.monospacedDigit())
                             .foregroundStyle(Theme.Colors.textSecondary)
                     }
                 }
-                Spacer()
-                Button { showsWorkout = true } label: {
-                    Text("Resume")
-                        .font(Theme.Fonts.rowTitle.weight(.bold))
-                        .foregroundStyle(Theme.Colors.onAccent)
-                        .padding(.horizontal, Theme.Spacing.m)
-                        .frame(minHeight: Theme.Size.minTouchTarget)
-                        .background(Theme.Colors.accent, in: RoundedRectangle(cornerRadius: Theme.Radius.smallButton))
+                HStack(spacing: Theme.Spacing.s) {
+                    cardButton("Resume", isPrimary: true) {
+                        afterConfirm = nil
+                        showsWorkout = true
+                    }
+                    cardButton("Finish", isPrimary: false) { askToFinish(active) }
                 }
-                .buttonStyle(.plain)
             }
         }
+    }
+
+    private func cardButton(_ title: String, isPrimary: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(Theme.Fonts.rowTitle.weight(.bold))
+                .foregroundStyle(isPrimary ? Theme.Colors.onAccent : Theme.Colors.textPrimary)
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.minTouchTarget)
+                .background(isPrimary ? Theme.Colors.accent : Theme.Colors.surfaceRaised,
+                            in: RoundedRectangle(cornerRadius: Theme.Radius.smallButton))
+        }
+        .buttonStyle(.plain)
     }
 
     private var emptyWorkoutTile: some View {

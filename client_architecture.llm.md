@@ -38,10 +38,10 @@ A real phone needs the laptop's network address and `NSAllowsLocalNetworking` in
 Every tab shows its icon and its label; the selected tab uses `accent`.
 
 ## Lift screens (from the mockups)
-1. **`LiftHomeView`:** large title "Lift" with Edit. CREATE section: an *Empty workout* tile ("Add exercises as you go") and a *Custom plan* tile ("A multi-week program", disabled, "Soon" pill). SAVED WORKOUTS · n: cards with name, focus, exercise count, last-done time ("6 days ago"), muscle chips and Start. The next workout in rotation is highlighted with an accent border, an UP NEXT badge and an accent Start button.
-2. **`ExercisePickerView`** ("New workout", Cancel): search field, muscle-group filter chips (All, Chest, Back, Legs, Shoulders, …). YOUR EXERCISES with a Recent / Most used toggle, each row showing the last set ("Last: 155 lb × 5 · 2 days ago") and a checkbox. ALL EXERCISES rows show muscles and load type with a + button. Bottom: a "Pair as superset" toggle and a primary button ("Add 2 as superset").
+1. **`LiftHomeView`:** large title "Lift" with Edit. CREATE section: an *Empty workout* tile ("Add exercises as you go") and a *Custom plan* tile ("A multi-week program", disabled, "Soon" pill). SAVED WORKOUTS (no count): two-line cards (#63): line 1 the name (one line), the exercise count ("3x") and the last-done time ("6d ago"); line 2 the muscle chips and Start. No focus on the card. The next workout in rotation is highlighted with an accent border, an UP NEXT badge and an accent Start button.
+2. **`ExercisePickerView`** ("New workout", Cancel): search field, muscle-group filter chips (All, Chest, Back, Legs, Shoulders, …). YOUR EXERCISES with a Recent / Most used toggle, each row showing the last set ("Last: 155 lb × 5 · 2 days ago") and a checkbox. ALL EXERCISES rows show muscles and the load type as a tag (`TagLabel`) with a + button. Bottom: a "Pair as superset" toggle and a primary button ("Add 2 as superset").
 3. **`ActiveWorkoutView`:** back to Lift, workout clock, workout name, a segmented progress bar. An UP NEXT card (supersets show "Push-up + Inverted Row", rounds and rest pattern, and Start), then the next exercise ("then"), then DONE with a count and each finished exercise's set count. Bottom: Add exercise and Finish.
-4. **`SetLogView`** (e.g. "Superset A"): filter chips (All and one per exercise); "7 sets · in the order you did them"; each row has a set badge (W for warm-up, F for failure, else a number), exercise, rest before the set (or "First set · 6:02 PM"), reps, load (BW, BW +10 lb, or weight) and an effort battery. A rest strip with −30s, +30s and Skip, and a + button.
+4. **`SetLogView`** (e.g. "Superset A"): filter chips (All and one per exercise); "7 sets · in the order you did them"; each row has a set badge (W for warm-up, F for failure, D for a drop set, else a number), the exercise name (only when the log shows more than one exercise), rest before the set (or "First set · 6:02 PM"), reps, load (BW, BW +10 lb, or weight) and an effort battery. A rest strip with −30s, +30s and Skip, and a + button.
 5. **`SetEntrySheet`** (bottom sheet over the exercise): set number and type (Warm-up, Working, Drop set, Failure); a hero weight with "Same as last set" and the plate breakdown ("45 bar + 55 per side"); a plate loader (bar drawing; plate buttons 45, 35, 25, 10, 5, 2.5 add pairs; tap the bar to remove; Reset); REPS stepper; REST AFTER with ±30; EFFORT 60–100% (100% = failure); a primary "Log 6 × 155 lb" button. Bodyweight exercises show bodyweight ± load, timed holds show seconds.
 
 ## Design tokens (Lift Tab UI)
@@ -59,6 +59,7 @@ Dark only. Inter in the mockups, SF Pro on device. 8 pt spacing.
 | `textPrimary` | Titles, values | `#F2F2F0` |
 | `textSecondary` | Captions, labels, inactive tabs | `#9AA0AA` |
 | `intensity` 0–4 | Muscle shades, none to heavy | `#2F343E`, `#5C3B2E`, `#9C4A2A`, `#E0662E`, `#FFB46E` |
+| `effortLow`, `effortMid`, `effortHigh` | Effort battery traffic light: under 80 %, 80–89 %, 90 % and up (also the failure flame) | `#4CC38A`, `#F2C94C`, `#E5484D` |
 
 Decided Nov 3, 2026: this is the token set for `Theme.swift`. The setup guide's `surfaceBorder` is replaced by `surfaceRaised` and `border`.
 
@@ -74,6 +75,7 @@ Decided Nov 3, 2026: this is the token set for `Theme.swift`. The setup guide's 
 | `PrimaryButton` | Accent fill, onAccent text, 52 tall |
 | `MuscleChip` | Muscle name with an intensity square |
 | `SectionHeader` | Caps label with optional count |
-| `EffortBattery` | Battery drains from 60% to 90%; flame at 100% |
+| `EffortBattery` | Battery drains from 60% to 90%; flame at 100%; traffic-light colors (`effortLow/Mid/High`) |
+| `TagLabel` | A small rounded tag after a line of text (an exercise's equipment) |
 | `RestStrip` | Countdown with −30s, +30s, Skip |
 | `PlateLoader` | Bar drawing plus plate buttons; adds pairs |
