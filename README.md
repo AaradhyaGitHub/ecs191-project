@@ -53,7 +53,7 @@ In server tests, the `signed_in` fixture gives you a signed-in user in one line,
 ## Run the app
 Requires **Xcode 27.2 or newer**: the project uses Xcode 27's project format, which older Xcode versions can't open. The app itself runs on iOS 17 and later, iPhone only.
 
-Open `ios/MuscleMap.xcodeproj` in Xcode and run on a simulator. If no simulators are listed, install the matching iOS simulator in Xcode → Settings → Components. Debug builds talk to `http://localhost:5001`. On a real phone, use your laptop's network address instead.
+Open `ios/MuscleMap.xcodeproj` in Xcode and run on a simulator. If no simulators are listed, install the matching iOS simulator in Xcode → Settings → Components. Debug builds on the Simulator talk to `http://localhost:5001`. On a real phone, Debug builds talk to the live server on App Engine and sign in with the shared test number, so anything you log there is visible to anyone with that number.
 
 ## Tests
 ```sh
