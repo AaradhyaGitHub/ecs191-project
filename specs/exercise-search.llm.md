@@ -136,5 +136,5 @@ None.
 - [x] Scaffold (638e175)
 - [x] Tests red (23209ef)
 - [x] Build green (1bf8126)
-- [ ] Review
+- [x] Review (0 blockers; S1 and S2 deferred to #44)
 - [ ] PR
