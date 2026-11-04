@@ -19,6 +19,11 @@ public struct TemplateExercise: Codable, Hashable, Sendable {
 public struct TopMuscle: Codable, Hashable, Sendable {
     public var muscleId: String
     public var level: Int
+
+    public init(muscleId: String, level: Int) {
+        self.muscleId = muscleId
+        self.level = level
+    }
 }
 
 /// A saved workout ("Push 1"), as the server returns it (`GET /templates`).

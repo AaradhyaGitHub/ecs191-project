@@ -50,6 +50,15 @@ public struct LastSet: Codable, Hashable, Sendable {
     public var reps: Int?
     public var durationS: Int?
     public var effortPct: Int?
+
+    public init(weightKg: Double? = nil, addedLoadKg: Double? = nil, reps: Int? = nil,
+                durationS: Int? = nil, effortPct: Int? = nil) {
+        self.weightKg = weightKg
+        self.addedLoadKg = addedLoadKg
+        self.reps = reps
+        self.durationS = durationS
+        self.effortPct = effortPct
+    }
 }
 
 /// This user's history with one exercise (`GET /exercises/mine`).
@@ -62,6 +71,16 @@ public struct UserExercise: Codable, Identifiable, Hashable, Sendable {
     public var bestE1rmAt: Date?
 
     public var id: String { exerciseId }
+
+    public init(exerciseId: String, useCount: Int, lastUsedAt: Date, lastSet: LastSet? = nil,
+                bestE1rmKg: Double? = nil, bestE1rmAt: Date? = nil) {
+        self.exerciseId = exerciseId
+        self.useCount = useCount
+        self.lastUsedAt = lastUsedAt
+        self.lastSet = lastSet
+        self.bestE1rmKg = bestE1rmKg
+        self.bestE1rmAt = bestE1rmAt
+    }
 }
 
 public struct ExerciseList: Codable, Sendable {
