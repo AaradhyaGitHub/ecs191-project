@@ -31,6 +31,7 @@ Branch: <branch from the brief>
 6. **Tests:** which tier each criterion is tested at (unit, integration, UI smoke), and the test files.
 7. **`## Test-writer may read`:** a bullet list of the source files (paths from the repo root, in backticks) that hold the interface, and nothing more. The test-writer can't read any other source file.
 8. **Open questions** for the humans.
+   **Optional: `## Walkthrough`.** If the feature changes what the user sees and the human wants one (ask if unsure), list the exact taps that show the new behavior on the Simulator, one action per step, with the setup (local server on port 5001, emulator, test sign-in). Leave the section out otherwise.
 9. **`## Progress`**, last, exactly this list, all unticked:
    ```
    - [ ] Plan approved
@@ -53,8 +54,9 @@ Only after the plan's status says approved. Create the interface from the plan w
 1. Implement until the feature's tests pass. **Never edit the test files test-writer wrote.** If a test looks wrong, stop and report why; a human decides.
 2. Run the affected tests (CLAUDE.md "Testing"), then the full fast suite before you report done.
 3. iOS: build through the Xcode MCP (`BuildProject`) when it's available; zero new warnings. UI work: render the SwiftUI previews and say which screens to look at.
-4. Commit in small steps with explicit paths: `feat(<feature>): …`, `fix(<feature>): …`.
-5. When fixing review findings, fix only those; each fixed finding gets a test.
+4. **If the plan has a `## Walkthrough`:** after the tests pass and before the review, run it on the Simulator from the lane's own Xcode window (never another checkout's window). Record it on video (`xcrun simctl io booted recordVideo`, stopped with SIGINT), pause about a second between steps, and take 3 to 5 screenshots of the key states. Report the file paths. If a step fails or looks wrong, stop and report it.
+5. Commit in small steps with explicit paths: `feat(<feature>): …`, `fix(<feature>): …`.
+6. When fixing review findings, fix only those; each fixed finding gets a test.
 
 ## Rules
 - Stay inside the plan. Ideas outside it go in your report as suggestions, not code.
