@@ -66,3 +66,53 @@ def test_unreachable_service_is_internal(monkeypatch):
     with pytest.raises(ApiError) as err:
         sms_auth.send_code("+15305550000")
     assert err.value.code == "internal"
+
+
+# --- Odd responses from the course service (review finding S3) ---------------------------
+
+@pytest.mark.parametrize("reply", [(200, {}), (200, {"success": True})])
+def test_verify_without_a_user_id_is_internal(monkeypatch, reply):
+    monkeypatch.setattr(sms_auth, "_post", lambda path, payload: reply)
+    with pytest.raises(ApiError) as err:
+        sms_auth.check_code("+15305550000", "123456")
+    assert err.value.code == "internal"
+
+
+@pytest.mark.parametrize("status", [500, 502, 503, 429])
+def test_course_server_errors_are_internal(monkeypatch, status):
+    monkeypatch.setattr(sms_auth, "_post", lambda path, payload: (status, {}))
+    with pytest.raises(ApiError) as err:
+        sms_auth.send_code("+15305550000")
+    assert err.value.code == "internal"
+
+
+@pytest.mark.parametrize("raw", [b"[]", b'"oops"', b"<html>Bad Gateway</html>", b"", b"null"])
+def test_non_object_bodies_read_as_empty(raw):
+    assert sms_auth._as_object(raw) == {}
+
+
+@pytest.mark.parametrize("status,raw", [(200, b"[]"), (502, b"<html>Bad Gateway</html>"), (200, b"null")])
+def test_real_post_handles_non_object_responses(monkeypatch, status, raw):
+    """Runs the real _post against a tiny local HTTP server that sends odd bodies."""
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("Content-Length", 0)))
+            self.send_response(status)
+            self.end_headers()
+            self.wfile.write(raw)
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        monkeypatch.setattr(sms_auth, "COURSE_AUTH_URL", f"http://127.0.0.1:{server.server_port}")
+        with pytest.raises(ApiError) as err:
+            sms_auth.check_code("+15305550000", "123456")
+        assert err.value.code == "internal"
+    finally:
+        server.shutdown()

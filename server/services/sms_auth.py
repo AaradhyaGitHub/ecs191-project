@@ -38,13 +38,18 @@ def _post(path: str, payload: dict) -> tuple[int, dict]:
     )
     try:
         with urllib.request.urlopen(request, timeout=TIMEOUT_S) as response:
-            return response.status, json.loads(response.read() or b"{}")
+            return response.status, _as_object(response.read())
     except urllib.error.HTTPError as err:
-        try:
-            body = json.loads(err.read() or b"{}")
-        except ValueError:
-            body = {}
-        return err.code, body
+        return err.code, _as_object(err.read())
+
+
+def _as_object(raw: bytes) -> dict:
+    """The JSON body if it's an object; {} for empty, invalid or non-object JSON (e.g. a proxy page)."""
+    try:
+        body = json.loads(raw or b"{}")
+    except ValueError:
+        return {}
+    return body if isinstance(body, dict) else {}
 
 
 def _payload(phone_number: str, **extra) -> dict:
@@ -67,9 +72,13 @@ def _call(path: str, payload: dict) -> dict:
     except (OSError, ValueError):
         raise ApiError("internal", "The sign-in service can't be reached right now. Try again.")
 
+    if not isinstance(body, dict):
+        body = {}
     if status == 200:
         return body
     message = str(body.get("error") or "Sign-in failed.")
+    # Matches the course service's wording ("app_token is required" / "Invalid app_token").
+    # Re-check it against the real service once our app token arrives (review finding S4).
     if status == 401 and "app_token" in message:
         raise ApiError("forbidden", "Real phone numbers can't sign in yet (the course app token isn't "
                                     f"set up). Use the test number {TEST_PHONE} with code {TEST_CODE}.")

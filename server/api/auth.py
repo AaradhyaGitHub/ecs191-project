@@ -42,10 +42,11 @@ def require_user(view):
     """Rejects requests without a valid `Authorization: Bearer <token>`; passes `user_id` first."""
     @wraps(view)
     def wrapper(*args, **kwargs):
-        header = request.headers.get("Authorization", "")
-        if not header.startswith("Bearer ") or not header[7:].strip():
+        scheme, _, token = request.headers.get("Authorization", "").partition(" ")
+        token = token.strip()
+        if scheme.lower() != "bearer" or not token:
             raise ApiError("unauthorized", "Sign in first: send Authorization: Bearer <token>.")
-        user_id = auth_service.user_id_for_token(header[7:].strip())
+        user_id = auth_service.user_id_for_token(token)
         if user_id is None:
             raise ApiError("unauthorized", "That sign-in isn't valid anymore. Sign in again.")
         return view(user_id, *args, **kwargs)

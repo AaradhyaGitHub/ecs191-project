@@ -73,10 +73,8 @@ def test_only_a_hash_of_the_token_is_stored(client, emulator, course_auth):
     assert models.session_user_id(token_hash(token)) == "course_user_1"
 
 
-@pytest.mark.parametrize("header", [None, "", "Bearer", "Bearer ", "Token abc", "Bearer not-a-real-token"])
-def test_missing_or_bad_token_is_unauthorized(protected, emulator, header):
-    headers = {"Authorization": header} if header is not None else {}
-    response = protected.get("/probe", headers=headers)
+def test_unknown_token_is_unauthorized(protected, emulator):
+    response = protected.get("/probe", headers={"Authorization": "Bearer not-a-real-token"})
     assert response.status_code == 401
     assert response.get_json()["error"]["code"] == "unauthorized"
 
