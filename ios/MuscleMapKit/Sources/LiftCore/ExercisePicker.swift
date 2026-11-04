@@ -88,6 +88,24 @@ public struct ExerciseSelection: Equatable, Sendable {
     }
 }
 
+// MARK: The 30-exercise limit (D-23)
+
+extension ExerciseSelection {
+    /// Whether the picks fit in a workout that can take `remaining` more exercises.
+    public func fits(remaining: Int) -> Bool { picked.count <= remaining }
+
+    /// The line under "Add" when the limit matters, else nil. `remaining` is how many more
+    /// exercises the workout can take (30 from "Empty workout").
+    public func limitText(remaining: Int) -> String? {
+        if remaining <= 0 {
+            return "This workout has \(ActiveWorkout.maxExercises) exercises, the most it can have."
+        }
+        guard !fits(remaining: remaining) else { return nil }
+        let more = max(0, remaining - picked.count)
+        return "A workout can have up to \(ActiveWorkout.maxExercises) exercises. You can add \(more) more."
+    }
+}
+
 /// The last set in a row's subtitle, e.g. "155 lb × 5", "BW +10 lb × 8", "45 s".
 /// A weighted set shows its weight, a timed set its seconds, anything else is bodyweight ("BW").
 public func lastSetText(_ set: LastSet, unit: WeightUnit) -> String {

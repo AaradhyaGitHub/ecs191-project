@@ -4,7 +4,6 @@ import SwiftData
 
 // Phone storage for the open workout and the outbox (plan: specs/log-workout.llm.md, D-20:
 // one SwiftData row per workout holding its JSON, so changing fields needs no migration).
-// SCAFFOLD: SwiftDataWorkoutStorage stores nothing yet. Build mode fills it in.
 
 /// A finished workout that is not on the server yet.
 public struct OutboxItem: Codable, Identifiable, Equatable, Sendable {
@@ -62,9 +61,12 @@ public final class SwiftDataWorkoutStorage: WorkoutStorage {
     /// The model types this storage needs, for the app's `ModelContainer`.
     public static let modelTypes: [any PersistentModel.Type] = [StoredWorkoutRow.self]
 
+    /// Kept, because a context whose container is gone crashes on use.
+    private let container: ModelContainer
     private let context: ModelContext
 
     public init(container: ModelContainer) {
+        self.container = container
         self.context = container.mainContext
     }
 
@@ -75,23 +77,70 @@ public final class SwiftDataWorkoutStorage: WorkoutStorage {
         self.init(container: container)
     }
 
+    // MARK: Rows
+
+    private static let activeKind = "active"
+    private static let outboxKind = "outbox"
+
+    /// Plain JSON (dates as exact seconds), so a stored workout loads back unchanged.
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+
+    private func rows(kind: String) -> [StoredWorkoutRow] {
+        let descriptor = FetchDescriptor<StoredWorkoutRow>(
+            predicate: #Predicate { $0.kind == kind },
+            sortBy: [SortDescriptor(\.position)])
+        return (try? context.fetch(descriptor)) ?? []
+    }
+
+    private func save() {
+        try? context.save()
+    }
+
+    // MARK: Active workout
+
     public func loadActive() -> ActiveWorkout? {
-        nil
+        rows(kind: Self.activeKind).first.flatMap { try? decoder.decode(ActiveWorkout.self, from: $0.json) }
     }
 
     public func saveActive(_ workout: ActiveWorkout) {
+        guard let json = try? encoder.encode(workout) else { return }
+        let existing = rows(kind: Self.activeKind)
+        if let row = existing.first {
+            row.key = workout.id
+            row.json = json
+            existing.dropFirst().forEach(context.delete)
+        } else {
+            context.insert(StoredWorkoutRow(kind: Self.activeKind, key: workout.id, position: 0, json: json))
+        }
+        save()
     }
 
     public func clearActive() {
+        rows(kind: Self.activeKind).forEach(context.delete)
+        save()
     }
 
+    // MARK: Outbox
+
     public func outboxItems() -> [OutboxItem] {
-        []
+        rows(kind: Self.outboxKind).compactMap { try? decoder.decode(OutboxItem.self, from: $0.json) }
     }
 
     public func saveOutboxItem(_ item: OutboxItem) {
+        guard let json = try? encoder.encode(item) else { return }
+        let existing = rows(kind: Self.outboxKind)
+        if let row = existing.first(where: { $0.key == item.id }) {
+            row.json = json
+        } else {
+            let position = (existing.map(\.position).max() ?? -1) + 1
+            context.insert(StoredWorkoutRow(kind: Self.outboxKind, key: item.id, position: position, json: json))
+        }
+        save()
     }
 
     public func removeOutboxItem(id: String) {
+        rows(kind: Self.outboxKind).filter { $0.key == id }.forEach(context.delete)
+        save()
     }
 }

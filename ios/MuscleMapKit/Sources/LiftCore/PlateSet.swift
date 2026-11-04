@@ -23,7 +23,6 @@ public struct PlateSet: Equatable, Sendable {
 
 /// The plates on the bar in the plate loader (plan: specs/log-workout.llm.md, "Plates").
 /// Each plate is a pair, one per side. Values are in `plateSet.unit`.
-/// SCAFFOLD: the methods return valid but wrong values. Build mode fills them in.
 public struct PlateLoad: Equatable, Sendable {
     public let plateSet: PlateSet
     /// One entry per pair, in the order added.
@@ -36,25 +35,42 @@ public struct PlateLoad: Equatable, Sendable {
 
     /// Adds a pair of `plate` (one per side).
     public mutating func add(_ plate: Double) {
+        pairs.append(plate)
     }
 
     /// Removes the last pair added (tapping the bar). The empty bar stays.
     public mutating func removeLast() {
+        _ = pairs.popLast()
     }
 
     /// Back to the empty bar.
     public mutating func reset() {
+        pairs.removeAll()
     }
 
+    /// The plates on one side, in `plateSet.unit`.
+    public var perSide: Double { pairs.reduce(0, +) }
+
     /// Bar plus both sides, in `plateSet.unit`.
-    public var total: Double { 0 }
+    public var total: Double { plateSet.bar + 2 * perSide }
 
     /// "45 bar + 55 per side".
-    public var breakdown: String { "" }
+    public var breakdown: String {
+        "\(numberText(plateSet.bar)) bar + \(numberText(perSide)) per side"
+    }
 
     /// The heaviest load the plates can make that is not above `target` (in `plateSet.unit`);
     /// 157 lb gives 155 lb. Below the bar, the empty bar.
     public static func nearestLoad(to target: Double, with plateSet: PlateSet) -> PlateLoad {
-        PlateLoad(plateSet: plateSet)
+        var load = PlateLoad(plateSet: plateSet)
+        var left = (target - plateSet.bar) / 2
+        // Every plate is a multiple of the smallest one, so heaviest-first reaches the best load.
+        for plate in plateSet.plates.sorted(by: >) {
+            while left >= plate - 1e-9 {
+                load.add(plate)
+                left -= plate
+            }
+        }
+        return load
     }
 }
