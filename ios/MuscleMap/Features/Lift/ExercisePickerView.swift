@@ -156,8 +156,14 @@ struct ExercisePickerView: View {
                 onAdd(model.selection)
                 dismiss()
             }
-            .disabled(!model.selection.canAdd)
-            .opacity(model.selection.canAdd ? 1 : 0.4)
+            .disabled(!model.canAdd)
+            .opacity(model.canAdd ? 1 : 0.4)
+            if let limit = model.limitText {
+                Text(limit)
+                    .font(Theme.Fonts.secondary)
+                    .foregroundStyle(Theme.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
         }
         .padding(.horizontal, Theme.Spacing.gutter)
         .padding(.vertical, Theme.Spacing.m)
@@ -276,6 +282,13 @@ private struct PickerRow: View {
     ExercisePickerView(model: ExercisePickerModel(
         source: PreviewExerciseSource(isSignedIn: false), now: { PreviewData.now },
         results: PreviewData.exercises, state: .loaded)) { _ in }
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Workout almost full") {
+    ExercisePickerView(model: ExercisePickerModel(
+        source: PreviewExerciseSource(), remainingExercises: 1, now: { PreviewData.now },
+        results: PreviewData.exercises, mine: PreviewData.myExercises, state: .loaded)) { _ in }
         .preferredColorScheme(.dark)
 }
 

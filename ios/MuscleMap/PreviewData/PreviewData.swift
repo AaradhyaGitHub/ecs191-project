@@ -1,6 +1,8 @@
 #if DEBUG
 import Foundation
 import Models
+import Networking
+import LiftCore
 
 /// Sample data for SwiftUI previews, matching the Lift mockups. Use it in any tab's
 /// `#Preview` instead of calling the server, e.g. `LiftHomeView(templates: PreviewData.templates)`.
@@ -114,5 +116,50 @@ enum PreviewData {
                        startedAt: daysAgo(6), endedAt: daysAgo(5.95), localDate: "2026-10-28",
                        setCount: 22, exerciseCount: 8),
     ]
+}
+// MARK: - The open workout (log a workout, #42)
+
+extension PreviewData {
+    /// A sender that never reaches a server, so outbox items stay in previews.
+    struct OfflineSender: WorkoutSending {
+        func saveWorkout(_ workout: Workout) async throws -> Workout {
+            throw APIError.transport(.notConnectedToInternet)
+        }
+    }
+
+    /// A Push workout: a superset of Push-up + Inverted Row, then Bench Press and Plank.
+    static func activeWorkout(withSets: Bool) -> ActiveWorkout {
+        var workout = ActiveWorkout(name: "Workout", startedAt: now.addingTimeInterval(-25 * 60))
+        workout.add([pushUp, invertedRow], asSuperset: true, restS: 90)
+        workout.add([benchPress, plank], asSuperset: false)
+        guard withSets else { return workout }
+        let superset = workout.blocks[0].id
+        var time = workout.startedAt.addingTimeInterval(120)
+        for (exercise, reps) in [(pushUp, 20), (invertedRow, 12), (pushUp, 18), (invertedRow, 10)] {
+            let draft = SetDraft(exerciseId: exercise.id, loadType: exercise.loadType, reps: reps,
+                                 effortPct: reps > 15 ? 80 : 90)
+            workout.log(draft, in: superset, at: time)
+            time.addTimeInterval(75)
+        }
+        workout.startRest(seconds: 90, at: Date())
+        return workout
+    }
+
+    /// A session on an in-memory store. `open` starts a workout; `outboxed` adds finished
+    /// workouts that weren't uploaded.
+    @MainActor
+    static func liftSession(open: Bool = true, withSets: Bool = false, outboxed: Int = 0) -> LiftSession {
+        // In-memory storage can't fail in practice; previews may stop if it does.
+        let storage = try! SwiftDataWorkoutStorage(inMemory: true)
+        let outbox = WorkoutOutbox(storage: storage, sender: OfflineSender())
+        for index in 0..<outboxed {
+            var finished = activeWorkout(withSets: true)
+            finished.name = "Push \(index + 1)"
+            outbox.finish(finished, at: now)
+        }
+        let session = LiftSession(storage: storage, outbox: outbox)
+        if open { session.start(activeWorkout(withSets: withSets)) }
+        return session
+    }
 }
 #endif

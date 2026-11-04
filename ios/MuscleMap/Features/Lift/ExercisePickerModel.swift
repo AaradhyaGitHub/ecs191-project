@@ -42,6 +42,10 @@ final class ExercisePickerModel {
     var sort: MyExerciseSort = .recent
     var selection = ExerciseSelection()
 
+    /// How many more exercises the workout can take (D-23): 30 from "Empty workout",
+    /// fewer from Add exercise in an open workout.
+    let remainingExercises: Int
+
     private(set) var results: [Exercise]
     private(set) var mine: [UserExercise]
     private(set) var state: SearchState
@@ -54,9 +58,11 @@ final class ExercisePickerModel {
     private var latestRequest = 0
 
     /// `results`, `mine` and `state` let previews start with data on screen.
-    init(source: any ExerciseSource, now: @escaping () -> Date = Date.init,
+    init(source: any ExerciseSource, remainingExercises: Int = ActiveWorkout.maxExercises,
+         now: @escaping () -> Date = Date.init,
          results: [Exercise] = [], mine: [UserExercise] = [], state: SearchState = .loading) {
         self.source = source
+        self.remainingExercises = remainingExercises
         self.now = now
         self.results = results
         self.mine = mine
@@ -67,6 +73,12 @@ final class ExercisePickerModel {
 
     /// "Your exercises", filtered by the current results. Empty hides the section.
     var myRows: [MyExerciseRow] { myExerciseRows(mine, in: results, sort: sort) }
+
+    /// "Add" needs picks that fit in the workout (D-23).
+    var canAdd: Bool { selection.canAdd && selection.fits(remaining: remainingExercises) }
+
+    /// The line under "Add" when the 30-exercise limit matters, else nil.
+    var limitText: String? { selection.limitText(remaining: remainingExercises) }
 
     /// "No exercises match 'xyz'" when a search found nothing.
     var noMatchMessage: String? {
