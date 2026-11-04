@@ -23,26 +23,32 @@ enum PreviewData {
         id: "barbell_bench_press", name: "Bench Press", aliases: ["bench", "bp"], loadType: .barbell,
         muscles: [ExerciseMuscle(muscleId: "chest_sternal", role: .primary, weight: 1.0),
                   ExerciseMuscle(muscleId: "delts_front", role: .secondary, weight: 0.5),
-                  ExerciseMuscle(muscleId: "triceps", role: .secondary, weight: 0.5)])
+                  ExerciseMuscle(muscleId: "triceps", role: .secondary, weight: 0.5)],
+        groups: ["chest"], primaryMuscles: ["Chest"])
     static let pushUp = Exercise(
         id: "push_up", name: "Push-up", aliases: ["pushup"], loadType: .bodyweight, bodyweightFraction: 0.64,
         muscles: [ExerciseMuscle(muscleId: "chest_sternal", role: .primary, weight: 1.0),
-                  ExerciseMuscle(muscleId: "triceps", role: .secondary, weight: 0.5)])
+                  ExerciseMuscle(muscleId: "triceps", role: .secondary, weight: 0.5)],
+        groups: ["chest"], primaryMuscles: ["Chest"])
     static let invertedRow = Exercise(
         id: "inverted_row", name: "Inverted Row", loadType: .bodyweight, bodyweightFraction: 0.6,
         muscles: [ExerciseMuscle(muscleId: "lats_latissimus", role: .primary, weight: 1.0),
-                  ExerciseMuscle(muscleId: "biceps", role: .secondary, weight: 0.5)])
+                  ExerciseMuscle(muscleId: "biceps", role: .secondary, weight: 0.5)],
+        groups: ["back"], primaryMuscles: ["Lats"])
     static let overheadPress = Exercise(
         id: "barbell_overhead_press", name: "Barbell Overhead Press", aliases: ["ohp"], loadType: .barbell,
         muscles: [ExerciseMuscle(muscleId: "delts_front", role: .primary, weight: 1.0),
-                  ExerciseMuscle(muscleId: "triceps", role: .secondary, weight: 0.6)])
+                  ExerciseMuscle(muscleId: "triceps", role: .secondary, weight: 0.6)],
+        groups: ["shoulders"], primaryMuscles: ["Delts"])
     static let backSquat = Exercise(
         id: "back_squat", name: "Back Squat", aliases: ["squat"], loadType: .barbell,
         muscles: [ExerciseMuscle(muscleId: "quads", role: .primary, weight: 1.0),
-                  ExerciseMuscle(muscleId: "glutes_max", role: .primary, weight: 0.9)])
+                  ExerciseMuscle(muscleId: "glutes_max", role: .primary, weight: 0.9)],
+        groups: ["legs"], primaryMuscles: ["Quads", "Glutes"])
     static let plank = Exercise(
         id: "plank", name: "Plank", loadType: .timed,
-        muscles: [ExerciseMuscle(muscleId: "abs_rectus", role: .primary, weight: 1.0)])
+        muscles: [ExerciseMuscle(muscleId: "abs_rectus", role: .primary, weight: 1.0)],
+        groups: ["core"], primaryMuscles: ["Abs"])
 
     static let exercises = [benchPress, pushUp, invertedRow, overheadPress, backSquat, plank]
 
