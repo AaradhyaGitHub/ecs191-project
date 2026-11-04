@@ -172,6 +172,16 @@ A reference such as "D13" in the plan points to this list. Sasa took every recom
 18. **Start while a workout is open:** disabled, as Empty workout is.
 19. **UP NEXT right after Finish:** the app sets `last_done_at` on the card at once; the server catches up when the outbox sends.
 
+## Decided (Sasa, Nov 4, 2026), after review
+These replace D9's "never done" effect, D12 and the UP NEXT rule above where they differ.
+20. **S-1:** `record_done` never fails `POST /workouts`, first save or repeat. An error is logged and the workout is returned with its normal status.
+21. **"Save as a workout" counts as done:** the new saved workout's `last_done_at` = the finished workout's `started_at`. `POST /templates` takes an optional `last_done_at` (ISO; at most 5 minutes ahead of the server clock, else `400`); `PUT` ignores it. `TemplateInput.lastDoneAt`.
+22. **UP NEXT without a plan:** the saved workout done longest ago among those with a `last_done_at`; never-done ones are never UP NEXT; no UP NEXT until at least 2 have a `last_done_at`. Ties go to the first in server order. With a plan (the later "Custom plan" feature), UP NEXT follows the plan.
+23. **Card order:** UP NEXT on top (if any), then the others newest-created first.
+24. **Card text:** "Last done 6 days ago"; a never-done card shows no time line ("Not done yet" is gone).
+25. **S-4:** on Lift appearing, the outbox upload, `GET /users/me` and the saved-workouts load run at the same time, upload started first.
+26. **Bundled exercise library:** the app ships the 45-exercise library as one generated file, `ios/MuscleMapKit/Sources/LiftCore/Resources/exercise_library.json`, in `GET /exercises`' shape, made by `server/seed/export_library.py`; a server test fails when it is out of date. Start uses it, so Lift never downloads the library. The picker's search stays on the server. Exercises missing from it are skipped on Start.
+
 ## Open questions
 None.
 
