@@ -1,6 +1,6 @@
 {
   "workouts": [
-    {"id": "6f1c2b1e-4b7a-4c3e-9d2a-0a1b2c3d4e5f", "name": "Push 1", "template_id": "tpl_push1",
+    {"id": "6f1c2b1e-4b7a-4c3e-9d2a-0a1b2c3d4e5f", "name": "Push 1", "template_id": "3c9d7e1a-5b2f-4c8d-a6e4-7f8a9b0c1d2e",
      "started_at": "2026-11-02T17:02:00Z", "ended_at": "2026-11-02T19:33:00Z",
      "local_date": "2026-11-02", "set_count": 31, "exercise_count": 10}
   ]

@@ -27,8 +27,8 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 | `GET /users/me`, `PUT /users/me` | Read or update the profile | Onboarding | agreed |
 | `GET /exercises?q=bench&group=chest` | Search exercises by name or alias, optionally in one muscle group. No auth | Adding exercises to a workout | agreed |
 | `GET /exercises/mine` | This user's exercises: recent, most used, last set | Exercise picker | agreed; shapes proposed |
-| `GET /templates` | Saved workouts, with last-done time | Lift home | agreed; shapes proposed |
-| `POST /templates`, `PUT /templates/{id}`, `DELETE /templates/{id}` | Create, edit or delete a saved workout | Lift home | agreed; shapes proposed |
+| `GET /templates` | Saved workouts, with last-done time | Lift home | agreed |
+| `POST /templates`, `PUT /templates/{id}`, `DELETE /templates/{id}` | Create, edit or delete a saved workout | Lift home | agreed |
 | `POST /workouts` | Save a finished workout and all its sets | Finishing a workout | agreed |
 | `GET /workouts?limit=20` | Recent workouts, newest first | History on Home | agreed (`before` comes with Home) |
 | `GET /workouts/{id}` | One workout with its sets | Workout detail | agreed |
@@ -154,31 +154,61 @@ The example is in `shared/fixtures/exercises_search.json` (the muscle lists are 
 ```
 The app sorts by `last_used_at` for Recent and by `use_count` for Most used.
 
-### `GET /templates`  (proposed shape)
+### `GET /templates`  (agreed)
+This user's saved workouts, oldest-created first. A new user gets `{"templates": []}`.
 ```json
 {
   "templates": [
     {
-      "id": "tpl_push1",
+      "id": "3c9d7e1a-5b2f-4c8d-a6e4-7f8a9b0c1d2e",
       "name": "Push 1",
       "focus": "tricep focus",
       "exercises": [
-        {"exercise_id": "barbell_bench_press", "target_sets": 4, "target_reps": 6, "rest_s": 180}
+        {"exercise_id": "barbell_bench_press", "target_sets": 4, "target_reps": 6, "rest_s": 180, "superset_group": null},
+        {"exercise_id": "triceps_pushdown", "target_sets": 3, "target_reps": 12, "rest_s": 90, "superset_group": "a"},
+        {"exercise_id": "plank", "target_sets": 3, "target_reps": null, "rest_s": 90, "superset_group": "a"}
       ],
-      "last_done_at": "2026-11-03T17:00:00Z",
+      "last_done_at": "2026-11-02T17:02:00Z",
       "top_muscles": [
-        {"muscle_id": "chest", "level": 4},
-        {"muscle_id": "delts", "level": 4},
-        {"muscle_id": "triceps", "level": 3}
+        {"muscle_id": "triceps", "name": "Triceps", "level": 4},
+        {"muscle_id": "chest", "name": "Chest", "level": 3},
+        {"muscle_id": "abs", "name": "Abs", "level": 3}
       ]
     }
   ]
 }
 ```
-`top_muscles` (decided): the 3 parent muscles the workout works most, computed by the server and never stored. `level` is 0–4, the intensity shade for the chip. The IDs above are examples until `shared/muscles.json` is agreed. "UP NEXT" is the template with the oldest `last_done_at` (never-done first); the app works that out from this list.
+- **`exercises`** are in the order the user does them. `target_reps` is `null` for a timed hold (plank). Neighbours with the same `superset_group` form one superset; `null` means no superset. Responses always include both fields.
+- **`last_done_at`:** the `started_at` of the latest workout saved with this `template_id` (see `POST /workouts`), or `null` if never done.
+- **`top_muscles`** (decided): the 3 parent muscles the workout works most, computed by the server and never stored. For each exercise and each of its muscles (every role), add `target_sets × weight` to that muscle's parent in `shared/muscles.json`. A head adds to its parent; a parent ID adds to itself; unknown IDs are skipped. Keep the 3 parents with the most work, ties in `muscles.json` order. `name` is the parent's display name. `level` (0–4, the chip's shade) is ceil(4 × work ÷ the top muscle's work), so the first chip is always 4. Example: 4 sets of Bench Press alone give Chest 4, Delts 2, Triceps 2.
+- **UP NEXT** is the saved workout with the oldest `last_done_at` (never-done first); the app works that out from this list.
 
-### `POST /templates` and `PUT /templates/{id}`  (proposed shape)
-Request: `name`, `focus` and `exercises` as above. Response: the full template, `201` for create and `200` for update. `DELETE /templates/{id}` returns `204` with no body.
+### `POST /templates`, `PUT /templates/{id}` and `DELETE /templates/{id}`  (agreed)
+`POST` creates a saved workout. The `id` is a lowercase UUID made on the phone, so a retry is safe (`shared/fixtures/template_post.json`):
+```json
+{
+  "id": "3c9d7e1a-5b2f-4c8d-a6e4-7f8a9b0c1d2e",
+  "name": "Push 1",
+  "focus": "tricep focus",
+  "exercises": [
+    {"exercise_id": "barbell_bench_press", "target_sets": 4, "target_reps": 6, "rest_s": 180},
+    {"exercise_id": "triceps_pushdown", "target_sets": 3, "target_reps": 12, "rest_s": 90, "superset_group": "a"},
+    {"exercise_id": "plank", "target_sets": 3, "rest_s": 90, "superset_group": "a"}
+  ]
+}
+```
+→ `201` with the full template, as in `GET /templates` (`last_done_at` is `null`). The same `id` again → `200` with the stored template; nothing changes.
+
+`PUT /templates/{id}` takes the same body and replaces `name`, `focus` and `exercises`; `last_done_at` stays. The `id` in the path says which saved workout to change; the app also sends it in the body. → `200` with the full template.
+
+`DELETE /templates/{id}` → `204` with no body, also when it is already gone. Past workouts that came from it stay.
+
+The body (`POST` and `PUT`):
+- `name`: required, 1–60 characters after trimming spaces. Names may repeat.
+- `focus`: optional, up to 60 characters after trimming; empty or left out is `null`.
+- `exercises`: 1–30 items. `exercise_id` must be in the library. `target_sets` 1–20. `target_reps` 1–100, or `null` or left out. `rest_s` 0–600. `superset_group` may be left out.
+
+Errors: `400 bad_request` when `id` isn't a lowercase UUID or any rule above is broken. `404 not_found` for `PUT` with an unknown id, or another user's.
 
 ### `POST /workouts`  (agreed)
 Saves the workout, its sets and this user's history for each exercise in it (UserExercise), in one transaction. The `id` fields are UUIDs made on the phone; repeating the request with the same IDs changes nothing. Daily stats and running totals are not saved; they come later with Home and Goals.
@@ -186,7 +216,7 @@ Saves the workout, its sets and this user's history for each exercise in it (Use
 {
   "id": "6f1c2b1e-4b7a-4c3e-9d2a-0a1b2c3d4e5f",
   "name": "Push 1",
-  "template_id": "tpl_push1",
+  "template_id": "3c9d7e1a-5b2f-4c8d-a6e4-7f8a9b0c1d2e",
   "started_at": "2026-11-02T17:02:00Z",
   "ended_at": "2026-11-02T19:33:00Z",
   "timezone": "America/Los_Angeles",
@@ -228,6 +258,8 @@ Errors: `400 bad_request`, and nothing is saved, when:
 - A workout that ended before the stored `last_used_at` (logged late) only adds to `use_count`; `last_used_at` and `last_set` stay.
 - `best_e1rm_kg` and `best_e1rm_at` stay `null` until History and Goals are built.
 
+**Last done for a saved workout.** When `template_id` names one of this user's saved workouts, its `last_done_at` becomes the workout's `started_at`, but only if that is later than the stored value. This also happens on a repeated request. An unknown `template_id` is not an error.
+
 ### `GET /workouts?limit=20&before=<timestamp>`  (agreed: `limit`; `before` comes with Home)
 Newest `started_at` first. A summary per workout, without its sets. No workouts gives `{"workouts": []}`.
 - `limit` (default 20) is built first. It must be 1–100; anything else is `400 bad_request`.
@@ -235,7 +267,7 @@ Newest `started_at` first. A summary per workout, without its sets. No workouts 
 ```json
 {
   "workouts": [
-    {"id": "6f1c2b1e-…", "name": "Push 1", "template_id": "tpl_push1",
+    {"id": "6f1c2b1e-…", "name": "Push 1", "template_id": "3c9d7e1a-5b2f-4c8d-a6e4-7f8a9b0c1d2e",
      "started_at": "2026-11-02T17:02:00Z", "ended_at": "2026-11-02T19:33:00Z",
      "local_date": "2026-11-02", "set_count": 31, "exercise_count": 10}
   ]

@@ -1,17 +1,19 @@
 {
   "templates": [
     {
-      "id": "tpl_push1",
+      "id": "3c9d7e1a-5b2f-4c8d-a6e4-7f8a9b0c1d2e",
       "name": "Push 1",
       "focus": "tricep focus",
       "exercises": [
-        {"exercise_id": "barbell_bench_press", "target_sets": 4, "target_reps": 6, "rest_s": 180}
+        {"exercise_id": "barbell_bench_press", "target_sets": 4, "target_reps": 6, "rest_s": 180, "superset_group": null},
+        {"exercise_id": "triceps_pushdown", "target_sets": 3, "target_reps": 12, "rest_s": 90, "superset_group": "a"},
+        {"exercise_id": "plank", "target_sets": 3, "target_reps": null, "rest_s": 90, "superset_group": "a"}
       ],
-      "last_done_at": "2026-11-03T17:00:00Z",
+      "last_done_at": "2026-11-02T17:02:00Z",
       "top_muscles": [
-        {"muscle_id": "chest", "level": 4},
-        {"muscle_id": "delts", "level": 4},
-        {"muscle_id": "triceps", "level": 3}
+        {"muscle_id": "triceps", "name": "Triceps", "level": 4},
+        {"muscle_id": "chest", "name": "Chest", "level": 3},
+        {"muscle_id": "abs", "name": "Abs", "level": 3}
       ]
     }
   ]
