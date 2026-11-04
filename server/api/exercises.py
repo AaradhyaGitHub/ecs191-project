@@ -15,7 +15,8 @@ bp = Blueprint("exercises", __name__)
 @bp.get("")
 def search_exercises():
     q = request.args.get("q")
-    group = request.args.get("group") or None
+    # The raw value: an empty `group=` fails the group check like an unknown group (#44).
+    group = request.args.get("group")
     return jsonify({"exercises": exercise_service.find_exercises(q, group)})
 
 
