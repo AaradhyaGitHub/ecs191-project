@@ -173,7 +173,7 @@ extension PreviewData {
     // MARK: Onboarding
 
     /// A new account: units lb, nothing else set, onboarding not finished.
-    static let newUser = User(id: "u_new", units: .lb, createdAt: now)
+    nonisolated static let newUser = User(id: "u_new", units: .lb, createdAt: now)
 
     /// A server that always succeeds: any code signs in and the profile is `newUser`.
     struct PreviewOnboardingAPI: OnboardingAPI {
