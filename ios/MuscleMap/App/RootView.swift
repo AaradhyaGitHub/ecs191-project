@@ -39,10 +39,14 @@ private extension View {
     }
 }
 
+#if DEBUG
 #Preview("All tabs") {
     RootView(showsCameraTab: true)
+        .environment(PreviewData.liftSession(open: false))
 }
 
 #Preview("Testers (no Camera)") {
     RootView(showsCameraTab: false)
+        .environment(PreviewData.liftSession(open: false))
 }
+#endif

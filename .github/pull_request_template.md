@@ -11,6 +11,7 @@ Closes #<!-- issue -->
 - [ ] Tests for the changed code pass
 - [ ] Full fast suite passes
 - [ ] UI changes: screenshot or preview attached
+- [ ] Walkthrough video and screenshots attached (only if the plan has a walkthrough)
 
 ## Checklist
 - [ ] Human-authored files (`overview.md`, architecture docs, `specs/*.md`) were written by a person, not Claude

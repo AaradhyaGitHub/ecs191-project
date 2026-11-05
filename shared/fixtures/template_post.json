@@ -1,0 +1,10 @@
+{
+  "id": "3c9d7e1a-5b2f-4c8d-a6e4-7f8a9b0c1d2e",
+  "name": "Push 1",
+  "focus": "tricep focus",
+  "exercises": [
+    {"exercise_id": "barbell_bench_press", "target_sets": 4, "target_reps": 6, "rest_s": 180},
+    {"exercise_id": "triceps_pushdown", "target_sets": 3, "target_reps": 12, "rest_s": 90, "superset_group": "a"},
+    {"exercise_id": "plank", "target_sets": 3, "rest_s": 90, "superset_group": "a"}
+  ]
+}

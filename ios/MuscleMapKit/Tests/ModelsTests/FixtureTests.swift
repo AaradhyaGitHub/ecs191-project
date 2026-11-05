@@ -35,6 +35,15 @@ struct FixtureTests {
         #expect(user.bodyweightKg == 82.1)
     }
 
+    @Test("AC-11 (#42): a new user decodes with no name and lb")
+    func newUser() throws {
+        let user = try Self.decode(User.self, "user_new")
+        #expect(user.displayName == nil)
+        #expect(user.units == .lb)
+        #expect(user.bodyweightKg == nil)
+        #expect(user.experience == nil)
+    }
+
     @Test("A partial user update sends only the fields that are set")
     func userUpdate() throws {
         let update = UserUpdate(bodyweightKg: 81.5, units: .kg)
@@ -51,6 +60,25 @@ struct FixtureTests {
         #expect(bench.muscles.first == ExerciseMuscle(muscleId: "chest_sternal", role: .primary, weight: 1.0))
     }
 
+    @Test("AC-10: Exercise decodes groups and primary_muscles from the search fixture")
+    func exerciseGroups() throws {
+        let list = try Self.decode(ExerciseList.self, "exercises_search")
+        let bench = try #require(list.exercises.first { $0.id == "barbell_bench_press" })
+        #expect(bench.groups == ["chest"])
+        #expect(bench.primaryMuscles == ["Chest"])
+        let deadlift = try #require(list.exercises.first { $0.id == "deadlift" })
+        #expect(deadlift.groups == ["legs", "back"])
+        #expect(deadlift.primaryMuscles == ["Glutes", "Lower back", "Hamstrings"])
+    }
+
+    @Test("AC-10: an older server's exercise without groups still decodes, with empty lists")
+    func exerciseWithoutGroups() throws {
+        let json = #"{"id": "x", "name": "X", "aliases": [], "load_type": "barbell", "muscles": []}"#
+        let exercise = try APIJSON.decoder().decode(Exercise.self, from: Data(json.utf8))
+        #expect(exercise.groups == [])
+        #expect(exercise.primaryMuscles == [])
+    }
+
     @Test("My exercises decode, including e1RM fields and the last set")
     func myExercises() throws {
         let list = try Self.decode(UserExerciseList.self, "exercises_mine")
@@ -61,13 +89,41 @@ struct FixtureTests {
         #expect(pushUp.bestE1rmKg == nil)
     }
 
-    @Test("Saved workouts decode with their muscle chips")
+    @Test("AC-8 (#43): saved workouts decode with muscle names, supersets and timed holds")
     func templates() throws {
         let list = try Self.decode(TemplateList.self, "templates")
         let push = try #require(list.templates.first)
+        #expect(push.id == push.id.lowercased())
         #expect(push.exercises.first?.restS == 180)
-        #expect(push.topMuscles.map(\.muscleId) == ["chest", "delts", "triceps"])
+        #expect(push.exercises.map(\.supersetGroup) == [nil, "a", "a"])
+        #expect(push.exercises.last?.targetReps == nil)
+        #expect(push.topMuscles.map(\.muscleId) == ["triceps", "chest", "abs"])
+        #expect(push.topMuscles.map(\.name) == ["Triceps", "Chest", "Abs"])
+        #expect(push.topMuscles.map(\.level) == [4, 3, 3])
         #expect(push.lastDoneAt != nil)
+    }
+
+    @Test("AC-8 (#43): a new saved workout is sent as in template_post.json")
+    func templateInput() throws {
+        let input = TemplateInput(
+            id: "3c9d7e1a-5b2f-4c8d-a6e4-7f8a9b0c1d2e", name: "Push 1", focus: "tricep focus",
+            exercises: [
+                TemplateExercise(exerciseId: "barbell_bench_press", targetSets: 4, targetReps: 6, restS: 180),
+                TemplateExercise(exerciseId: "triceps_pushdown", targetSets: 3, targetReps: 12, restS: 90,
+                                 supersetGroup: "a"),
+                TemplateExercise(exerciseId: "plank", targetSets: 3, targetReps: nil, restS: 90,
+                                 supersetGroup: "a"),
+            ])
+        let sent = try Self.json(APIJSON.encoder().encode(input))
+        #expect(sent == (try Self.json(Self.fixture("template_post"))))
+    }
+
+    @Test("The workout examples point at the saved workout in templates.json")
+    func workoutTemplateIDs() throws {
+        let templateID = try #require(Self.decode(TemplateList.self, "templates").templates.first?.id)
+        #expect(try Self.decode(Workout.self, "workout_post").templateId == templateID)
+        #expect(try Self.decode(Workout.self, "workout_detail").templateId == templateID)
+        #expect(try Self.decode(WorkoutList.self, "workouts_list").workouts.first?.templateId == templateID)
     }
 
     @Test("Workout history decodes")

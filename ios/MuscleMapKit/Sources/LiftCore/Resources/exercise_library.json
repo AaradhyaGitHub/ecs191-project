@@ -1,0 +1,1868 @@
+{
+  "exercises": [
+    {
+      "aliases": [
+        "hyperextension",
+        "45 degree back extension"
+      ],
+      "bodyweight_fraction": 0.5,
+      "groups": [
+        "back"
+      ],
+      "id": "back_extension",
+      "load_type": "bodyweight",
+      "muscles": [
+        {
+          "muscle_id": "lower_back_erectors",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "glutes_max",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "hamstrings",
+          "role": "secondary",
+          "weight": 0.5
+        }
+      ],
+      "name": "Back Extension",
+      "primary_muscles": [
+        "Lower back"
+      ]
+    },
+    {
+      "aliases": [
+        "squat",
+        "barbell squat"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "back_squat",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "quads",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "glutes_max",
+          "role": "primary",
+          "weight": 0.9
+        },
+        {
+          "muscle_id": "adductors_magnus",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "lower_back_erectors",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "hamstrings",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "abs",
+          "role": "stabilizer",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "calves_soleus",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Back Squat",
+      "primary_muscles": [
+        "Quads",
+        "Glutes"
+      ]
+    },
+    {
+      "aliases": [
+        "bb curl",
+        "ez bar curl"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "arms"
+      ],
+      "id": "barbell_curl",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "biceps_long",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "biceps_short",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "biceps_brachialis",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "forearms_brachioradialis",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "forearms_flexors",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Barbell Curl",
+      "primary_muscles": [
+        "Biceps"
+      ]
+    },
+    {
+      "aliases": [
+        "ohp",
+        "overhead press",
+        "military press"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "shoulders"
+      ],
+      "id": "barbell_overhead_press",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "delts_front",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "delts_side",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "triceps",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "chest_clavicular",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "traps_upper",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "abs",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Barbell Overhead Press",
+      "primary_muscles": [
+        "Delts"
+      ]
+    },
+    {
+      "aliases": [
+        "bent-over row",
+        "bent over row",
+        "bb row"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "back"
+      ],
+      "id": "barbell_row",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "lats_latissimus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "traps_middle",
+          "role": "primary",
+          "weight": 0.8
+        },
+        {
+          "muscle_id": "rhomboids",
+          "role": "secondary",
+          "weight": 0.7
+        },
+        {
+          "muscle_id": "delts_rear",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "biceps",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "lower_back_erectors",
+          "role": "stabilizer",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "hamstrings",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Barbell Row",
+      "primary_muscles": [
+        "Lats",
+        "Traps"
+      ]
+    },
+    {
+      "aliases": [
+        "shrug",
+        "shrugs"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "back"
+      ],
+      "id": "barbell_shrug",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "traps_upper",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "traps_middle",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "forearms_flexors",
+          "role": "stabilizer",
+          "weight": 0.3
+        }
+      ],
+      "name": "Barbell Shrug",
+      "primary_muscles": [
+        "Traps"
+      ]
+    },
+    {
+      "aliases": [
+        "bench",
+        "bp",
+        "flat bench"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "chest"
+      ],
+      "id": "barbell_bench_press",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "chest_sternal",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "chest_clavicular",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "delts_front",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "triceps",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "serratus_anterior",
+          "role": "stabilizer",
+          "weight": 0.15
+        }
+      ],
+      "name": "Bench Press",
+      "primary_muscles": [
+        "Chest"
+      ]
+    },
+    {
+      "aliases": [
+        "bss",
+        "rear foot elevated split squat"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "bulgarian_split_squat",
+      "load_type": "dumbbell",
+      "muscles": [
+        {
+          "muscle_id": "quads",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "glutes_max",
+          "role": "primary",
+          "weight": 0.8
+        },
+        {
+          "muscle_id": "adductors",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "glutes_med",
+          "role": "stabilizer",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "hamstrings",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Bulgarian Split Squat",
+      "primary_muscles": [
+        "Quads",
+        "Glutes"
+      ]
+    },
+    {
+      "aliases": [
+        "kneeling cable crunch"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "core"
+      ],
+      "id": "cable_crunch",
+      "load_type": "cable",
+      "muscles": [
+        {
+          "muscle_id": "abs_rectus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "obliques",
+          "role": "secondary",
+          "weight": 0.4
+        }
+      ],
+      "name": "Cable Crunch",
+      "primary_muscles": [
+        "Abs"
+      ]
+    },
+    {
+      "aliases": [
+        "cable crossover",
+        "crossover"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "chest"
+      ],
+      "id": "cable_fly",
+      "load_type": "cable",
+      "muscles": [
+        {
+          "muscle_id": "chest_sternal",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "chest_clavicular",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "delts_front",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "serratus_anterior",
+          "role": "stabilizer",
+          "weight": 0.1
+        }
+      ],
+      "name": "Cable Fly",
+      "primary_muscles": [
+        "Chest"
+      ]
+    },
+    {
+      "aliases": [
+        "chinup"
+      ],
+      "bodyweight_fraction": 0.95,
+      "groups": [
+        "back"
+      ],
+      "id": "chin_up",
+      "load_type": "bodyweight",
+      "muscles": [
+        {
+          "muscle_id": "lats_latissimus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "biceps",
+          "role": "secondary",
+          "weight": 0.7
+        },
+        {
+          "muscle_id": "lats_teres_major",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "traps_lower",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "rhomboids",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "abs_rectus",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Chin-up",
+      "primary_muscles": [
+        "Lats"
+      ]
+    },
+    {
+      "aliases": [
+        "conventional deadlift",
+        "dl"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs",
+        "back"
+      ],
+      "id": "deadlift",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "glutes_max",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "lower_back_erectors",
+          "role": "primary",
+          "weight": 0.9
+        },
+        {
+          "muscle_id": "hamstrings",
+          "role": "primary",
+          "weight": 0.8
+        },
+        {
+          "muscle_id": "quads",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "traps",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "adductors_magnus",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "forearms_flexors",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "lats_latissimus",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "abs",
+          "role": "stabilizer",
+          "weight": 0.3
+        }
+      ],
+      "name": "Deadlift",
+      "primary_muscles": [
+        "Glutes",
+        "Lower back",
+        "Hamstrings"
+      ]
+    },
+    {
+      "aliases": [
+        "dip",
+        "chest dip",
+        "parallel bar dip"
+      ],
+      "bodyweight_fraction": 0.95,
+      "groups": [
+        "chest",
+        "arms"
+      ],
+      "id": "dips",
+      "load_type": "bodyweight",
+      "muscles": [
+        {
+          "muscle_id": "chest_sternal",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "triceps",
+          "role": "primary",
+          "weight": 0.9
+        },
+        {
+          "muscle_id": "delts_front",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "chest_clavicular",
+          "role": "secondary",
+          "weight": 0.3
+        }
+      ],
+      "name": "Dips",
+      "primary_muscles": [
+        "Chest",
+        "Triceps"
+      ]
+    },
+    {
+      "aliases": [
+        "db bench",
+        "dumbbell press"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "chest"
+      ],
+      "id": "dumbbell_bench_press",
+      "load_type": "dumbbell",
+      "muscles": [
+        {
+          "muscle_id": "chest_sternal",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "chest_clavicular",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "delts_front",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "triceps",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "rotator_cuff",
+          "role": "stabilizer",
+          "weight": 0.15
+        }
+      ],
+      "name": "Dumbbell Bench Press",
+      "primary_muscles": [
+        "Chest"
+      ]
+    },
+    {
+      "aliases": [
+        "db curl",
+        "bicep curl",
+        "biceps curl"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "arms"
+      ],
+      "id": "dumbbell_curl",
+      "load_type": "dumbbell",
+      "muscles": [
+        {
+          "muscle_id": "biceps_long",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "biceps_short",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "biceps_brachialis",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "forearms_brachioradialis",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "forearms_flexors",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Dumbbell Curl",
+      "primary_muscles": [
+        "Biceps"
+      ]
+    },
+    {
+      "aliases": [
+        "db shoulder press",
+        "seated dumbbell press"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "shoulders"
+      ],
+      "id": "dumbbell_shoulder_press",
+      "load_type": "dumbbell",
+      "muscles": [
+        {
+          "muscle_id": "delts_front",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "delts_side",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "triceps",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "traps_upper",
+          "role": "secondary",
+          "weight": 0.25
+        }
+      ],
+      "name": "Dumbbell Shoulder Press",
+      "primary_muscles": [
+        "Delts"
+      ]
+    },
+    {
+      "aliases": [
+        "rope face pull"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "shoulders"
+      ],
+      "id": "face_pull",
+      "load_type": "cable",
+      "muscles": [
+        {
+          "muscle_id": "delts_rear",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "traps_middle",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "rhomboids",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "rotator_cuff_infraspinatus",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "rotator_cuff_teres_minor",
+          "role": "secondary",
+          "weight": 0.4
+        }
+      ],
+      "name": "Face Pull",
+      "primary_muscles": [
+        "Delts"
+      ]
+    },
+    {
+      "aliases": [
+        "barbell front squat"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "front_squat",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "quads",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "glutes_max",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "abs",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "adductors_magnus",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "lower_back_erectors",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "traps_upper",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Front Squat",
+      "primary_muscles": [
+        "Quads"
+      ]
+    },
+    {
+      "aliases": [
+        "dumbbell goblet squat"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "goblet_squat",
+      "load_type": "dumbbell",
+      "muscles": [
+        {
+          "muscle_id": "quads",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "glutes_max",
+          "role": "secondary",
+          "weight": 0.7
+        },
+        {
+          "muscle_id": "adductors",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "abs",
+          "role": "stabilizer",
+          "weight": 0.3
+        }
+      ],
+      "name": "Goblet Squat",
+      "primary_muscles": [
+        "Quads"
+      ]
+    },
+    {
+      "aliases": [
+        "neutral grip curl"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "arms"
+      ],
+      "id": "hammer_curl",
+      "load_type": "dumbbell",
+      "muscles": [
+        {
+          "muscle_id": "biceps_brachialis",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "forearms_brachioradialis",
+          "role": "primary",
+          "weight": 0.9
+        },
+        {
+          "muscle_id": "biceps_long",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "biceps_short",
+          "role": "secondary",
+          "weight": 0.3
+        }
+      ],
+      "name": "Hammer Curl",
+      "primary_muscles": [
+        "Biceps",
+        "Forearms"
+      ]
+    },
+    {
+      "aliases": [
+        "leg raise",
+        "hanging knee raise"
+      ],
+      "bodyweight_fraction": 0.35,
+      "groups": [
+        "core",
+        "legs"
+      ],
+      "id": "hanging_leg_raise",
+      "load_type": "bodyweight",
+      "muscles": [
+        {
+          "muscle_id": "abs_rectus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "hip_flexors_iliopsoas",
+          "role": "primary",
+          "weight": 0.8
+        },
+        {
+          "muscle_id": "obliques",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "forearms_flexors",
+          "role": "stabilizer",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "lats_latissimus",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Hanging Leg Raise",
+      "primary_muscles": [
+        "Abs",
+        "Hip flexors"
+      ]
+    },
+    {
+      "aliases": [
+        "barbell hip thrust",
+        "glute bridge"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "hip_thrust",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "glutes_max",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "hamstrings",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "quads",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "glutes_med",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "adductors",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Hip Thrust",
+      "primary_muscles": [
+        "Glutes"
+      ]
+    },
+    {
+      "aliases": [
+        "incline bench",
+        "incline press"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "chest"
+      ],
+      "id": "incline_bench_press",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "chest_clavicular",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "chest_sternal",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "delts_front",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "triceps",
+          "role": "secondary",
+          "weight": 0.45
+        }
+      ],
+      "name": "Incline Bench Press",
+      "primary_muscles": [
+        "Chest"
+      ]
+    },
+    {
+      "aliases": [
+        "incline db press"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "chest"
+      ],
+      "id": "incline_dumbbell_press",
+      "load_type": "dumbbell",
+      "muscles": [
+        {
+          "muscle_id": "chest_clavicular",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "chest_sternal",
+          "role": "secondary",
+          "weight": 0.45
+        },
+        {
+          "muscle_id": "delts_front",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "triceps",
+          "role": "secondary",
+          "weight": 0.4
+        }
+      ],
+      "name": "Incline Dumbbell Press",
+      "primary_muscles": [
+        "Chest"
+      ]
+    },
+    {
+      "aliases": [
+        "australian pull-up",
+        "body row"
+      ],
+      "bodyweight_fraction": 0.6,
+      "groups": [
+        "back"
+      ],
+      "id": "inverted_row",
+      "load_type": "bodyweight",
+      "muscles": [
+        {
+          "muscle_id": "lats_latissimus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "traps_middle",
+          "role": "primary",
+          "weight": 0.8
+        },
+        {
+          "muscle_id": "rhomboids",
+          "role": "secondary",
+          "weight": 0.7
+        },
+        {
+          "muscle_id": "delts_rear",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "biceps",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "abs",
+          "role": "stabilizer",
+          "weight": 0.2
+        },
+        {
+          "muscle_id": "glutes_max",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Inverted Row",
+      "primary_muscles": [
+        "Lats",
+        "Traps"
+      ]
+    },
+    {
+      "aliases": [
+        "pulldown",
+        "lat pull down"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "back"
+      ],
+      "id": "lat_pulldown",
+      "load_type": "cable",
+      "muscles": [
+        {
+          "muscle_id": "lats_latissimus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "lats_teres_major",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "biceps",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "traps_lower",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "rhomboids",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "delts_rear",
+          "role": "secondary",
+          "weight": 0.3
+        }
+      ],
+      "name": "Lat Pulldown",
+      "primary_muscles": [
+        "Lats"
+      ]
+    },
+    {
+      "aliases": [
+        "side raise",
+        "lat raise",
+        "side lateral raise"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "shoulders"
+      ],
+      "id": "lateral_raise",
+      "load_type": "dumbbell",
+      "muscles": [
+        {
+          "muscle_id": "delts_side",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "delts_front",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "traps_upper",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "rotator_cuff_supraspinatus",
+          "role": "secondary",
+          "weight": 0.3
+        }
+      ],
+      "name": "Lateral Raise",
+      "primary_muscles": [
+        "Delts"
+      ]
+    },
+    {
+      "aliases": [
+        "quad extension"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "leg_extension",
+      "load_type": "machine",
+      "muscles": [
+        {
+          "muscle_id": "quads",
+          "role": "primary",
+          "weight": 1.0
+        }
+      ],
+      "name": "Leg Extension",
+      "primary_muscles": [
+        "Quads"
+      ]
+    },
+    {
+      "aliases": [
+        "machine leg press"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "leg_press",
+      "load_type": "machine",
+      "muscles": [
+        {
+          "muscle_id": "quads",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "glutes_max",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "adductors_magnus",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "hamstrings",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Leg Press",
+      "primary_muscles": [
+        "Quads"
+      ]
+    },
+    {
+      "aliases": [
+        "leg curl",
+        "hamstring curl"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "lying_leg_curl",
+      "load_type": "machine",
+      "muscles": [
+        {
+          "muscle_id": "hamstrings",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "calves_gastrocnemius",
+          "role": "secondary",
+          "weight": 0.3
+        }
+      ],
+      "name": "Lying Leg Curl",
+      "primary_muscles": [
+        "Hamstrings"
+      ]
+    },
+    {
+      "aliases": [
+        "overhead extension",
+        "french press"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "arms"
+      ],
+      "id": "overhead_triceps_extension",
+      "load_type": "cable",
+      "muscles": [
+        {
+          "muscle_id": "triceps_long",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "triceps_lateral",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "triceps_medial",
+          "role": "secondary",
+          "weight": 0.6
+        }
+      ],
+      "name": "Overhead Triceps Extension",
+      "primary_muscles": [
+        "Triceps"
+      ]
+    },
+    {
+      "aliases": [
+        "pec deck",
+        "machine fly",
+        "chest fly"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "chest"
+      ],
+      "id": "pec_fly",
+      "load_type": "machine",
+      "muscles": [
+        {
+          "muscle_id": "chest_sternal",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "chest_clavicular",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "delts_front",
+          "role": "secondary",
+          "weight": 0.3
+        }
+      ],
+      "name": "Pec Fly",
+      "primary_muscles": [
+        "Chest"
+      ]
+    },
+    {
+      "aliases": [
+        "front plank",
+        "forearm plank"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "core"
+      ],
+      "id": "plank",
+      "load_type": "timed",
+      "muscles": [
+        {
+          "muscle_id": "abs_rectus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "abs_transverse",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "obliques",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "glutes_max",
+          "role": "stabilizer",
+          "weight": 0.2
+        },
+        {
+          "muscle_id": "delts_front",
+          "role": "stabilizer",
+          "weight": 0.2
+        },
+        {
+          "muscle_id": "serratus_anterior",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Plank",
+      "primary_muscles": [
+        "Abs"
+      ]
+    },
+    {
+      "aliases": [
+        "pullup"
+      ],
+      "bodyweight_fraction": 0.95,
+      "groups": [
+        "back"
+      ],
+      "id": "pull_up",
+      "load_type": "bodyweight",
+      "muscles": [
+        {
+          "muscle_id": "lats_latissimus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "lats_teres_major",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "biceps",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "forearms_brachioradialis",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "traps_lower",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "rhomboids",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "delts_rear",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "abs_rectus",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Pull-up",
+      "primary_muscles": [
+        "Lats"
+      ]
+    },
+    {
+      "aliases": [
+        "pushup",
+        "press-up"
+      ],
+      "bodyweight_fraction": 0.64,
+      "groups": [
+        "chest"
+      ],
+      "id": "push_up",
+      "load_type": "bodyweight",
+      "muscles": [
+        {
+          "muscle_id": "chest_sternal",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "chest_clavicular",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "triceps",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "delts_front",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "serratus_anterior",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "abs_rectus",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Push-up",
+      "primary_muscles": [
+        "Chest"
+      ]
+    },
+    {
+      "aliases": [
+        "reverse fly",
+        "reverse pec deck"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "shoulders"
+      ],
+      "id": "rear_delt_fly",
+      "load_type": "machine",
+      "muscles": [
+        {
+          "muscle_id": "delts_rear",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "traps_middle",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "rhomboids",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "rotator_cuff_infraspinatus",
+          "role": "secondary",
+          "weight": 0.3
+        }
+      ],
+      "name": "Rear Delt Fly",
+      "primary_muscles": [
+        "Delts"
+      ]
+    },
+    {
+      "aliases": [
+        "rdl",
+        "stiff-leg deadlift"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "romanian_deadlift",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "hamstrings",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "glutes_max",
+          "role": "primary",
+          "weight": 0.8
+        },
+        {
+          "muscle_id": "lower_back_erectors",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "adductors_magnus",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "forearms_flexors",
+          "role": "stabilizer",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "traps",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Romanian Deadlift",
+      "primary_muscles": [
+        "Hamstrings",
+        "Glutes"
+      ]
+    },
+    {
+      "aliases": [
+        "cable row",
+        "low row"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "back"
+      ],
+      "id": "seated_cable_row",
+      "load_type": "cable",
+      "muscles": [
+        {
+          "muscle_id": "lats_latissimus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "traps_middle",
+          "role": "primary",
+          "weight": 0.8
+        },
+        {
+          "muscle_id": "rhomboids",
+          "role": "secondary",
+          "weight": 0.7
+        },
+        {
+          "muscle_id": "delts_rear",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "biceps",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "lower_back_erectors",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Seated Cable Row",
+      "primary_muscles": [
+        "Lats",
+        "Traps"
+      ]
+    },
+    {
+      "aliases": [
+        "seated calves"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "seated_calf_raise",
+      "load_type": "machine",
+      "muscles": [
+        {
+          "muscle_id": "calves_soleus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "calves_gastrocnemius",
+          "role": "secondary",
+          "weight": 0.4
+        }
+      ],
+      "name": "Seated Calf Raise",
+      "primary_muscles": [
+        "Calves"
+      ]
+    },
+    {
+      "aliases": [],
+      "bodyweight_fraction": null,
+      "groups": [
+        "core"
+      ],
+      "id": "side_plank",
+      "load_type": "timed",
+      "muscles": [
+        {
+          "muscle_id": "obliques",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "abs_transverse",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "glutes_med",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "lower_back_ql",
+          "role": "secondary",
+          "weight": 0.4
+        }
+      ],
+      "name": "Side Plank",
+      "primary_muscles": [
+        "Obliques"
+      ]
+    },
+    {
+      "aliases": [
+        "db row",
+        "dumbbell row",
+        "one arm row"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "back"
+      ],
+      "id": "single_arm_dumbbell_row",
+      "load_type": "dumbbell",
+      "muscles": [
+        {
+          "muscle_id": "lats_latissimus",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "rhomboids",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "traps_middle",
+          "role": "secondary",
+          "weight": 0.6
+        },
+        {
+          "muscle_id": "delts_rear",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "biceps",
+          "role": "secondary",
+          "weight": 0.5
+        },
+        {
+          "muscle_id": "obliques",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Single-arm Dumbbell Row",
+      "primary_muscles": [
+        "Lats"
+      ]
+    },
+    {
+      "aliases": [
+        "lying triceps extension",
+        "skullcrusher"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "arms"
+      ],
+      "id": "skull_crusher",
+      "load_type": "barbell",
+      "muscles": [
+        {
+          "muscle_id": "triceps_long",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "triceps_lateral",
+          "role": "secondary",
+          "weight": 0.7
+        },
+        {
+          "muscle_id": "triceps_medial",
+          "role": "secondary",
+          "weight": 0.7
+        }
+      ],
+      "name": "Skull Crusher",
+      "primary_muscles": [
+        "Triceps"
+      ]
+    },
+    {
+      "aliases": [
+        "calf raise"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "standing_calf_raise",
+      "load_type": "machine",
+      "muscles": [
+        {
+          "muscle_id": "calves_gastrocnemius",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "calves_soleus",
+          "role": "secondary",
+          "weight": 0.6
+        }
+      ],
+      "name": "Standing Calf Raise",
+      "primary_muscles": [
+        "Calves"
+      ]
+    },
+    {
+      "aliases": [
+        "tricep pushdown",
+        "rope pushdown",
+        "pressdown"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "arms"
+      ],
+      "id": "triceps_pushdown",
+      "load_type": "cable",
+      "muscles": [
+        {
+          "muscle_id": "triceps_lateral",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "triceps_medial",
+          "role": "primary",
+          "weight": 0.9
+        },
+        {
+          "muscle_id": "triceps_long",
+          "role": "secondary",
+          "weight": 0.6
+        }
+      ],
+      "name": "Triceps Pushdown",
+      "primary_muscles": [
+        "Triceps"
+      ]
+    },
+    {
+      "aliases": [
+        "lunge",
+        "lunges"
+      ],
+      "bodyweight_fraction": null,
+      "groups": [
+        "legs"
+      ],
+      "id": "walking_lunge",
+      "load_type": "dumbbell",
+      "muscles": [
+        {
+          "muscle_id": "quads",
+          "role": "primary",
+          "weight": 1.0
+        },
+        {
+          "muscle_id": "glutes_max",
+          "role": "primary",
+          "weight": 0.8
+        },
+        {
+          "muscle_id": "adductors",
+          "role": "secondary",
+          "weight": 0.4
+        },
+        {
+          "muscle_id": "hamstrings",
+          "role": "secondary",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "glutes_med",
+          "role": "stabilizer",
+          "weight": 0.3
+        },
+        {
+          "muscle_id": "calves",
+          "role": "stabilizer",
+          "weight": 0.2
+        }
+      ],
+      "name": "Walking Lunge",
+      "primary_muscles": [
+        "Quads",
+        "Glutes"
+      ]
+    }
+  ]
+}

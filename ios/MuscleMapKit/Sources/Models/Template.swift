@@ -4,24 +4,32 @@ import Foundation
 public struct TemplateExercise: Codable, Hashable, Sendable {
     public var exerciseId: String
     public var targetSets: Int
-    public var targetReps: Int
+    /// `nil` for a timed hold (plank).
+    public var targetReps: Int?
     public var restS: Int
+    /// Neighbours with the same group form one superset; `nil` = no superset.
+    public var supersetGroup: String?
 
-    public init(exerciseId: String, targetSets: Int, targetReps: Int, restS: Int) {
+    public init(exerciseId: String, targetSets: Int, targetReps: Int?, restS: Int,
+                supersetGroup: String? = nil) {
         self.exerciseId = exerciseId
         self.targetSets = targetSets
         self.targetReps = targetReps
         self.restS = restS
+        self.supersetGroup = supersetGroup
     }
 }
 
-/// A muscle chip on a saved-workout card: a parent muscle and its 0–4 shade.
+/// A muscle chip on a saved-workout card: a parent muscle, its display name and its 0–4 shade.
 public struct TopMuscle: Codable, Hashable, Sendable {
     public var muscleId: String
+    public var name: String
     public var level: Int
 
-    public init(muscleId: String, level: Int) {
+    /// `name` defaults to empty only so older call sites (previews) still compile.
+    public init(muscleId: String, name: String = "", level: Int) {
         self.muscleId = muscleId
+        self.name = name
         self.level = level
     }
 }
@@ -53,13 +61,17 @@ public struct TemplateInput: Codable, Hashable, Sendable {
     public var name: String
     public var focus: String?
     public var exercises: [TemplateExercise]
+    /// `POST` only: the finished workout's start when saved from it, so it counts as done.
+    /// Left out of the JSON when nil; the server ignores it on `PUT`.
+    public var lastDoneAt: Date?
 
     public init(id: String = ClientID.make(), name: String, focus: String? = nil,
-                exercises: [TemplateExercise]) {
+                exercises: [TemplateExercise], lastDoneAt: Date? = nil) {
         self.id = id
         self.name = name
         self.focus = focus
         self.exercises = exercises
+        self.lastDoneAt = lastDoneAt
     }
 }
 

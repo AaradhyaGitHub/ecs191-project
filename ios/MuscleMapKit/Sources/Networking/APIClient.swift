@@ -20,7 +20,7 @@ public struct APIClient: Sendable {
     private let session: URLSession
     private let tokens: any TokenStore
 
-    /// - Parameter baseURL: the server root, e.g. `http://localhost:5000`; `/api/v1` is added here.
+    /// - Parameter baseURL: the server root, e.g. `http://localhost:5001`; `/api/v1` is added here.
     public init(baseURL: URL, session: URLSession = .shared, tokens: any TokenStore = InMemoryTokenStore()) {
         self.baseURL = baseURL
         self.session = session
@@ -71,8 +71,16 @@ public struct APIClient: Sendable {
     }
 
     /// Search by name or alias; `nil` or empty returns the whole library.
-    public func searchExercises(_ query: String? = nil) async throws -> [Exercise] {
-        let items = query.flatMap { $0.isEmpty ? nil : [URLQueryItem(name: "q", value: $0)] } ?? []
+    /// `group` is a group ID from shared/muscles.json ("chest"); `nil` means all groups.
+    /// A blank `query` (only spaces) is not sent.
+    public func searchExercises(_ query: String? = nil, group: String? = nil) async throws -> [Exercise] {
+        var items: [URLQueryItem] = []
+        if let text = query?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
+            items.append(URLQueryItem(name: "q", value: text))
+        }
+        if let group {
+            items.append(URLQueryItem(name: "group", value: group))
+        }
         let list: ExerciseList = try await send("GET", "/exercises", query: items)
         return list.exercises
     }

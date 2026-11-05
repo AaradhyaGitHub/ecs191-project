@@ -49,10 +49,39 @@ TOKEN = re.compile(r"[^\s'\"<>|;&()`]+")
 PROJECT = os.path.realpath(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd())
 
 
+def worktree_roots() -> list[str]:
+    """The main checkout and every lane (git worktree) of this repo, longest path first."""
+    roots = {PROJECT}
+    try:
+        out = subprocess.run(["git", "-C", PROJECT, "worktree", "list", "--porcelain"],
+                             capture_output=True, text=True, timeout=10)
+        for line in out.stdout.splitlines():
+            if line.startswith("worktree "):
+                roots.add(os.path.realpath(line[len("worktree "):]))
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return sorted(roots, key=len, reverse=True)
+
+
+ROOTS = worktree_roots()
+
+
 def rel_to_project(path: str, cwd: str) -> str | None:
+    """The path inside whichever checkout (main or a lane) holds it, or None if outside all."""
     full = os.path.realpath(os.path.join(cwd, os.path.expanduser(path)))
-    rel = os.path.relpath(full, PROJECT)
-    return None if rel.startswith("..") else rel.replace(os.sep, "/")
+    for root in ROOTS:
+        rel = os.path.relpath(full, root)
+        if not rel.startswith(".."):
+            return rel.replace(os.sep, "/")
+    return None
+
+
+def command_dir(command: str, cwd: str) -> str:
+    """Where a `git commit` in this command runs: after `cd <dir>` or `git -C <dir>`."""
+    where = cwd
+    for m in re.finditer(r"(?:^|[;&|]\s*)cd\s+(\S+)|\bgit\s+-C\s+(\S+)", command):
+        where = os.path.realpath(os.path.join(where, os.path.expanduser((m.group(1) or m.group(2)).strip("'\""))))
+    return where
 
 
 def is_human_only(rel: str | None) -> bool:
@@ -95,10 +124,11 @@ def check_bash(command: str, cwd: str) -> None:
                 if WRITE_COMMANDS.search(command) or re.search(r">>?\s*['\"]?" + re.escape(token), command):
                     block(HUMAN_ONLY_MSG.format(path=token))
 
-    if re.search(r"\bgit\s+commit\b", command):
-        names = git_names(["diff", "--cached", "--name-only"], cwd)
+    if re.search(r"\bgit\s+(-C\s+\S+\s+)?commit\b", command):
+        where = command_dir(command, cwd)
+        names = git_names(["diff", "--cached", "--name-only"], where)
         if re.search(r"\s(-[a-zA-Z]*a[a-zA-Z]*|--all)\b", command):
-            names += git_names(["diff", "--name-only"], cwd)
+            names += git_names(["diff", "--name-only"], where)
         human = sorted({n for n in names if is_human_only(n)})
         if human:
             ask("This commit includes human-authored files: " + ", ".join(human)

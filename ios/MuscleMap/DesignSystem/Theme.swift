@@ -17,6 +17,12 @@ enum Theme {
         static let textPrimary = Color(hex: 0xF2F2F0)
         static let textSecondary = Color(hex: 0x9AA0AA)
 
+        /// Effort traffic light (#63, Sasa, Nov 4, 2026): easy (under 80 %), medium (80–89 %),
+        /// near failure and failure (90 % and up). The failure flame uses `effortHigh` too.
+        static let effortLow = Color(hex: 0x4CC38A)
+        static let effortMid = Color(hex: 0xF2C94C)
+        static let effortHigh = Color(hex: 0xE5484D)
+
         /// Muscle shades from 0 (none) to 4 (heavy).
         static let intensity: [Color] = [
             Color(hex: 0x2F343E),
