@@ -49,7 +49,7 @@ shared/muscles.json             muscle IDs, names, groups (a file, not a kind)
 
 **DailyStats** (user's local date): `workouts`, `sets`, `reps`, `volume_kg`, `active_seconds`. **Stats/totals:** `total_volume_kg`, `total_reps`, `total_sets`, `current_streak`, `longest_streak`, `last_workout_date`.
 
-**Goal:** `type` (`streak` | `volume` | `reps` | `sets` | `frequency` | `muscle_volume` | `strength`), `target`, `period` (`week` | `month` | `all_time` | `custom`, with `start_date` and `end_date`), `muscle_id`, `exercise_id`, `challenge_id`.
+**Goal** (`User/{id}/Goal/{uuid}`, id made on the phone; built in #72): `type` (`strength` | `frequency`), `exercise_id` (strength only; not `bodyweight`/`timed`), `target` (strength: e1RM in kg, > 0 and ≤ 1500; frequency: workouts a week, 1–7), `start_date` (`YYYY-MM-DD`, the phone's local date), `deadline` (strength only, optional, ≥ `start_date`, ≤ 5 years after), `created_at`. Status, `exercise_name` and `progress` are computed on each request (Epley e1RM over all `working`/`failure` sets with 1–10 reps; workouts Monday–Sunday of `?today=`). At most 3 active goals and one frequency goal (`409`). Ancestor queries filtered in Python, so no index. Later types (streak, volume, muscle_volume, challenges) would add fields such as `period`, `muscle_id`, `challenge_id`.
 
 **SharedWorkout** (key = `share_code`, e.g. `k7Qm2xPa`): `visibility` (`anonymous` | `public`), `author_handle` (public only), `name`, `tags`, `exercises` (a full snapshot with no personal weights), `muscle_summary`, `version`, `status` (`active` | `removed`), `import_count`, `created_at`.
 

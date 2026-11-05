@@ -12,6 +12,7 @@ let package = Package(
         .library(name: "Networking", targets: ["Networking"]),
         .library(name: "LiftCore", targets: ["LiftCore"]),
         .library(name: "BodyCore", targets: ["BodyCore"]),
+        .library(name: "GoalsCore", targets: ["GoalsCore"]),
         .library(name: "OnboardingCore", targets: ["OnboardingCore"]),
     ],
     targets: [
@@ -21,12 +22,15 @@ let package = Package(
         .target(name: "LiftCore", dependencies: ["Models", "Networking"], resources: [.process("Resources")]),
         // Body tab (MuscleLab page): muscle IDs, SVG figure art, sample sessions, workout analysis.
         .target(name: "BodyCore", resources: [.process("Resources")]),
+        // Goals tab: goal form rules, card texts, screen state (specs/goals.llm.md).
+        .target(name: "GoalsCore", dependencies: ["Models", "Networking"]),
         // Welcome, sign-in, profile setup, launch routing (specs/onboarding.llm.md).
         .target(name: "OnboardingCore", dependencies: ["Models", "Networking"]),
         .testTarget(name: "ModelsTests", dependencies: ["Models"]),
         .testTarget(name: "NetworkingTests", dependencies: ["Networking"]),
         .testTarget(name: "LiftCoreTests", dependencies: ["LiftCore"]),
         .testTarget(name: "BodyCoreTests", dependencies: ["BodyCore"]),
+        .testTarget(name: "GoalsCoreTests", dependencies: ["GoalsCore"]),
         .testTarget(name: "OnboardingCoreTests", dependencies: ["OnboardingCore"]),
     ]
 )

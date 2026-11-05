@@ -361,7 +361,7 @@ A frequency goal (`shared/fixtures/goal_post_frequency.json`):
 ```
 → `201` with the full goal, as in `GET /goals`. The same `id` again → `200` with the stored goal; nothing changes.
 
-`PUT /goals/{id}` takes the same body (`shared/fixtures/goal_put.json`) but changes only `target` and, for a strength goal, `deadline`; `type`, `exercise_id` and `start_date` are ignored (to track another exercise, delete the goal and make a new one). → `200` with the full goal.
+`PUT /goals/{id}` takes the same body (`shared/fixtures/goal_put.json`) but changes only `target` and, for a strength goal, `deadline`; `type`, `exercise_id` and `start_date` are ignored (to track another exercise, delete the goal and make a new one). A body without `deadline`, or with `"deadline": null`, clears the deadline. → `200` with the full goal.
 
 `DELETE /goals/{id}` → `204` with no body, also when it is already gone. The user's workouts are never touched.
 

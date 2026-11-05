@@ -351,5 +351,106 @@ def change_template(user_id: str, template_id: str, change) -> dict | None:
         return new
 
 
+# --- Goal (User/{id}/Goal/{uuid}; plan specs/goals.llm.md) --------------------------------
+# Ancestor queries only, filtered and sorted in Python, so no index is needed.
+
+GOAL = "Goal"
+
+
+def goal_key(user_id: str, goal_id: str) -> datastore.Key:
+    return client().key(USER, user_id, GOAL, goal_id)
+
+
+def _goal_dict(entity: datastore.Entity) -> dict:
+    return {"id": entity.key.name, **dict(entity)}
+
+
+def put_goal(user_id: str, data: dict) -> None:
+    """Creates or replaces one goal; `data["id"]` is its key."""
+    entity = datastore.Entity(key=goal_key(user_id, data["id"]))
+    entity.update({k: v for k, v in data.items() if k != "id"})
+    client().put(entity)
+
+
+def get_goal(user_id: str, goal_id: str) -> dict | None:
+    """One of this user's goals, or None."""
+    entity = client().get(goal_key(user_id, goal_id))
+    return _goal_dict(entity) if entity else None
+
+
+def user_goals(user_id: str) -> list[dict]:
+    """All of this user's goals, in no set order (the service sorts them)."""
+    query = client().query(kind=GOAL, ancestor=user_key(user_id))
+    return [_goal_dict(e) for e in query.fetch()]
+
+
+def delete_goal(user_id: str, goal_id: str) -> None:
+    """Deletes one goal. A missing one is no error."""
+    client().delete(goal_key(user_id, goal_id))
+
+
+def goal_transaction():
+    """A transaction for one user's goals. The goal reads, queries and puts made inside its
+    `with` block (get_goal, user_goals, put_goal, user_sets, user_workout_dates) join it,
+    because the client uses its current transaction."""
+    return client().transaction()
+
+
+def add_goal(user_id: str, data: dict, check) -> tuple[dict, bool]:
+    """In one transaction: writes `data` as a new goal unless its id is taken.
+
+    `check(goals)` gets the user's stored goals and raises to refuse the write (the active and
+    frequency limits), so two POSTs at once can't both pass it. Returns (stored, created); when
+    the id is already there, nothing is checked or changed (a retry, API.md "POST /goals").
+    """
+    with goal_transaction():
+        existing = get_goal(user_id, data["id"])
+        if existing is not None:
+            return existing, False
+        check(user_goals(user_id))
+        put_goal(user_id, data)
+        return data, True
+
+
+def change_goal(user_id: str, goal_id: str, change) -> dict | None:
+    """In one transaction: reads the goal, calls change(old, others) and writes the result.
+
+    `others` are the user's other stored goals, so a limit check sees what is stored at that
+    moment; `change` may raise to refuse. Returns the written goal, or None when it is missing.
+    """
+    with goal_transaction():
+        old = get_goal(user_id, goal_id)
+        if old is None:
+            return None
+        others = [g for g in user_goals(user_id) if g["id"] != goal_id]
+        new = {**change(old, others), "id": goal_id}
+        put_goal(user_id, new)
+        return new
+
+
+def user_sets(user_id: str, exercise_ids) -> list[dict]:
+    """This user's stored sets of these exercises, each with its workout's `local_date`."""
+    wanted = set(exercise_ids)
+    if not wanted:
+        return []
+    db = client()
+    dates = {e.key.name: e.get("local_date")
+             for e in db.query(kind=WORKOUT, ancestor=user_key(user_id)).fetch()}
+    rows = []
+    for entity in db.query(kind=SET_ENTRY, ancestor=user_key(user_id)).fetch():
+        if entity.get("exercise_id") not in wanted:
+            continue
+        row = _set_dict(entity)
+        row["local_date"] = dates.get(entity.key.parent.name)
+        rows.append(row)
+    return rows
+
+
+def user_workout_dates(user_id: str) -> list[str]:
+    """The `local_date` (YYYY-MM-DD) of each of this user's workouts, one per workout."""
+    query = client().query(kind=WORKOUT, ancestor=user_key(user_id))
+    return [e.get("local_date") for e in query.fetch() if e.get("local_date")]
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
