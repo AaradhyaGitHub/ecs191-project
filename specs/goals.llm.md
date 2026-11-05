@@ -66,7 +66,7 @@ public protocol GoalsAPI: Sendable { goals, createGoal, updateGoal, deleteGoal }
 - iOS new: `Models/Goal.swift` (**hot spot**), `Sources/GoalsCore/{GoalDraft,GoalCard,GoalsScreenModel}.swift`, `Features/Goals/{GoalsView (rewrite),GoalCardView,GoalDetailView,GoalFormView,GoalExercisePicker}.swift`. Changed: `Networking/APIClient.swift`, **`Package.swift`** (GoalsCore + test target), `PreviewData/PreviewData.swift`. New app files through the Xcode MCP.
 
 ## Reuse
-`require_user`, `ApiError`, `services/timestamps.py`, the template service's lowercase-UUID check and retry-safe create (`models.add_template` pattern), `exercise_service` lookup. iOS: `Weight`/`WeightUnit`, `APIJSON`, `ClientID.make()`, LiftCore `ExerciseSearch` + bundled library for the strength picker (single select, bodyweight/timed hidden), `CardView`, `PrimaryButton`, `SectionHeader`, `NoticeLine`, `PlaceholderScreen`, `Theme`. SwiftUI `ProgressView(value:)` tinted `accent`. No new dependency.
+`require_user`, `ApiError`, `services/timestamps.py`, the template service's lowercase-UUID check and retry-safe create (`models.add_template` pattern), `exercise_service` lookup. iOS: `Weight`/`WeightUnit`, `APIJSON`, `ClientID.make()`, LiftCore `ExerciseSearch` over `APIClient` for the strength picker, searching the server like Lift's picker, not the bundled library (single select, bodyweight/timed hidden), `CardView`, `PrimaryButton`, `SectionHeader`, `NoticeLine`, `PlaceholderScreen`, `Theme`. SwiftUI `ProgressView(value:)` tinted `accent`. No new dependency.
 
 ## Tests
 - Server unit: `server/tests/services/test_goal_service.py` (AC-5–7 maths, AC-2 rules). Emulator: `server/tests/api/test_goals.py` (AC-1–4, 6, 8–10).
