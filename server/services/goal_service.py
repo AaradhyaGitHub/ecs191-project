@@ -286,56 +286,58 @@ def _conflict(message: str) -> ApiError:
 
 # --- Writes ------------------------------------------------------------------------------------
 
+def _active_count(ctx: _Context, goals: list[dict]) -> int:
+    ctx.load_sets(g.get("exercise_id") for g in goals if g["type"] == "strength")
+    return sum(1 for g in goals if _status(g, ctx.progress(g)) == "active")
+
+
 def create_goal(user_id: str, body: dict, today: date) -> tuple[dict, bool]:
     """Validates and creates a goal. Returns (goal, created); a repeated id returns the
-    stored goal with created False."""
+    stored goal with created False. The limit checks and the write share one transaction."""
     data = _clean_new(body)
+    data["created_at"] = datetime.now(timezone.utc)
     ctx = _Context(user_id, today)
 
-    existing = models.get_goal(user_id, data["id"])
-    if existing is not None:
-        return ctx.full(existing), False
+    def check(goals: list[dict]) -> None:
+        if data["type"] == "frequency" and any(g["type"] == "frequency" for g in goals):
+            raise _conflict("You already have a weekly workout goal.")
+        new_is_active = _status(data, ctx.progress(data)) == "active"
+        if new_is_active and _active_count(ctx, goals) >= MAX_ACTIVE:
+            raise _conflict(f"You can have at most {MAX_ACTIVE} active goals.")
 
-    others = _all_full(ctx, models.user_goals(user_id))
-    if data["type"] == "frequency" and any(g["type"] == "frequency" for g in others):
-        raise _conflict("You already have a weekly workout goal.")
-    data["created_at"] = datetime.now(timezone.utc)
-    goal = ctx.full(data)
-    active = sum(1 for g in others if g["status"] == "active")
-    if goal["status"] == "active" and active >= MAX_ACTIVE:
-        raise _conflict(f"You can have at most {MAX_ACTIVE} active goals.")
-
-    models.put_goal(user_id, data)
-    return goal, True
+    goal, created = models.add_goal(user_id, data, check)
+    return ctx.full(goal), created
 
 
 def update_goal(user_id: str, goal_id: str, body: dict, today: date) -> dict:
-    """Changes `target` and, for strength, `deadline`; returns the full goal."""
+    """Changes `target` and, for strength, `deadline`; returns the full goal. The reopen
+    check and the write share one transaction."""
     if not isinstance(body, dict):
         raise _bad("Send a JSON object.")
-    stored = models.get_goal(user_id, goal_id) if isinstance(goal_id, str) and _UUID.match(goal_id) else None
-    if stored is None:
+    if not isinstance(goal_id, str) or not _UUID.match(goal_id):
         raise ApiError("not_found", "No goal with that id.")
-
-    changed = dict(stored)
-    if stored["type"] == "strength":
-        changed["target"] = _strength_target(body.get("target"))
-        # The app leaves `deadline` out when there is none, so missing means no deadline.
-        changed["deadline"] = _deadline(body.get("deadline"), stored["start_date"])
-    else:
-        changed["target"] = _frequency_target(body.get("target"))
-        if body.get("deadline") is not None:
-            raise _bad("A frequency goal has no deadline.")
-
     ctx = _Context(user_id, today)
-    before, after = ctx.full(stored), ctx.full(changed)
-    if before["status"] == "completed" and after["status"] == "active":
-        others = _all_full(ctx, [g for g in models.user_goals(user_id) if g["id"] != goal_id])
-        if sum(1 for g in others if g["status"] == "active") >= MAX_ACTIVE:
-            raise _conflict(f"You can have at most {MAX_ACTIVE} active goals.")
 
-    models.put_goal(user_id, changed)
-    return after
+    def change(stored: dict, others: list[dict]) -> dict:
+        changed = dict(stored)
+        if stored["type"] == "strength":
+            changed["target"] = _strength_target(body.get("target"))
+            # The app leaves `deadline` out when there is none, so missing means no deadline.
+            changed["deadline"] = _deadline(body.get("deadline"), stored["start_date"])
+        else:
+            changed["target"] = _frequency_target(body.get("target"))
+            if body.get("deadline") is not None:
+                raise _bad("A frequency goal has no deadline.")
+        reopens = (_status(stored, ctx.progress(stored)) == "completed"
+                   and _status(changed, ctx.progress(changed)) == "active")
+        if reopens and _active_count(ctx, others) >= MAX_ACTIVE:
+            raise _conflict(f"You can have at most {MAX_ACTIVE} active goals.")
+        return changed
+
+    changed = models.change_goal(user_id, goal_id, change)
+    if changed is None:
+        raise ApiError("not_found", "No goal with that id.")
+    return ctx.full(changed)
 
 
 def delete_goal(user_id: str, goal_id: str) -> None:

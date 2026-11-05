@@ -389,6 +389,45 @@ def delete_goal(user_id: str, goal_id: str) -> None:
     client().delete(goal_key(user_id, goal_id))
 
 
+def goal_transaction():
+    """A transaction for one user's goals. The goal reads, queries and puts made inside its
+    `with` block (get_goal, user_goals, put_goal, user_sets, user_workout_dates) join it,
+    because the client uses its current transaction."""
+    return client().transaction()
+
+
+def add_goal(user_id: str, data: dict, check) -> tuple[dict, bool]:
+    """In one transaction: writes `data` as a new goal unless its id is taken.
+
+    `check(goals)` gets the user's stored goals and raises to refuse the write (the active and
+    frequency limits), so two POSTs at once can't both pass it. Returns (stored, created); when
+    the id is already there, nothing is checked or changed (a retry, API.md "POST /goals").
+    """
+    with goal_transaction():
+        existing = get_goal(user_id, data["id"])
+        if existing is not None:
+            return existing, False
+        check(user_goals(user_id))
+        put_goal(user_id, data)
+        return data, True
+
+
+def change_goal(user_id: str, goal_id: str, change) -> dict | None:
+    """In one transaction: reads the goal, calls change(old, others) and writes the result.
+
+    `others` are the user's other stored goals, so a limit check sees what is stored at that
+    moment; `change` may raise to refuse. Returns the written goal, or None when it is missing.
+    """
+    with goal_transaction():
+        old = get_goal(user_id, goal_id)
+        if old is None:
+            return None
+        others = [g for g in user_goals(user_id) if g["id"] != goal_id]
+        new = {**change(old, others), "id": goal_id}
+        put_goal(user_id, new)
+        return new
+
+
 def user_sets(user_id: str, exercise_ids) -> list[dict]:
     """This user's stored sets of these exercises, each with its workout's `local_date`."""
     wanted = set(exercise_ids)
