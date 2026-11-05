@@ -90,8 +90,8 @@ Setup: lane 2, server on 5001 with emulator 8093 (`seed.load_exercises`), Debug 
 6. Empty workout, 2 exercises, log 1 set of the first, Finish → Save. Check: new card shows 2 exercises (screenshot).
 
 ## Progress
-- [ ] Plan approved
-- [ ] Scaffold
+- [x] Plan approved (1ad72a0)
+- [x] Scaffold (4e6ab19)
 - [ ] Tests red
 - [ ] Build green
 - [ ] Review
