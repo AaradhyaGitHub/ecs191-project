@@ -9,6 +9,12 @@ import Observation
 @Observable
 public final class OnboardingFlow {
     public private(set) var step: OnboardingStep
+    /// True once `onboarding_completed` is saved; the app shows Home.
+    public private(set) var isFinished = false
+    /// Why the last save failed, or nil; the step stays put.
+    public private(set) var errorText: String?
+    /// True after a 401 on an onboarding PUT: the token is cleared and the app shows Welcome (Q-10).
+    public private(set) var isSignedOut = false
 
     @ObservationIgnored private let api: any OnboardingAPI
 
