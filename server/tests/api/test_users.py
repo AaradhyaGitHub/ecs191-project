@@ -11,7 +11,7 @@ pytestmark = pytest.mark.emulator
 
 FIXTURES = Path(__file__).resolve().parents[3] / "shared" / "fixtures"
 USER_KEYS = {"id", "display_name", "sex", "birth_year", "bodyweight_kg", "units", "experience",
-             "created_at"}
+             "onboarding_completed", "created_at"}
 URL = "/api/v1/users/me"
 
 
