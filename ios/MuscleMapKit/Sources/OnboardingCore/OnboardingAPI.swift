@@ -12,6 +12,8 @@ public protocol OnboardingAPI: Sendable {
     func verifySignIn(phoneNumber: String, code: String) async throws -> SignIn
     func me() async throws -> User
     func updateMe(_ update: UserUpdate) async throws -> User
+    /// `POST /goals` from the goal step (plan: specs/onboarding-first-goal.llm.md).
+    func createGoal(_ goal: GoalInput) async throws -> Goal
     /// Deletes the saved token.
     func clearSignIn() throws
 }

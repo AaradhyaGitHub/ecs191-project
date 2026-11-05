@@ -3,11 +3,14 @@ import Models
 import Networking
 import Observation
 
-/// Profile → first goal → done (AC-9). The goal step only offers "Skip for now" until #72's
-/// goal form is swapped in (Q-9).
+/// Profile → first goal → done (AC-9). The goal step saves at most one goal through `saveGoal`
+/// (the shared goal form's `onSave`), then finishes (#79).
 @MainActor
 @Observable
 public final class OnboardingFlow {
+    /// Thrown by `saveGoal` when it sends nothing (review N-1 of #79).
+    public struct GoalNotSaved: Error, Equatable {}
+
     public private(set) var step: OnboardingStep
     /// True once `onboarding_completed` is saved; the app shows Home.
     public private(set) var isFinished = false
@@ -17,6 +20,10 @@ public final class OnboardingFlow {
     public private(set) var isSignedOut = false
     /// True while a save is running; the buttons are off.
     public private(set) var isSaving = false
+    /// The goal saved on the goal step, or nil (one per onboarding, Q-2 of #79).
+    public private(set) var savedGoal: Goal?
+    /// The units of the profile just saved; `.lb` until `saveProfile` succeeds (Q-4 of #79).
+    public private(set) var units: WeightUnit = .lb
 
     @ObservationIgnored private let api: any OnboardingAPI
 
@@ -32,7 +39,8 @@ public final class OnboardingFlow {
             errorText = problem
             return
         }
-        if await save(draft.update()) {
+        if let user = await save(draft.update()) {
+            units = user.units
             step = .firstGoal
         }
     }
@@ -41,26 +49,46 @@ public final class OnboardingFlow {
     /// Does nothing on the profile step: the flag is set only after the goal step (spec 3).
     public func finish(skippedGoal: Bool) async {
         guard step == .firstGoal, !isSaving, !isFinished else { return }
-        if await save(UserUpdate(onboardingCompleted: true)) {
+        if await save(UserUpdate(onboardingCompleted: true)) != nil {
             isFinished = true
         }
     }
 
-    /// Sends one `PUT /users/me`; true on success. A 401 clears the token and signs out (Q-10).
-    private func save(_ update: UserUpdate) async -> Bool {
+    /// Sends the goal form's input through `POST /goals` (the form's `onSave`). Throws on failure
+    /// so the form stays open with its message (the error is the form's to show, so `errorText`
+    /// is left alone). Sends nothing off the goal step, while a save runs, or once a goal is saved
+    /// (one per onboarding, Q-2); it throws `GoalNotSaved` then, so a caller never takes it for a
+    /// success. A 401 clears the token and signs out, as the PUTs do (Q-5).
+    public func saveGoal(_ input: GoalInput) async throws {
+        guard step == .firstGoal, !isSaving, savedGoal == nil else { throw GoalNotSaved() }
         isSaving = true
         defer { isSaving = false }
         do {
-            _ = try await api.updateMe(update)
+            savedGoal = try await api.createGoal(input)
             errorText = nil
-            return true
         } catch where OnboardingErrors.isUnauthorized(error) {
             try? api.clearSignIn()
             isSignedOut = true
-            return false
+            throw error
+        }
+    }
+
+    /// Sends one `PUT /users/me`; the saved user on success, nil otherwise. A 401 clears the
+    /// token and signs out (Q-10).
+    private func save(_ update: UserUpdate) async -> User? {
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            let user = try await api.updateMe(update)
+            errorText = nil
+            return user
+        } catch where OnboardingErrors.isUnauthorized(error) {
+            try? api.clearSignIn()
+            isSignedOut = true
+            return nil
         } catch {
             errorText = OnboardingErrors.text(for: error)
-            return false
+            return nil
         }
     }
 }

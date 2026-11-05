@@ -185,8 +185,19 @@ extension PreviewData {
         }
         func me() async throws -> User { newUser }
         func updateMe(_ update: UserUpdate) async throws -> User { newUser }
+        /// Echoes the input; names the exercise only for `firstGoal`.
+        func createGoal(_ goal: GoalInput) async throws -> Goal {
+            Goal(id: goal.id, type: goal.type, exerciseId: goal.exerciseId,
+                 exerciseName: goal.exerciseId == firstGoal.exerciseId ? "Bench Press" : nil,
+                 target: goal.target, startDate: goal.startDate, deadline: goal.deadline, createdAt: now)
+        }
         func clearSignIn() throws {}
     }
+
+    /// The goal step's "goal saved" preview: Bench Press 225 lb.
+    nonisolated static let firstGoal = GoalInput(
+        id: "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d", type: .strength, exerciseId: "barbell_bench_press",
+        target: Weight(225, .lb).kilograms, startDate: "2026-11-05")
 
     static func onboardingAPI(signedIn: Bool = true) -> any OnboardingAPI {
         PreviewOnboardingAPI(isSignedIn: signedIn)
