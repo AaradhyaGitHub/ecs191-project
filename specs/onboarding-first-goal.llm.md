@@ -60,7 +60,7 @@ AC-1–6 unit in `FirstGoalTests.swift` (fake `OnboardingAPI` with a scripted `c
 
 ## Progress
 - [x] Plan approved
-- [ ] Scaffold
+- [x] Scaffold (3aef1fa)
 - [ ] Tests red
 - [ ] Build green
 - [ ] Review
