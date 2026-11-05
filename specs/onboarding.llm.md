@@ -89,7 +89,7 @@ AC-1–2 server unit + emulator integration; AC-3–9 `OnboardingCoreTests`; AC-
 ## Progress
 - [x] Plan approved
 - [x] Scaffold (db49863)
-- [ ] Tests red
-- [ ] Build green
+- [x] Tests red (2b027c0)
+- [x] Build green (48d322b; package and server tests pass; app build, run and screenshot still to do: Xcode was open)
 - [ ] Review
 - [ ] PR
