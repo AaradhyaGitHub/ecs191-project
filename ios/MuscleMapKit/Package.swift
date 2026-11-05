@@ -11,13 +11,17 @@ let package = Package(
         .library(name: "Models", targets: ["Models"]),
         .library(name: "Networking", targets: ["Networking"]),
         .library(name: "LiftCore", targets: ["LiftCore"]),
+        .library(name: "BodyCore", targets: ["BodyCore"]),
     ],
     targets: [
         .target(name: "Models"),
         .target(name: "Networking", dependencies: ["Models"]),
         .target(name: "LiftCore", dependencies: ["Models"]),
+        // Body tab (MuscleLab page): muscle IDs, SVG figure art, sample sessions, workout analysis.
+        .target(name: "BodyCore", resources: [.process("Resources")]),
         .testTarget(name: "ModelsTests", dependencies: ["Models"]),
         .testTarget(name: "NetworkingTests", dependencies: ["Networking"]),
         .testTarget(name: "LiftCoreTests", dependencies: ["LiftCore"]),
+        .testTarget(name: "BodyCoreTests", dependencies: ["BodyCore"]),
     ]
 )

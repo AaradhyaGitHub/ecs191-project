@@ -18,8 +18,8 @@ Keep your own notes in `llm.md`, `client_architecture.llm.md` and `server_archit
 | `API.md` | Every endpoint with request and response JSON. The contract between app and server |
 | `specs/` | One human-written spec per feature, plus Claude's plan next to it (`<feature>.llm.md`) |
 | `shared/` | `muscles.json` (muscle IDs used by both sides) and contract fixtures |
-| `ios/MuscleMap/` | The app target, screens only: `App/`, `DesignSystem/`, `Features/{Home,Lift,Goals,Camera}/` (views), `PreviewData/` |
-| `ios/MuscleMapKit/` | Local Swift package with the app's logic, one module per area: `Sources/Models/`, `Sources/Networking/`, `Sources/LiftCore/` (later `HomeCore`, `GoalsCore`), each with a test target in `Tests/<Module>Tests/` |
+| `ios/MuscleMap/` | The app target, screens only: `App/`, `DesignSystem/`, `Features/{Home,Body,Lift,Goals,Camera}/` (views), `PreviewData/` |
+| `ios/MuscleMapKit/` | Local Swift package with the app's logic, one module per area: `Sources/Models/`, `Sources/Networking/`, `Sources/LiftCore/`, `Sources/BodyCore/` (later `HomeCore`, `GoalsCore`), each with a test target in `Tests/<Module>Tests/` |
 | `server/` | `main.py`, `api/` (one Blueprint per resource), `services/`, `models.py`, `seed/`, `tests/` |
 | `.private/` | Gitignored, per person. Keys go in `.private/secrets/`, which Claude never reads |
 

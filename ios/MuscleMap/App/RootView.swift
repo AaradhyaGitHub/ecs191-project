@@ -10,6 +10,10 @@ struct RootView: View {
             HomeView()
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tabBarStyle()
+            // Body: the MuscleLab page (anatomy figure + workout stats), imported from the Map prototype.
+            MuscleLabScreen()
+                .tabItem { Label("Body", systemImage: "figure.strengthtraining.traditional") }
+                .tabBarStyle()
             LiftView()
                 .tabItem { Label("Lift", systemImage: "dumbbell.fill") }
                 .tabBarStyle()

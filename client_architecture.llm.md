@@ -8,8 +8,8 @@ Xcode iOS App, SwiftUI, Swift, iOS 17+: SwiftData for local storage and `@Observ
 | Folder (`ios/MuscleMap/`) | Holds |
 |---|---|
 | `App/` | App entry and `RootView` (the `TabView`) |
-| `DesignSystem/` | `Theme.swift` and the shared components |
-| `Features/{Home,Lift,Goals,Camera}/` | One folder per tab: views only; their logic is in the package |
+| `DesignSystem/` | `Theme.swift` and the shared components; `Body/` holds the Body tab's token structs (`BodyTheme`, `StatsStyle`, `ColorScale`), whose values are in `Theme.swift` |
+| `Features/{Home,Body,Lift,Goals,Camera}/` | One folder per tab: views only; their logic is in the package |
 | `PreviewData/` | Mock data for SwiftUI previews |
 | `Resources/ThirdParty/` | The paid 3D model. Gitignored; never commit it |
 
@@ -21,6 +21,7 @@ The app's logic lives in `ios/MuscleMapKit/`, not in the app target, so its test
 | `Models` | `Codable` structs that mirror the API JSON exactly: `Exercise`, `Template`, `Workout`, `SetEntry`, `User`. Decoded with `.convertFromSnakeCase` and ISO 8601 dates. Unit conversion (exact kg; round only for display) |
 | `Networking` | `APIClient`: one async client, a method per endpoint. Base URL from the build configuration: `http://localhost:5000` for Debug, the App Engine URL for Release. Sign-in token in the Keychain, never UserDefaults |
 | `LiftCore` | Lift logic: plate maths (lb and kg plate sets), rest timer, set ordering and supersets, Up Next |
+| `BodyCore` | Body tab (MuscleLab page): `MuscleID`/`BodyPart`, SVG figure art (`Resources/*.svg`, loaded from `Bundle.module`), sample sessions, `WorkoutAnalysis` (sets, PRs, recovery, progression), `MuscleLabModel` (page state) |
 | later `HomeCore`, `GoalsCore` | The other tabs' logic |
 
 Each module has a test target, `Tests/<Module>Tests/`. Command: `swift test --package-path ios/MuscleMapKit --filter <Module>Tests`.
@@ -31,6 +32,7 @@ A real phone needs the laptop's network address and `NSAllowsLocalNetworking` in
 | Tab | SF Symbol | Contents | First build |
 |---|---|---|---|
 | Home | `house.fill` | Muscle map, streak, goal rings, today's summary, past workouts (History) | Placeholder |
+| Body | `figure.strengthtraining.traditional` | MuscleLab page: date header and week strip, Stats (gauge, training focus, tickers, exercise volumes) and Muscle Map (anatomy figure colored by sets, insight cards). Sample data for now | **Real** (imported prototype) |
 | Lift | `dumbbell.fill` | Create tiles, saved workouts with Start, the active workout, set entry | **Real** |
 | Goals | `target` | Frequency, volume, strength, balance and style goals | Placeholder |
 | Camera | `camera.viewfinder` | Record a set and count reps (stretch goal) | Placeholder, behind `FeatureFlags.cameraTab` |
