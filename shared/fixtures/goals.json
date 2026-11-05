@@ -1,0 +1,80 @@
+{
+  "goals": [
+    {
+      "id": "7b1e4c2a-9d3f-4e8a-b5c6-1a2b3c4d5e6f",
+      "type": "strength",
+      "exercise_id": "barbell_bench_press",
+      "exercise_name": "Bench Press",
+      "target": 100.0,
+      "start_date": "2026-10-20",
+      "deadline": "2026-12-15",
+      "created_at": "2026-10-20T18:00:00Z",
+      "status": "active",
+      "progress": {
+        "current": 95.0,
+        "percent": 95.0,
+        "remaining": 5.0,
+        "achieved_on": null,
+        "met_this_week": null,
+        "week_start": null
+      }
+    },
+    {
+      "id": "2f8a6d4c-1e3b-4a5c-9d7e-8f9a0b1c2d3e",
+      "type": "strength",
+      "exercise_id": "deadlift",
+      "exercise_name": "Deadlift",
+      "target": 180.0,
+      "start_date": "2026-11-01",
+      "deadline": null,
+      "created_at": "2026-11-01T18:00:00Z",
+      "status": "active",
+      "progress": {
+        "current": null,
+        "percent": null,
+        "remaining": null,
+        "achieved_on": null,
+        "met_this_week": null,
+        "week_start": null
+      }
+    },
+    {
+      "id": "c4d5e6f7-a8b9-4c0d-8e1f-2a3b4c5d6e7f",
+      "type": "frequency",
+      "exercise_id": null,
+      "exercise_name": null,
+      "target": 4,
+      "start_date": "2026-10-12",
+      "deadline": null,
+      "created_at": "2026-10-12T18:00:00Z",
+      "status": "active",
+      "progress": {
+        "current": 2,
+        "percent": 50.0,
+        "remaining": 2,
+        "achieved_on": null,
+        "met_this_week": false,
+        "week_start": "2026-11-02"
+      }
+    },
+    {
+      "id": "9e0f1a2b-3c4d-4e5f-a6b7-c8d9e0f1a2b3",
+      "type": "strength",
+      "exercise_id": "back_squat",
+      "exercise_name": "Back Squat",
+      "target": 120.0,
+      "start_date": "2026-09-14",
+      "deadline": null,
+      "created_at": "2026-09-14T18:00:00Z",
+      "status": "completed",
+      "progress": {
+        "current": 132.0,
+        "percent": 100.0,
+        "remaining": 0.0,
+        "achieved_on": "2026-10-28",
+        "met_this_week": null,
+        "week_start": null
+      }
+    }
+  ]
+}

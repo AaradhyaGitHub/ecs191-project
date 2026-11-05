@@ -32,8 +32,10 @@ The contract between the iOS app and the Flask server. A new or changed endpoint
 | `POST /workouts` | Save a finished workout and all its sets | Finishing a workout | agreed |
 | `GET /workouts?limit=20` | Recent workouts, newest first | History on Home | agreed (`before` comes with Home) |
 | `GET /workouts/{id}` | One workout with its sets | Workout detail | agreed |
+| `GET /goals?today=2026-11-04` | This user's goals with progress worked out from their workouts | Goals tab | agreed (#72) |
+| `POST /goals`, `PUT /goals/{id}`, `DELETE /goals/{id}` | Create, edit or delete a goal | Goals tab, onboarding | agreed (#72) |
 
-**Next, once Lift works:** `GET /muscle-map?window=7d` (Home), `GET` and `POST /goals`, `POST /smart-log/parse` (the AI feature). Home must also show where your muscles were at any past point, so the muscle map will need an end date as well as a window (for example `?window=7d&end=2026-10-01`); to be designed with Home.
+**Next, once Lift works:** `GET /muscle-map?window=7d` (Home), `POST /smart-log/parse` (the AI feature). Home must also show where your muscles were at any past point, so the muscle map will need an end date as well as a window (for example `?window=7d&end=2026-10-01`); to be designed with Home.
 
 ---
 
@@ -68,10 +70,11 @@ Any endpoint that needs sign-in answers `401 unauthorized` when the header is mi
   "bodyweight_kg": 82.1,
   "units": "lb",
   "experience": "intermediate",
+  "onboarding_completed": true,
   "created_at": "2026-11-01T18:00:00Z"
 }
 ```
-Every field is always present. `units` is `lb` or `kg` (display only); `experience` is `beginner`, `intermediate`, `advanced` or `null`. A new user has `display_name: null`, `units: "lb"`, and `null` for every other field except `id` and `created_at` (`shared/fixtures/user_new.json`):
+Every field is always present. `units` is `lb` or `kg` (display only); `experience` is `beginner`, `intermediate`, `advanced` or `null`. A new user has `display_name: null`, `units: "lb"`, `onboarding_completed: false`, and `null` for every other field except `id` and `created_at` (`shared/fixtures/user_new.json`):
 ```json
 {
   "id": "u_456",
@@ -81,16 +84,19 @@ Every field is always present. `units` is `lb` or `kg` (display only); `experien
   "bodyweight_kg": null,
   "units": "lb",
   "experience": null,
+  "onboarding_completed": false,
   "created_at": "2026-11-03T18:00:00Z"
 }
 ```
+
+**`onboarding_completed`** (#64, Gabriel, Nov 4, 2026) is `true` once the user has finished onboarding, ending with the first-goal step (a goal saved or skipped). It is `false` for a new user and for any user stored before the field existed. The app uses it at launch: `false` resumes onboarding at the profile step, `true` goes to Home.
 
 ### `PUT /users/me`  (agreed: partial update)
 Send only the fields to change; fields left out stay as they are. The response is the full user, as in `GET /users/me`.
 ```json
 {"bodyweight_kg": 81.5, "units": "kg"}
 ```
-Errors: `400 bad_request`, and nothing changes, when `units` is not `lb` or `kg`, `bodyweight_kg` is not a number above 0 and at most 500 (D-25), `experience` is not one of the three values, or the body has any other field. Only `display_name`, `sex`, `birth_year`, `bodyweight_kg`, `units` and `experience` can be changed.
+Errors: `400 bad_request`, and nothing changes, when `units` is not `lb` or `kg`, `bodyweight_kg` is not a number above 0 and at most 500 (D-25), `experience` is not one of the three values, `onboarding_completed` is not `true` or `false`, or the body has any other field. Only `display_name`, `sex`, `birth_year`, `bodyweight_kg`, `units`, `experience` and `onboarding_completed` can be changed. Onboarding finishes with `{"onboarding_completed": true}` (`shared/fixtures/user_update_onboarding.json`).
 
 ### `GET /exercises?q=bench&group=chest`
 No auth: the library is the same for everyone. Both parameters are optional.
@@ -295,3 +301,77 @@ Newest `started_at` first. A summary per workout, without its sets. No workouts 
 
 ### `GET /workouts/{id}`  (agreed)
 The workout with every set, in the same fields as the `POST /workouts` body, plus `status` (always `finished` for now). Every workout and set field is present, `null` when it wasn't sent. Sets are sorted by `order`. Weights come back exactly as sent. An unknown id, or another user's, is `404 not_found`. Example: `shared/fixtures/workout_detail.json`.
+
+---
+
+## Endpoints for the Goals tab
+
+Goals (#72, `specs/goals.md`, decisions in `specs/goals.llm.md`; Gabriel, Nov 4, 2026). The server stores what the goal is; `status` and `progress` are worked out from the user's workouts on every request and never stored.
+
+### `GET /goals?today=YYYY-MM-DD`  (agreed)
+This user's goals. `today` is the phone's local date; it picks the Monday–Sunday week for frequency goals. Left out, the server uses its own UTC date. A new user gets `{"goals": []}`. Order: active goals oldest-created first, then completed goals newest `achieved_on` first. Example (`shared/fixtures/goals.json`, `today=2026-11-04`), shortened to one goal:
+```json
+{
+  "goals": [
+    {
+      "id": "7b1e4c2a-9d3f-4e8a-b5c6-1a2b3c4d5e6f",
+      "type": "strength",
+      "exercise_id": "barbell_bench_press",
+      "exercise_name": "Bench Press",
+      "target": 100.0,
+      "start_date": "2026-10-20",
+      "deadline": "2026-12-15",
+      "created_at": "2026-10-20T18:00:00Z",
+      "status": "active",
+      "progress": {
+        "current": 95.0,
+        "percent": 95.0,
+        "remaining": 5.0,
+        "achieved_on": null,
+        "met_this_week": null,
+        "week_start": null
+      }
+    }
+  ]
+}
+```
+Every field is always present, `null` when it doesn't apply.
+- **`type`** is `strength` or `frequency`. For `strength`, `target`, `current` and `remaining` are e1RM in kg at full precision; `exercise_name` is the exercise's display name, added by the server. For `frequency`, `exercise_id`, `exercise_name` and `deadline` are `null`, and `target`, `current` and `remaining` are whole numbers of workouts.
+- **Strength `current`:** the highest Epley estimate, `weight_kg × (1 + reps / 30)`, over every set of that exercise in the user's history (not only since `start_date`) with `set_type` `working` or `failure`, `weight_kg` above 0, and `reps` 1–10. Warm-up and drop sets don't count. With no such set, `current`, `percent` and `remaining` are `null` (the app shows "No sets yet", never 0).
+- **Strength `status`:** `completed` when `current` ≥ `target`, else `active`. Completed goals have `percent: 100`, `remaining: 0` and `achieved_on`, the `local_date` of the first set that reached the target. Raising the target above `current` makes the goal active again.
+- **Frequency:** `current` is the number of the user's workouts whose `local_date` is in the week (Monday to Sunday) containing `today`; each workout counts once, whatever its sets. `week_start` is that Monday. `met_this_week` is `current` ≥ `target`. A frequency goal is always `active`.
+- **`percent`** = min(100, `current` ÷ `target` × 100), not rounded (the app rounds for display). **`remaining`** = max(0, `target` − `current`).
+- **Deadline passed:** an unmet strength goal stays `active`; the app shows "Deadline passed".
+
+### `POST /goals`, `PUT /goals/{id}` and `DELETE /goals/{id}`  (agreed)
+`POST` creates a goal. The `id` is a lowercase UUID made on the phone, so a retry is safe. `start_date` is the phone's local date. A strength goal (`shared/fixtures/goal_post.json`):
+```json
+{
+  "id": "7b1e4c2a-9d3f-4e8a-b5c6-1a2b3c4d5e6f",
+  "type": "strength",
+  "exercise_id": "barbell_bench_press",
+  "target": 100.0,
+  "start_date": "2026-10-20",
+  "deadline": "2026-12-15"
+}
+```
+A frequency goal (`shared/fixtures/goal_post_frequency.json`):
+```json
+{"id": "c4d5e6f7-a8b9-4c0d-8e1f-2a3b4c5d6e7f", "type": "frequency", "target": 4, "start_date": "2026-10-12"}
+```
+→ `201` with the full goal, as in `GET /goals`. The same `id` again → `200` with the stored goal; nothing changes.
+
+`PUT /goals/{id}` takes the same body (`shared/fixtures/goal_put.json`) but changes only `target` and, for a strength goal, `deadline`; `type`, `exercise_id` and `start_date` are ignored (to track another exercise, delete the goal and make a new one). → `200` with the full goal.
+
+`DELETE /goals/{id}` → `204` with no body, also when it is already gone. The user's workouts are never touched.
+
+The body:
+- `type`: `strength` or `frequency`.
+- `start_date`: `YYYY-MM-DD`.
+- Strength: `exercise_id` must be in the library and not have `load_type` `bodyweight` or `timed`. `target` is a number above 0 and at most 1500 (kg). `deadline` is optional (`YYYY-MM-DD` or `null`), not before `start_date` and at most 5 years after it.
+- Frequency: `target` is a whole number 1–7. `exercise_id` and `deadline` must be left out or `null`.
+- NaN and infinity are never accepted.
+
+Limits: at most **3 active goals** (every frequency goal plus each strength goal that isn't completed); completed goals don't count. At most **one frequency goal**. Strength goals may repeat an exercise.
+
+Errors: `400 bad_request`, nothing saved, when `id` isn't a lowercase UUID or any rule above is broken. `409 conflict` when a `POST` would make a 4th active goal or a second frequency goal, or a `PUT` that raises a completed goal's target would make a 4th active goal. `404 not_found` for `PUT` with an unknown id, or another user's.
