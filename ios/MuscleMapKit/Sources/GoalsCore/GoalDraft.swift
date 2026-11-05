@@ -28,6 +28,16 @@ public struct GoalDraft: Equatable, Sendable {
     public var unit: WeightUnit
     public var deadline: Date?
 
+    /// The edited goal's stored target, kept so an untouched target is sent back exactly
+    /// instead of re-rounded from `targetText`.
+    private var original: OriginalTarget?
+
+    private struct OriginalTarget: Equatable, Sendable {
+        let text: String
+        let unit: WeightUnit
+        let kilograms: Double
+    }
+
     /// A blank draft, or one filled from `editing`.
     public init(editing: Goal? = nil, unit: WeightUnit) {
         self.unit = unit
@@ -36,6 +46,7 @@ public struct GoalDraft: Equatable, Sendable {
             self.exercise = nil
             self.targetText = ""
             self.deadline = nil
+            self.original = nil
             return
         }
         self.type = goal.type
@@ -46,10 +57,12 @@ public struct GoalDraft: Equatable, Sendable {
                 Exercise(id: $0, name: goal.exerciseName ?? "", loadType: .barbell)
             }
             self.targetText = GoalNumbers.weight(Weight(kilograms: goal.target).value(in: unit))
+            self.original = OriginalTarget(text: targetText, unit: unit, kilograms: goal.target)
             self.deadline = goal.deadline.flatMap { GoalDates.date($0, calendar: .current) }
         case .frequency:
             self.exercise = nil
             self.targetText = GoalNumbers.whole(goal.target)
+            self.original = nil
             self.deadline = nil
         }
     }
@@ -91,7 +104,17 @@ extension GoalDraft {
         return errors
     }
 
+    /// The strength target to send, in kg: the edited goal's stored target when the user
+    /// left the target as shown (so it isn't re-rounded), otherwise the typed value.
+    private func strengthKilograms(_ typed: Double) -> Double {
+        if let original, original.unit == unit, original.text == trimmedTarget {
+            return original.kilograms
+        }
+        return Weight(typed, unit).kilograms
+    }
+
     /// The body to send, with a lb target converted to exact kg; `nil` when invalid.
+    /// An edited goal's untouched target is sent unchanged.
     /// The limit isn't checked here; the server answers 409 past it.
     public func input(id: String, startDate: Date, calendar: Calendar) -> GoalInput? {
         guard validate(startDate: startDate, activeCount: 0, calendar: calendar).isEmpty else { return nil }
@@ -100,7 +123,7 @@ extension GoalDraft {
         case .strength:
             guard let exercise, let target = strengthTarget else { return nil }
             return GoalInput(id: id, type: .strength, exerciseId: exercise.id,
-                             target: Weight(target, unit).kilograms, startDate: start,
+                             target: strengthKilograms(target), startDate: start,
                              deadline: deadline.map { GoalDates.day($0, calendar: calendar) })
         case .frequency:
             guard let target = frequencyTarget else { return nil }
