@@ -90,6 +90,6 @@ AC-1–2 server unit + emulator integration; AC-3–9 `OnboardingCoreTests`; AC-
 - [x] Plan approved
 - [x] Scaffold (db49863)
 - [x] Tests red (2b027c0)
-- [x] Build green (48d322b; package and server tests pass; app build, run and screenshot still to do: Xcode was open)
+- [x] Build green (48d322b; package and server tests pass; app built Debug and launched on Welcome at e77cb6d. Review fixes 8c04cdc, 0d73b4d, cef4fa8, 98f048c: Debug and Release builds succeed)
 - [ ] Review
 - [ ] PR
