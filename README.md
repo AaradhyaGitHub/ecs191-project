@@ -5,13 +5,13 @@ An iOS workout tracker that shows which muscles you've trained. ECS 191 group pr
 - **App:** SwiftUI, iOS 17+ (`ios/`)
 - **Server:** Flask on Google App Engine, Firestore in Datastore mode (`server/`)
 
-> Work in progress: the server is deployed (health check only so far) and the app has its four tabs; the Lift tab is next.
+> Work in progress. **Built:** the Lift tab (exercise search, saved workouts, logging a workout) and the server endpoints behind it (sign-in, exercises, saved workouts, workouts). **Prototype:** the Body tab (MuscleLab page), on sample data. **Placeholders:** Home and Goals; Camera is hidden behind a feature flag.
 
 ## Getting started (new teammates)
-1. **Install the tools:** Xcode **27.2+**; Python **3.13**; **Java 25+**; the **Google Cloud CLI** with its Firestore emulator. Details are under [Run the server locally](#run-the-server-locally) and [Run the app](#run-the-app).
-2. **Run the server and the app once** by following those two sections. Sign in with the test number (see [Signing in during development](#signing-in-during-development)).
+1. **Install the tools:** Python **3.13**, **Java 25+** and the **Google Cloud CLI** with its Firestore emulator for the server; Xcode **27.2+** for the app (Mac only). Details are under [Run the server locally](#run-the-server-locally) and [Run the app](#run-the-app).
+2. **Run the server and the app once** by following those two sections. Sign in with the test number (see [Signing in during development](#signing-in-during-development)). On Windows you can run the server and its tests, but not the app.
 3. **Pick your work** from [GitHub Issues](https://github.com/AaradhyaGitHub/ecs191-project/issues) and assign yourself (see [Working on this repo](#working-on-this-repo)).
-4. **Building a tab** (Home, Goals, Camera): put its screens in `ios/MuscleMap/Features/<Tab>/` and its logic in `ios/MuscleMapKit` (see [Code layout](#code-layout)). Use `Theme` for every color, font and spacing value, the shared components in `DesignSystem/Components/`, and `PreviewData` for sample data in SwiftUI previews, so you don't need the server to design a screen.
+4. **Building a tab** (Home, Goals, Camera, or the real data for Body): put its screens in `ios/MuscleMap/Features/<Tab>/` and its logic in `ios/MuscleMapKit` (see [Code layout](#code-layout)). Use `Theme` for every color, font and spacing value, the shared components in `DesignSystem/Components/`, and `PreviewData` for sample data in SwiftUI previews, so you don't need the server to design a screen.
 5. **Using Claude Code?** It reads [CLAUDE.md](CLAUDE.md) automatically. Claude's notes on decisions so far are in [llm.md](llm.md), and the API contract is in [API.md](API.md).
 
 ## Run the server locally
@@ -20,6 +20,16 @@ An iOS workout tracker that shows which muscles you've trained. ECS 191 group pr
 - **Google Cloud CLI** (`gcloud`): [install guide](https://cloud.google.com/sdk/docs/install). Then `gcloud components install cloud-firestore-emulator`.
 - **Java 25 or newer**, which the database emulator runs on (it refuses older Java). With Homebrew: `brew install openjdk`, then put it first on your PATH: `export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"` (add that line to `~/.zshrc` to keep it).
 
+On **Windows**, install all three with winget, then open a new terminal so the PATH updates:
+```powershell
+winget install --id astral-sh.uv -e
+winget install --id EclipseAdoptium.Temurin.25.JDK -e   # if you also have an older Java, check `java -version` shows 25
+winget install --id Google.CloudSDK -e
+uv python install 3.13
+gcloud components install cloud-firestore-emulator
+```
+
+**macOS / Linux**
 ```sh
 # one time, from the repo root
 cd server
@@ -37,6 +47,24 @@ flask --app main run --port 5001   # not 5000: macOS AirPlay Receiver holds it
 curl http://localhost:5001/api/v1/health   # → {"status": "ok"}
 ```
 
+**Windows (PowerShell)**
+```powershell
+# one time, from the repo root
+cd server
+uv venv --python 3.13 .venv
+uv pip install -r requirements.txt -r requirements-dev.txt
+
+# terminal 1: Datastore-mode emulator
+gcloud emulators firestore start --database-mode=datastore-mode --host-port=localhost:8081
+
+# terminal 2, from server/
+.venv\Scripts\Activate.ps1
+$env:DATASTORE_EMULATOR_HOST = "localhost:8081"
+python -m seed.load_exercises
+flask --app main run --port 5001
+curl.exe http://localhost:5001/api/v1/health   # → {"status": "ok"}
+```
+
 ## Signing in during development
 Use the course's **test number `+15305550000` with code `123456`**: no text message is sent and nothing needs setting up. Real phone numbers only work once the course `app_token` is configured on the server.
 
@@ -51,13 +79,13 @@ curl -s -X POST localhost:5001/api/v1/auth/sms/verify -H 'Content-Type: applicat
 In server tests, the `signed_in` fixture gives you a signed-in user in one line, and `course_auth` fakes the course service so tests never touch the network.
 
 ## Run the app
-Requires **Xcode 27.2 or newer**: the project uses Xcode 27's project format, which older Xcode versions can't open. The app itself runs on iOS 17 and later, iPhone only.
+Requires a **Mac** with **Xcode 27.2 or newer**: the project uses Xcode 27's project format, which older Xcode versions can't open. The app itself runs on iOS 17 and later, iPhone only.
 
 Open `ios/MuscleMap.xcodeproj` in Xcode and run on a simulator. If no simulators are listed, install the matching iOS simulator in Xcode → Settings → Components. Debug builds on the Simulator talk to `http://localhost:5001`. On a real phone, Debug builds talk to the live server on App Engine and sign in with the shared test number, so anything you log there is visible to anyone with that number.
 
 ## Tests
 ```sh
-cd server && pytest                      # everything; emulator tests skip if the emulator isn't running
+cd server && pytest                      # everything; emulator tests skip if the emulator isn't running (they take a few minutes)
 cd server && pytest -m "not emulator"   # fast: no database
 cd server && pytest -m emulator         # needs the emulator and DATASTORE_EMULATOR_HOST
 ```
@@ -71,9 +99,9 @@ The app's few UI smoke tests run from Xcode (⌘U).
 ## Code layout
 - `server/`: Flask app. `api/` handlers stay thin, `services/` holds the logic, `models.py` is the only Datastore access.
 - `ios/MuscleMap/`: the iOS app target, screens only.
-- `ios/MuscleMapKit/`: a local Swift package with the app's logic, one module per area (`Models`, `Networking`, `LiftCore`, …), each with its own tests. New logic goes here, not in the app target.
+- `ios/MuscleMapKit/`: a local Swift package with the app's logic, one module per area (`Models`, `Networking`, `LiftCore`, `BodyCore`, …), each with its own tests. New logic goes here, not in the app target.
 - `shared/`: files both sides use, such as `muscles.json` and the API example JSON.
-- Why it's laid out this way: see `client_architecture.md` and `server_architecture.md`.
+- Why it's laid out this way: `client_architecture.md` and `server_architecture.md` (the team is writing these). Until they're in, Claude's summaries are in [client_architecture.llm.md](client_architecture.llm.md) and [server_architecture.llm.md](server_architecture.llm.md).
 
 ## Google Cloud access
 You only need this to deploy or read the live server's logs. Day-to-day development uses the local emulator and needs no Cloud access.
