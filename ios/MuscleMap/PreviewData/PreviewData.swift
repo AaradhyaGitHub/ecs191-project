@@ -3,6 +3,7 @@ import Foundation
 import Models
 import Networking
 import LiftCore
+import OnboardingCore
 
 /// Sample data for SwiftUI previews, matching the Lift mockups. Use it in any tab's
 /// `#Preview` instead of calling the server, e.g. `LiftHomeView(templates: PreviewData.templates)`.
@@ -167,6 +168,27 @@ extension PreviewData {
         let session = LiftSession(storage: storage, outbox: outbox)
         if open { session.start(activeWorkout(withSets: withSets)) }
         return session
+    }
+
+    // MARK: Onboarding
+
+    /// A new account: units lb, nothing else set, onboarding not finished.
+    static let newUser = User(id: "u_new", units: .lb, createdAt: now)
+
+    /// A server that always succeeds: any code signs in and the profile is `newUser`.
+    struct PreviewOnboardingAPI: OnboardingAPI {
+        let isSignedIn: Bool
+        func startSignIn(phoneNumber: String) async throws {}
+        func verifySignIn(phoneNumber: String, code: String) async throws -> SignIn {
+            SignIn(token: "preview", userId: newUser.id)
+        }
+        func me() async throws -> User { newUser }
+        func updateMe(_ update: UserUpdate) async throws -> User { newUser }
+        func clearSignIn() throws {}
+    }
+
+    static func onboardingAPI(signedIn: Bool = true) -> any OnboardingAPI {
+        PreviewOnboardingAPI(isSignedIn: signedIn)
     }
 }
 #endif
