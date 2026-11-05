@@ -17,6 +17,10 @@ public final class OnboardingFlow {
     public private(set) var isSignedOut = false
     /// True while a save is running; the buttons are off.
     public private(set) var isSaving = false
+    /// The goal saved on the goal step, or nil (one per onboarding, Q-2 of #79).
+    public private(set) var savedGoal: Goal?
+    /// The units of the profile just saved; `.lb` until `saveProfile` succeeds (Q-4 of #79).
+    public private(set) var units: WeightUnit = .lb
 
     @ObservationIgnored private let api: any OnboardingAPI
 
@@ -45,6 +49,10 @@ public final class OnboardingFlow {
             isFinished = true
         }
     }
+
+    /// Sends the goal form's input through `POST /goals` (the form's `onSave`). Throws on failure
+    /// so the form stays open with its message. Scaffold: does nothing yet (#79).
+    public func saveGoal(_ input: GoalInput) async throws {}
 
     /// Sends one `PUT /users/me`; true on success. A 401 clears the token and signs out (Q-10).
     private func save(_ update: UserUpdate) async -> Bool {

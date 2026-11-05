@@ -185,6 +185,10 @@ extension PreviewData {
         }
         func me() async throws -> User { newUser }
         func updateMe(_ update: UserUpdate) async throws -> User { newUser }
+        func createGoal(_ goal: GoalInput) async throws -> Goal {
+            Goal(id: goal.id, type: goal.type, exerciseId: goal.exerciseId, target: goal.target,
+                 startDate: goal.startDate, deadline: goal.deadline, createdAt: now)
+        }
         func clearSignIn() throws {}
     }
 
