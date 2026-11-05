@@ -13,6 +13,8 @@ struct UpdateWorkoutSheet: View {
 
     @State private var problem: String?
     @State private var isSaving = false
+    /// The content's height; the sheet is only this tall. Grows when the error line shows.
+    @State private var contentHeight: CGFloat = 320
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -50,9 +52,11 @@ struct UpdateWorkoutSheet: View {
         }
         .padding(Theme.Spacing.gutter)
         .padding(.top, Theme.Spacing.s)
+        .fixedSize(horizontal: false, vertical: true)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
         .frame(maxHeight: .infinity, alignment: .top)
         .background(Theme.Colors.sheet)
-        .presentationDetents([.medium])
+        .presentationDetents([.height(contentHeight)])
         .presentationBackground(Theme.Colors.sheet)
         .interactiveDismissDisabled(isSaving)
     }
@@ -68,6 +72,15 @@ struct UpdateWorkoutSheet: View {
 }
 
 #if DEBUG
+#Preview("Presented over Lift") {
+    LiftView(saved: .preview())
+        .environment(PreviewData.liftSession(open: false))
+        .sheet(isPresented: .constant(true)) {
+            UpdateWorkoutSheet(template: PreviewData.push, workout: PreviewData.changedPush, model: .preview())
+        }
+        .preferredColorScheme(.dark)
+}
+
 #Preview("Update question") {
     UpdateWorkoutSheet(template: PreviewData.push, workout: PreviewData.changedPush, model: .preview())
         .preferredColorScheme(.dark)
