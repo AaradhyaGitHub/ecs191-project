@@ -3,13 +3,14 @@ import Foundation
 import Models
 import Networking
 import LiftCore
+import GoalsCore
 
 /// Sample data for SwiftUI previews, matching the Lift mockups. Use it in any tab's
 /// `#Preview` instead of calling the server, e.g. `LiftHomeView(templates: PreviewData.templates)`.
 /// Debug builds only, so none of it ships to testers.
 enum PreviewData {
     /// A fixed "now" (Nov 3, 2026, 5 pm UTC), so relative dates like "6 days ago" don't drift.
-    static let now = Date(timeIntervalSince1970: 1_793_725_200)
+    nonisolated static let now = Date(timeIntervalSince1970: 1_793_725_200)
 
     static func daysAgo(_ days: Double) -> Date {
         now.addingTimeInterval(-days * 86_400)
@@ -167,6 +168,47 @@ extension PreviewData {
         let session = LiftSession(storage: storage, outbox: outbox)
         if open { session.start(activeWorkout(withSets: withSets)) }
         return session
+    }
+}
+// MARK: - Goals (#72; shared/fixtures/goals.json)
+
+extension PreviewData {
+    /// Bench 100 kg at 95 %, Deadlift with no sets, 4 workouts a week at 2, Back Squat done.
+    static let goals: [Goal] = [
+        Goal(id: "7b1e4c2a-9d3f-4e8a-b5c6-1a2b3c4d5e6f", type: .strength, exerciseId: "barbell_bench_press",
+             exerciseName: "Bench Press", target: 100, startDate: "2026-10-20", deadline: "2026-12-15",
+             createdAt: daysAgo(14), progress: GoalProgress(current: 95, percent: 95, remaining: 5)),
+        Goal(id: "2f8a6d4c-1e3b-4a5c-9d7e-8f9a0b1c2d3e", type: .strength, exerciseId: "deadlift",
+             exerciseName: "Deadlift", target: 180, startDate: "2026-11-01", createdAt: daysAgo(2)),
+        Goal(id: "c4d5e6f7-a8b9-4c0d-8e1f-2a3b4c5d6e7f", type: .frequency, target: 4, startDate: "2026-10-12",
+             createdAt: daysAgo(22),
+             progress: GoalProgress(current: 2, percent: 50, remaining: 2, metThisWeek: false, weekStart: "2026-11-02")),
+        Goal(id: "9e0f1a2b-3c4d-4e5f-a6b7-c8d9e0f1a2b3", type: .strength, exerciseId: "back_squat",
+             exerciseName: "Back Squat", target: 120, startDate: "2026-09-14", createdAt: daysAgo(50),
+             status: .completed,
+             progress: GoalProgress(current: 132, percent: 100, remaining: 0, achievedOn: "2026-10-28")),
+    ]
+
+    /// Serves `goals` (or fails) without a server; writes succeed and change nothing.
+    struct GoalsSource: GoalsAPI {
+        var goals: [Goal] = PreviewData.goals
+        var fails = false
+
+        func goals(today: String) async throws -> [Goal] {
+            if fails { throw APIError.transport(.notConnectedToInternet) }
+            return goals
+        }
+
+        func createGoal(_ goal: GoalInput) async throws -> Goal {
+            Goal(id: goal.id, type: goal.type, exerciseId: goal.exerciseId, target: goal.target,
+                 startDate: goal.startDate, deadline: goal.deadline, createdAt: PreviewData.now)
+        }
+
+        func updateGoal(_ goal: GoalInput) async throws -> Goal {
+            try await createGoal(goal)
+        }
+
+        func deleteGoal(id: String) async throws {}
     }
 }
 #endif
