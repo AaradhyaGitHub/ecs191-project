@@ -62,6 +62,10 @@ public struct ActiveWorkout: Codable, Equatable, Sendable {
     /// Whether a rest timer was started since the last set was logged. The next set then gets
     /// `timeSource` "rest_timer", else "manual" (D-12).
     public private(set) var restTimerRan = false
+    /// The saved workout's exercises that Start skipped because the bundled library doesn't have
+    /// them (#67, Q-4). They don't count as removed, and Update keeps them. Optional, so a
+    /// workout stored before this field existed still loads.
+    public internal(set) var skippedTemplateExerciseIDs: [String]?
 
     public init(id: String = ClientID.make(), name: String = "Workout", templateId: String? = nil,
                 startedAt: Date, timeZone: TimeZone = .current, bodyweightKg: Double? = nil) {
