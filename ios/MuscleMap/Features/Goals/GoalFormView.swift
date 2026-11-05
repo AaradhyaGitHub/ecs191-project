@@ -204,7 +204,7 @@ struct GoalFormView: View {
             do {
                 try await onSave(input)
             } catch {
-                problem = GoalsScreenModel.message(for: error)
+                problem = GoalsScreenModel.message(for: error, during: .save)
             }
             isSaving = false
         }

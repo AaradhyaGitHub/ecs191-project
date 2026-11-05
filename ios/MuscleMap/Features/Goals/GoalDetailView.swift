@@ -84,7 +84,7 @@ struct GoalDetailView: View {
                 try await model.delete(id: goal.id)
                 dismiss()
             } catch {
-                problem = GoalsScreenModel.message(for: error)
+                problem = GoalsScreenModel.message(for: error, during: .delete)
             }
         }
     }

@@ -101,15 +101,23 @@ public final class GoalsScreenModel {
         return .loaded(active: active, completed: completed)
     }
 
+    /// What the user was doing when an error happened; picks the fallback text.
+    public enum Action: Sendable {
+        case load, save, delete
+    }
+
     /// The text for an error from the server or the network.
-    public static func message(for error: any Error) -> String {
+    public static func message(for error: any Error, during action: Action = .load) -> String {
         switch error as? APIError {
         case .transport?:
             return "Can't reach the server."
         case .server(_, _, let message)?:
             return message
         default:
-            return "Couldn't load your goals."
+            switch action {
+            case .load: return "Couldn't load your goals."
+            case .save, .delete: return "Something went wrong. Try again."
+            }
         }
     }
 }
