@@ -85,7 +85,7 @@ AC-1–2 server unit + emulator integration; AC-3–9 `OnboardingCoreTests`; AC-
 
 ## Progress
 - [x] Plan approved
-- [ ] Scaffold
+- [x] Scaffold (db49863)
 - [ ] Tests red
 - [ ] Build green
 - [ ] Review
