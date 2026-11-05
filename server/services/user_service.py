@@ -45,6 +45,7 @@ def _profile(user: dict) -> dict:
         "bodyweight_kg": user.get("bodyweight_kg"),
         "units": user.get("units") or DEFAULT_UNITS,
         "experience": user.get("experience"),
+        "onboarding_completed": False,  # scaffold (#64): always false for now
         "created_at": iso(user.get("created_at")),
     }
 
