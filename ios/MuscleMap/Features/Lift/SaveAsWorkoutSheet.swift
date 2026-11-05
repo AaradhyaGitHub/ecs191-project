@@ -4,9 +4,10 @@ import LiftCore
 
 /// "Save as a workout" after Finish (D10): Name (filled with the workout's name), Focus
 /// (optional), Save and Not now. If the server fails, the sheet stays open with the error and
-/// Try again; the same id is sent again, so a retry is safe.
+/// Try again; the same id is sent again, so a retry is safe. Every exercise of the workout is
+/// kept (#67).
 struct SaveAsWorkoutSheet: View {
-    let workout: Workout
+    let workout: ActiveWorkout
     let model: SavedWorkoutsModel
 
     @State private var name: String
@@ -17,7 +18,7 @@ struct SaveAsWorkoutSheet: View {
     @State private var id = ClientID.make()
     @Environment(\.dismiss) private var dismiss
 
-    init(workout: Workout, model: SavedWorkoutsModel) {
+    init(workout: ActiveWorkout, model: SavedWorkoutsModel) {
         self.workout = workout
         self.model = model
         _name = State(initialValue: workout.name)
@@ -100,7 +101,7 @@ struct SaveAsWorkoutSheet: View {
 
 #if DEBUG
 #Preview("Save as a workout") {
-    SaveAsWorkoutSheet(workout: PreviewData.finishedPush, model: .preview())
+    SaveAsWorkoutSheet(workout: PreviewData.activeWorkout(withSets: true), model: .preview())
         .preferredColorScheme(.dark)
 }
 #endif

@@ -56,7 +56,6 @@ struct SetLogView: View {
             }
             .onAppear { sheetAppeared = true }
         }
-        .sensoryFeedback(.warning, trigger: model.restEndedCount)
         .task { await openFirstSheet() }
     }
 

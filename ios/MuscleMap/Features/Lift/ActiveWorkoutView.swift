@@ -6,9 +6,10 @@ import LiftCore
 /// segmented progress bar, UP NEXT with Start, REMAINING (tap one to do it next, D-24), DONE,
 /// and Add exercise and Finish.
 /// "‹ Lift" closes the screen and keeps the workout open (the Resume card brings it back).
-/// Finish calls `onFinished`; Discard does not (plan, "Starting a workout").
+/// Finish calls `onFinished` with the workout as it was at Finish (#67); Discard does not
+/// (plan, "Starting a workout").
 struct ActiveWorkoutView: View {
-    let onFinished: (Workout) -> Void
+    let onFinished: (ActiveWorkout) -> Void
 
     @State private var model: ActiveWorkoutModel
     @State private var path: [String] = []
@@ -19,13 +20,13 @@ struct ActiveWorkoutView: View {
     @Environment(\.apiClient) private var apiClient
     @Environment(\.dismiss) private var dismiss
 
-    init(session: LiftSession, onFinished: @escaping (Workout) -> Void) {
+    init(session: LiftSession, onFinished: @escaping (ActiveWorkout) -> Void) {
         _model = State(initialValue: ActiveWorkoutModel(session: session))
         self.onFinished = onFinished
     }
 
     /// Previews pass a model with data already loaded.
-    init(model: ActiveWorkoutModel, onFinished: @escaping (Workout) -> Void = { _ in }) {
+    init(model: ActiveWorkoutModel, onFinished: @escaping (ActiveWorkout) -> Void = { _ in }) {
         _model = State(initialValue: model)
         self.onFinished = onFinished
     }
@@ -69,7 +70,6 @@ struct ActiveWorkoutView: View {
         } message: {
             Text("Its sets are deleted and nothing is saved.")
         }
-        .sensoryFeedback(.warning, trigger: model.restEndedCount)
     }
 
     // MARK: Toolbar
@@ -244,9 +244,10 @@ struct ActiveWorkoutView: View {
     }
 
     private func finish() {
+        let atFinish = model.active
         switch model.finish() {
-        case .finished(let workout):
-            onFinished(workout)
+        case .finished:
+            if let atFinish { onFinished(atFinish) }
             dismiss()
         case .noSets:
             asksToDiscardEmpty = true

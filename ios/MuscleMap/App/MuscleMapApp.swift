@@ -1,6 +1,7 @@
 import SwiftUI
 import Networking
 import LiftCore
+import UserNotifications
 
 @main
 struct MuscleMapApp: App {
@@ -8,6 +9,8 @@ struct MuscleMapApp: App {
     private let apiClient: APIClient
     /// The open workout and the outbox, kept on the phone (plan: specs/log-workout.llm.md).
     @State private var session: LiftSession
+    /// The rest countdown's beeps, taps and notices, on any screen (#67).
+    private let restAlerts = RestAlertController()
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -17,6 +20,8 @@ struct MuscleMapApp: App {
         _session = State(initialValue: LiftSession(
             storage: storage, outbox: WorkoutOutbox(storage: storage, sender: apiClient),
             storageIsTemporary: isTemporary))
+        // Set at launch, so a rest notice that arrives while the app is open stays hidden.
+        UNUserNotificationCenter.current().delegate = restAlerts
     }
 
     var body: some Scene {
@@ -29,7 +34,11 @@ struct MuscleMapApp: App {
                     await session.outbox.sendPending()
                 }
                 .onChange(of: scenePhase) { _, phase in
+                    restAlerts.scenePhaseChanged(phase)
                     if phase == .active { Task { await session.outbox.sendPending() } }
+                }
+                .onChange(of: session.active?.restTimer.endsAt, initial: true) { _, endsAt in
+                    restAlerts.update(endsAt: endsAt)
                 }
         }
     }

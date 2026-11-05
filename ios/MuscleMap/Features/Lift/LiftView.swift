@@ -8,7 +8,8 @@ import LiftCore
 /// a Resume card shows it and Empty workout is disabled (D-16). Finished workouts that aren't
 /// on the server yet show in a banner (plan, "Empty and error states").
 /// Saved workouts (#43) follow CREATE: Start opens one through `LiftSession.start`, and Finish
-/// offers "Save as a workout" (specs/saved-workouts.llm.md).
+/// offers "Save as a workout" (specs/saved-workouts.llm.md), or, for a changed workout from a
+/// saved workout, asks whether to update it (#67).
 struct LiftView: View {
     @Environment(\.apiClient) private var apiClient
     @Environment(LiftSession.self) private var session
@@ -75,8 +76,16 @@ struct LiftView: View {
         .fullScreenCover(isPresented: $showsWorkout, onDismiss: { saved?.showPendingOffer() }) {
             ActiveWorkoutView(session: session) { saved?.finished($0) }
         }
-        .sheet(item: Binding(get: { saved?.offer }, set: { if $0 == nil { saved?.dismissOffer() } })) { workout in
-            if let saved { SaveAsWorkoutSheet(workout: workout, model: saved) }
+        .sheet(item: Binding(get: { saved?.offer }, set: { if $0 == nil { saved?.dismissOffer() } }),
+               onDismiss: { saved?.showPendingOffer() }) { offer in
+            if let saved {
+                switch offer {
+                case .save(let workout):
+                    SaveAsWorkoutSheet(workout: workout, model: saved)
+                case .update(let template, let workout):
+                    UpdateWorkoutSheet(template: template, workout: workout, model: saved)
+                }
+            }
         }
         .confirmationDialog("Delete this workout?", isPresented: Binding(
             get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible,
@@ -115,10 +124,12 @@ struct LiftView: View {
     }
 
     /// The confirm's Finish does what Finish inside the workout does. What comes next (the
-    /// "Save as a workout" sheet or an alert) waits until the confirm alert has closed.
+    /// "Save as a workout" sheet, the update question or an alert) waits until the confirm
+    /// alert has closed.
     private func finishOpenWorkout() {
+        let atFinish = session.active
         let result = ActiveWorkoutModel(session: session).finish()
-        if case .finished(let workout) = result { saved?.finished(workout) }
+        if case .finished = result, let atFinish { saved?.finished(atFinish) }
         afterConfirm = result
         // SwiftUI may close the alert before or after running this action.
         if !asksToFinish { showAfterConfirm() }

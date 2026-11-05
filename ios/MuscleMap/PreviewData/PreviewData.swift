@@ -145,6 +145,13 @@ extension PreviewData {
         return workout
     }
 
+    /// "Push 1" started from its saved workout, with Push-up added (the update question, #67).
+    static var changedPush: ActiveWorkout {
+        var workout = LiftCore.activeWorkout(from: push, library: exercises, startedAt: now.addingTimeInterval(-40 * 60))
+        workout.add([pushUp], asSuperset: false)
+        return workout
+    }
+
     /// A session on an in-memory store. `open` starts a workout; `outboxed` adds finished
     /// workouts that weren't uploaded.
     @MainActor
