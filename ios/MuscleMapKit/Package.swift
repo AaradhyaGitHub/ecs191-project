@@ -11,14 +11,18 @@ let package = Package(
         .library(name: "Models", targets: ["Models"]),
         .library(name: "Networking", targets: ["Networking"]),
         .library(name: "LiftCore", targets: ["LiftCore"]),
+        .library(name: "BodyCore", targets: ["BodyCore"]),
     ],
     targets: [
         .target(name: "Models"),
         .target(name: "Networking", dependencies: ["Models"]),
         // Resources/exercise_library.json: the bundled exercise library (server/seed/export_library.py).
         .target(name: "LiftCore", dependencies: ["Models", "Networking"], resources: [.process("Resources")]),
+        // Body tab (MuscleLab page): muscle IDs, SVG figure art, sample sessions, workout analysis.
+        .target(name: "BodyCore", resources: [.process("Resources")]),
         .testTarget(name: "ModelsTests", dependencies: ["Models"]),
         .testTarget(name: "NetworkingTests", dependencies: ["Networking"]),
         .testTarget(name: "LiftCoreTests", dependencies: ["LiftCore"]),
+        .testTarget(name: "BodyCoreTests", dependencies: ["BodyCore"]),
     ]
 )
