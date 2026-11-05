@@ -8,6 +8,9 @@ import Observation
 @MainActor
 @Observable
 public final class OnboardingFlow {
+    /// Thrown by `saveGoal` when it sends nothing (review N-1 of #79).
+    public struct GoalNotSaved: Error, Equatable {}
+
     public private(set) var step: OnboardingStep
     /// True once `onboarding_completed` is saved; the app shows Home.
     public private(set) var isFinished = false
@@ -53,10 +56,11 @@ public final class OnboardingFlow {
 
     /// Sends the goal form's input through `POST /goals` (the form's `onSave`). Throws on failure
     /// so the form stays open with its message (the error is the form's to show, so `errorText`
-    /// is left alone). Does nothing off the goal step, while a save runs, or once a goal is saved
-    /// (one per onboarding, Q-2). A 401 clears the token and signs out, as the PUTs do (Q-5).
+    /// is left alone). Sends nothing off the goal step, while a save runs, or once a goal is saved
+    /// (one per onboarding, Q-2); it throws `GoalNotSaved` then, so a caller never takes it for a
+    /// success. A 401 clears the token and signs out, as the PUTs do (Q-5).
     public func saveGoal(_ input: GoalInput) async throws {
-        guard step == .firstGoal, !isSaving, savedGoal == nil else { return }
+        guard step == .firstGoal, !isSaving, savedGoal == nil else { throw GoalNotSaved() }
         isSaving = true
         defer { isSaving = false }
         do {
