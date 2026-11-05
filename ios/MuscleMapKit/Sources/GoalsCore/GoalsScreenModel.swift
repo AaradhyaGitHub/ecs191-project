@@ -4,7 +4,6 @@ import Models
 import Networking
 
 // The Goals tab's state (specs/goals.llm.md, AC-14).
-// SCAFFOLD: nothing is loaded or sent until the build step.
 
 /// What the Goals screen needs from the server. `APIClient` in the app; a fake in tests
 /// and previews.
@@ -46,15 +45,63 @@ public final class GoalsScreenModel {
         self.calendar = calendar
     }
 
+    /// The phone's date now, as the form's start date.
+    public var today: Date { now() }
+    public var todayCalendar: Calendar { calendar }
+
+    /// The active goals shown now (0 while loading or failed).
+    public var activeCount: Int {
+        if case .loaded(let active, _) = state { return active.count }
+        return 0
+    }
+
     /// Loads (or reloads, for "Try again") the user's goals.
-    public func load() async {}
+    public func load() async {
+        if case .failed = state { state = .loading }
+        do {
+            let goals = try await api.goals(today: GoalDates.day(now(), calendar: calendar))
+            state = Self.state(for: goals)
+        } catch {
+            state = .failed(Self.message(for: error))
+        }
+    }
 
     /// Creates a goal, then reloads. Throws the server's error for the form to show.
-    public func create(_ goal: GoalInput) async throws {}
+    public func create(_ goal: GoalInput) async throws {
+        _ = try await api.createGoal(goal)
+        await load()
+    }
 
     /// Saves an edited goal, then reloads.
-    public func update(_ goal: GoalInput) async throws {}
+    public func update(_ goal: GoalInput) async throws {
+        _ = try await api.updateGoal(goal)
+        await load()
+    }
 
     /// Deletes a goal, then reloads.
-    public func delete(id: String) async throws {}
+    public func delete(id: String) async throws {
+        try await api.deleteGoal(id: id)
+        await load()
+    }
+
+    static func state(for goals: [Goal]) -> State {
+        guard !goals.isEmpty else { return .empty }
+        let active = goals.filter { $0.status == .active }
+            .sorted { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }
+        let completed = goals.filter { $0.status == .completed }
+            .sorted { ($0.progress.achievedOn ?? "", $0.createdAt) > ($1.progress.achievedOn ?? "", $1.createdAt) }
+        return .loaded(active: active, completed: completed)
+    }
+
+    /// The text for an error from the server or the network.
+    public static func message(for error: any Error) -> String {
+        switch error as? APIError {
+        case .transport?:
+            return "Can't reach the server."
+        case .server(_, _, let message)?:
+            return message
+        default:
+            return "Couldn't load your goals."
+        }
+    }
 }
