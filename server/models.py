@@ -353,7 +353,6 @@ def change_template(user_id: str, template_id: str, change) -> dict | None:
 
 # --- Goal (User/{id}/Goal/{uuid}; plan specs/goals.llm.md) --------------------------------
 # Ancestor queries only, filtered and sorted in Python, so no index is needed.
-# SCAFFOLD: the helpers below return valid but wrong values until the build step.
 
 GOAL = "Goal"
 
@@ -362,34 +361,56 @@ def goal_key(user_id: str, goal_id: str) -> datastore.Key:
     return client().key(USER, user_id, GOAL, goal_id)
 
 
+def _goal_dict(entity: datastore.Entity) -> dict:
+    return {"id": entity.key.name, **dict(entity)}
+
+
 def put_goal(user_id: str, data: dict) -> None:
     """Creates or replaces one goal; `data["id"]` is its key."""
-    return None
+    entity = datastore.Entity(key=goal_key(user_id, data["id"]))
+    entity.update({k: v for k, v in data.items() if k != "id"})
+    client().put(entity)
 
 
 def get_goal(user_id: str, goal_id: str) -> dict | None:
     """One of this user's goals, or None."""
-    return None
+    entity = client().get(goal_key(user_id, goal_id))
+    return _goal_dict(entity) if entity else None
 
 
 def user_goals(user_id: str) -> list[dict]:
     """All of this user's goals, in no set order (the service sorts them)."""
-    return []
+    query = client().query(kind=GOAL, ancestor=user_key(user_id))
+    return [_goal_dict(e) for e in query.fetch()]
 
 
 def delete_goal(user_id: str, goal_id: str) -> None:
     """Deletes one goal. A missing one is no error."""
-    return None
+    client().delete(goal_key(user_id, goal_id))
 
 
 def user_sets(user_id: str, exercise_ids) -> list[dict]:
     """This user's stored sets of these exercises, each with its workout's `local_date`."""
-    return []
+    wanted = set(exercise_ids)
+    if not wanted:
+        return []
+    db = client()
+    dates = {e.key.name: e.get("local_date")
+             for e in db.query(kind=WORKOUT, ancestor=user_key(user_id)).fetch()}
+    rows = []
+    for entity in db.query(kind=SET_ENTRY, ancestor=user_key(user_id)).fetch():
+        if entity.get("exercise_id") not in wanted:
+            continue
+        row = _set_dict(entity)
+        row["local_date"] = dates.get(entity.key.parent.name)
+        rows.append(row)
+    return rows
 
 
 def user_workout_dates(user_id: str) -> list[str]:
     """The `local_date` (YYYY-MM-DD) of each of this user's workouts, one per workout."""
-    return []
+    query = client().query(kind=WORKOUT, ancestor=user_key(user_id))
+    return [e.get("local_date") for e in query.fetch() if e.get("local_date")]
 
 
 def _now() -> datetime:
