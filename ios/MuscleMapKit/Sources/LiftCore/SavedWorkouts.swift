@@ -153,6 +153,8 @@ public func templateInput(from workout: Workout, name: String, focus: String?) -
 public func activeWorkout(from template: Template, library: [Exercise], startedAt: Date) -> ActiveWorkout {
     var workout = ActiveWorkout(name: template.name, templateId: template.id, startedAt: startedAt)
     let byID = Dictionary(library.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+    let skipped = template.exercises.map(\.exerciseId).filter { byID[$0] == nil }
+    if !skipped.isEmpty { workout.skippedTemplateExerciseIDs = skipped }
     for group in neighbourGroups(template.exercises) {
         guard let first = group.first else { continue }
         let exercises = group.compactMap { byID[$0.exerciseId] }
@@ -198,13 +200,13 @@ private func neighbourGroups(_ rows: [TemplateExercise]) -> [[TemplateExercise]]
     return groups
 }
 
-private func clamp(_ value: Int, to range: ClosedRange<Int>) -> Int {
+func clamp(_ value: Int, to range: ClosedRange<Int>) -> Int {
     min(max(value, range.lowerBound), range.upperBound)
 }
 
 /// The most common reps among `sets` (already in logged order), ties to the first logged.
 /// Reps the server wouldn't accept (outside 1–100) are left out; `nil` when none are left.
-private func mostCommonReps(_ sets: [SetEntry]) -> Int? {
+func mostCommonReps(_ sets: [SetEntry]) -> Int? {
     let reps = sets.compactMap(\.reps).filter { TemplateLimits.reps.contains($0) }
     var counts: [Int: Int] = [:]
     for value in reps { counts[value, default: 0] += 1 }
@@ -217,7 +219,7 @@ private func mostCommonReps(_ sets: [SetEntry]) -> Int? {
 }
 
 /// The median `restBeforeS` of the 2nd and later sets, rounded to 15 s; 90 s when there is none.
-private func medianRest(_ sets: [SetEntry]) -> Int {
+func medianRest(_ sets: [SetEntry]) -> Int {
     let rests = sets.dropFirst().compactMap(\.restBeforeS).sorted()
     guard !rests.isEmpty else { return TemplateLimits.defaultRest }
     let middle = rests.count / 2

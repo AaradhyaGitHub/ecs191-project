@@ -16,8 +16,23 @@ protocol SavedWorkoutsSource: Sendable {
 
 extension APIClient: SavedWorkoutsSource {}
 
+/// What Lift home shows after Finish, once the workout screen has closed (#67): the "Save as a
+/// workout" sheet, or the question whether to update the saved workout the workout came from.
+enum FinishOffer: Identifiable, Equatable {
+    case save(ActiveWorkout)
+    case update(Template, ActiveWorkout)
+
+    var id: String {
+        switch self {
+        case .save(let workout): "save-\(workout.id)"
+        case .update(_, let workout): "update-\(workout.id)"
+        }
+    }
+}
+
 /// Saved workouts on Lift home (plan: specs/saved-workouts.llm.md). The rules (UP NEXT, card
-/// order, texts, Start, "Save as a workout") live in LiftCore; this class adds the server calls.
+/// order, texts, Start, "Save as a workout", the update question) live in LiftCore; this class
+/// adds the server calls.
 @MainActor
 @Observable
 final class SavedWorkoutsModel {
@@ -35,9 +50,9 @@ final class SavedWorkoutsModel {
     private(set) var state: LoadState
     /// A short error line above a list that is already on screen.
     private(set) var errorText: String?
-    /// A finished workout to offer "Save as a workout" for, once the workout screen has closed.
-    private(set) var offer: Workout?
-    @ObservationIgnored private var pendingOffer: Workout?
+    /// What to show after Finish, once the workout screen has closed.
+    private(set) var offer: FinishOffer?
+    @ObservationIgnored private var pendingOffer: FinishOffer?
 
     /// The exercise library the app ships (Sasa, Nov 4, 2026); Lift never downloads it.
     @ObservationIgnored private let library: [Exercise]
@@ -113,14 +128,19 @@ final class SavedWorkoutsModel {
 
     // MARK: Finish
 
-    /// Called by the workout screen's Finish. Moves UP NEXT at once (D19) and keeps the
-    /// "Save as a workout" offer until the workout screen has closed (D9, D10).
-    func finished(_ workout: Workout) {
+    /// Called by Finish with the workout as it was at Finish. Moves UP NEXT at once (D19) and
+    /// keeps the offer (the save sheet, or the update question, #67) until the workout screen
+    /// has closed (D9, D10).
+    func finished(_ workout: ActiveWorkout) {
+        switch afterFinish(workout, templates: templates, signedIn: source.isSignedIn) {
+        case .nothing: pendingOffer = nil
+        case .saveAsWorkout: pendingOffer = .save(workout)
+        case .askToUpdate(let template): pendingOffer = .update(template, workout)
+        }
         if let id = workout.templateId { markDone(id, at: workout.startedAt) }
-        pendingOffer = source.isSignedIn && canSaveAsTemplate(workout) ? workout : nil
     }
 
-    /// The workout screen has closed: show the offer, if any.
+    /// The workout screen (or the update question) has closed: show the offer, if any.
     func showPendingOffer() {
         offer = pendingOffer
         pendingOffer = nil
@@ -128,6 +148,14 @@ final class SavedWorkoutsModel {
 
     /// Not now, or the sheet closed.
     func dismissOffer() {
+        offer = nil
+    }
+
+    /// "Save as new" in the update question: closes it, and the save sheet opens once it has
+    /// closed (`showPendingOffer`).
+    func saveAsNew() {
+        guard case .update(_, let workout) = offer else { return }
+        pendingOffer = .save(workout)
         offer = nil
     }
 
@@ -156,6 +184,22 @@ final class SavedWorkoutsModel {
             return nil
         } catch {
             return problemText(error, doing: "save")
+        }
+    }
+
+    /// "Update" in the update question: replaces the saved workout's exercises and targets with
+    /// the workout's, keeping its name and focus (`PUT /templates/{id}`). Returns an error text,
+    /// or nil when it was saved. There is no offline queue (Q-5): the sheet keeps the error.
+    func update(_ template: Template, from workout: ActiveWorkout) async -> String? {
+        do {
+            let saved = try await source.updateTemplate(updateInput(for: template, from: workout))
+            if let index = templates.firstIndex(where: { $0.id == saved.id }) {
+                templates[index] = merged([saved])[0]
+            }
+            offer = nil
+            return nil
+        } catch {
+            return problemText(error, doing: "update")
         }
     }
 

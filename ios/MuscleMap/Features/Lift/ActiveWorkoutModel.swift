@@ -31,7 +31,8 @@ struct SetSheetRequest: Identifiable {
 }
 
 /// The open workout's screens (plan: specs/log-workout.llm.md). The rules live in LiftCore;
-/// this class adds the server calls, the clock and the rest-end vibration.
+/// this class adds the server calls and the clock. The rest countdown's beeps and taps are
+/// `RestAlertController`'s (#67).
 @MainActor
 @Observable
 final class ActiveWorkoutModel {
@@ -41,11 +42,8 @@ final class ActiveWorkoutModel {
     private(set) var unit: WeightUnit = .lb
     /// Each exercise's last set from `GET /exercises/mine`, for pre-fill.
     private(set) var lastSets: [String: LastSet] = [:]
-    /// Goes up by one when a rest timer reaches 0 while the app is open (the vibration).
-    private(set) var restEndedCount = 0
 
     @ObservationIgnored private var source: (any LiftProfileSource)?
-    @ObservationIgnored private var restTask: Task<Void, Never>?
 
     init(session: LiftSession, unit: WeightUnit = .lb, lastSets: [String: LastSet] = [:]) {
         self.session = session
@@ -60,7 +58,6 @@ final class ActiveWorkoutModel {
     /// Units, body weight and last sets. Each is optional: without them the defaults apply.
     func load(using source: any LiftProfileSource) async {
         self.source = source
-        scheduleRestEnd()
         guard source.isSignedIn else { return }
         if let user = try? await source.me() {
             unit = user.units
@@ -171,7 +168,6 @@ final class ActiveWorkoutModel {
                 workout.startRest(seconds: draft.restAfterS, at: date)
             }
         }
-        scheduleRestEnd()
     }
 
     func delete(_ set: SetEntry) {
@@ -209,23 +205,10 @@ final class ActiveWorkoutModel {
 
     func adjustRest(by seconds: Int) {
         session.update { $0.adjustRest(by: seconds, at: Date()) }
-        scheduleRestEnd()
     }
 
     func skipRest() {
         session.update { $0.skipRest() }
-        scheduleRestEnd()
-    }
-
-    /// Waits for the timer's end time and then bumps `restEndedCount`, so the view vibrates.
-    private func scheduleRestEnd() {
-        restTask?.cancel()
-        guard let endsAt = active?.restTimer.endsAt, endsAt > Date() else { return }
-        restTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(endsAt.timeIntervalSinceNow))
-            guard !Task.isCancelled, let self, self.active?.restTimer.endsAt == endsAt else { return }
-            self.restEndedCount += 1
-        }
     }
 
     // MARK: Finish
@@ -235,7 +218,6 @@ final class ActiveWorkoutModel {
     func finish(at date: Date = Date()) -> FinishResult {
         let result = session.finishResult(at: date)
         if case .finished = result {
-            restTask?.cancel()
             let outbox = session.outbox
             Task { await outbox.sendPending() }
         }
@@ -260,7 +242,6 @@ final class ActiveWorkoutModel {
     }
 
     func discard() {
-        restTask?.cancel()
         session.discard()
     }
 }
