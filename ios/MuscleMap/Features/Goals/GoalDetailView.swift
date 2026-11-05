@@ -50,7 +50,7 @@ struct GoalDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isEditing) {
             GoalFormView(draft: GoalDraft(editing: goal, unit: unit),
-                         activeCount: goal.status == .active ? model.activeCount - 1 : model.activeCount,
+                         activeCount: model.activeCountForEditing(goal),
                          editing: goal,
                          onSave: { input in
                              try await model.update(input)

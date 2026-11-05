@@ -55,6 +55,14 @@ public final class GoalsScreenModel {
         return 0
     }
 
+    /// The active count the goal form checks when editing `goal`: the other active goals
+    /// for an active goal, and 0 for a completed one, so a deadline-only edit is never
+    /// blocked. If the edit would reopen it past the limit, the server's 409 says so.
+    public func activeCountForEditing(_ goal: Goal) -> Int {
+        guard goal.status == .active else { return 0 }
+        return max(0, activeCount - 1)
+    }
+
     /// Loads (or reloads, for "Try again") the user's goals.
     public func load() async {
         if case .failed = state { state = .loading }
