@@ -4,13 +4,17 @@ import LiftCore
 
 /// "New workout": search, group chips, YOUR EXERCISES and ALL EXERCISES, then
 /// "Pair as superset" and the Add button (client_architecture.llm.md, "Lift screens").
+/// From an open workout's "Add exercise" it is titled "Add exercises".
 struct ExercisePickerView: View {
     @State private var model: ExercisePickerModel
+    private let title: LocalizedStringKey
     private let onAdd: (ExerciseSelection) -> Void
     @Environment(\.dismiss) private var dismiss
 
-    init(model: ExercisePickerModel, onAdd: @escaping (ExerciseSelection) -> Void) {
+    init(model: ExercisePickerModel, title: LocalizedStringKey = "New workout",
+         onAdd: @escaping (ExerciseSelection) -> Void) {
         _model = State(initialValue: model)
+        self.title = title
         self.onAdd = onAdd
     }
 
@@ -25,7 +29,7 @@ struct ExercisePickerView: View {
             }
             .padding(.top, Theme.Spacing.s)
             .background(Theme.Colors.sheet)
-            .navigationTitle("New workout")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Theme.Colors.sheet, for: .navigationBar)
             .toolbar {
@@ -297,6 +301,14 @@ private struct PickerRow: View {
     ExercisePickerView(model: ExercisePickerModel(
         source: PreviewExerciseSource(), remainingExercises: 1, now: { PreviewData.now },
         results: PreviewData.exercises, mine: PreviewData.myExercises, state: .loaded)) { _ in }
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Adding to an open workout") {
+    ExercisePickerView(model: ExercisePickerModel(
+        source: PreviewExerciseSource(), now: { PreviewData.now },
+        results: PreviewData.exercises, mine: PreviewData.myExercises, state: .loaded),
+                       title: "Add exercises") { _ in }
         .preferredColorScheme(.dark)
 }
 

@@ -52,7 +52,7 @@ struct ActiveWorkoutView: View {
         .sheet(isPresented: $isPicking) {
             ExercisePickerView(model: ExercisePickerModel(
                 source: apiClient, remainingExercises: model.active?.remainingExerciseSlots ?? 0,
-                unit: model.unit)) { picks in
+                unit: model.unit), title: "Add exercises") { picks in
                 model.add(picks)
             }
         }
