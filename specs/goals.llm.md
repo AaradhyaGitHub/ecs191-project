@@ -101,7 +101,7 @@ public protocol GoalsAPI: Sendable { goals, createGoal, updateGoal, deleteGoal }
 
 ## Progress
 - [x] Plan approved
-- [ ] Scaffold
+- [x] Scaffold (8977bea)
 - [ ] Tests red
 - [ ] Build green
 - [ ] Review
