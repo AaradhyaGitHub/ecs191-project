@@ -43,6 +43,9 @@
       ],
       "package-product-members": [
         {
+          "product-name": "BodyCore",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
           "product-name": "LiftCore",
           "build-phase": { "build-phase": "frameworks" },
         }, {
