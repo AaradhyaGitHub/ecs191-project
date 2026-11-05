@@ -351,5 +351,46 @@ def change_template(user_id: str, template_id: str, change) -> dict | None:
         return new
 
 
+# --- Goal (User/{id}/Goal/{uuid}; plan specs/goals.llm.md) --------------------------------
+# Ancestor queries only, filtered and sorted in Python, so no index is needed.
+# SCAFFOLD: the helpers below return valid but wrong values until the build step.
+
+GOAL = "Goal"
+
+
+def goal_key(user_id: str, goal_id: str) -> datastore.Key:
+    return client().key(USER, user_id, GOAL, goal_id)
+
+
+def put_goal(user_id: str, data: dict) -> None:
+    """Creates or replaces one goal; `data["id"]` is its key."""
+    return None
+
+
+def get_goal(user_id: str, goal_id: str) -> dict | None:
+    """One of this user's goals, or None."""
+    return None
+
+
+def user_goals(user_id: str) -> list[dict]:
+    """All of this user's goals, in no set order (the service sorts them)."""
+    return []
+
+
+def delete_goal(user_id: str, goal_id: str) -> None:
+    """Deletes one goal. A missing one is no error."""
+    return None
+
+
+def user_sets(user_id: str, exercise_ids) -> list[dict]:
+    """This user's stored sets of these exercises, each with its workout's `local_date`."""
+    return []
+
+
+def user_workout_dates(user_id: str) -> list[str]:
+    """The `local_date` (YYYY-MM-DD) of each of this user's workouts, one per workout."""
+    return []
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)

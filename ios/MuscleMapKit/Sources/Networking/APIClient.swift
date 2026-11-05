@@ -107,6 +107,25 @@ public struct APIClient: Sendable {
         _ = try await data("DELETE", "/templates/\(id)", body: Optional<Empty>.none)
     }
 
+    // MARK: Goals (API.md "Endpoints for the Goals tab"). SCAFFOLD: not sent yet.
+
+    /// `today` is the phone's local date, `YYYY-MM-DD`; it picks the week for frequency goals.
+    public func goals(today: String) async throws -> [Goal] {
+        []
+    }
+
+    /// Safe to retry: a repeated `id` returns the stored goal.
+    public func createGoal(_ goal: GoalInput) async throws -> Goal {
+        throw APIError.unexpectedStatus(501)
+    }
+
+    /// Changes only `target` and (strength) `deadline`.
+    public func updateGoal(_ goal: GoalInput) async throws -> Goal {
+        throw APIError.unexpectedStatus(501)
+    }
+
+    public func deleteGoal(id: String) async throws {}
+
     /// Saves a finished workout. Safe to retry: the server answers 201 the first time and
     /// 200 with the same body for a repeat, and both count as success.
     public func saveWorkout(_ workout: Workout) async throws -> Workout {
