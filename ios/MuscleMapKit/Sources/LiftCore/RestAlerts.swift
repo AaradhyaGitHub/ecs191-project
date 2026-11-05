@@ -79,9 +79,9 @@ public func restNotices(endsAt: Date?, now: Date, leavingApp: Bool) -> [RestNoti
     }
     guard leavingApp else { return [over] }
     let seconds = clampedCountdown(Int(left.rounded()))
-    let now = RestNotice(id: RestNoticeID.tenLeft, fireAt: nil, title: secondsLeftTitle(seconds),
-                         sound: countdownSound(secondsLeft: seconds))
-    return [now, over]
+    let immediate = RestNotice(id: RestNoticeID.tenLeft, fireAt: nil, title: secondsLeftTitle(seconds),
+                               sound: countdownSound(secondsLeft: seconds))
+    return [immediate, over]
 }
 
 /// "10 seconds left", "1 second left".
