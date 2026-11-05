@@ -105,4 +105,4 @@ public protocol GoalsAPI: Sendable { goals, createGoal, updateGoal, deleteGoal }
 - [x] Tests red (86cf341)
 - [x] Build green (a05d5ca)
 - [x] Review (S-1..S-4 fixed in 8e57472, 015ab12, 75f0cd2, f6daf44; S-5 deferred to #76; re-check clean)
-- [ ] PR
+- [x] PR (#77)
