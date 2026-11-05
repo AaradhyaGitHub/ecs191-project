@@ -34,6 +34,9 @@ public final class SignInFlow {
     @ObservationIgnored private let api: any OnboardingAPI
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var lastSentAt: Date?
+    /// True once the code was accepted (the token is saved). A spent code can't be checked
+    /// again, so a later Verify only retries loading the profile.
+    @ObservationIgnored private var isVerified = false
 
     public init(api: any OnboardingAPI, now: @escaping () -> Date = Date.init) {
         self.api = api
@@ -61,21 +64,24 @@ public final class SignInFlow {
 
     /// Checks the code; on success loads the profile and ends `.signedIn`.
     /// If the profile can't load, it stays on the code screen (the token is kept) so the user
-    /// can try again.
+    /// can try again; that next Verify only loads the profile, since the code is spent.
     public func verify() async {
         guard !isBusy, state == .enterCode, let sentTo else { return }
-        guard VerificationCode.isValid(codeText) else {
+        guard isVerified || VerificationCode.isValid(codeText) else {
             errorText = Self.invalidCodeText
             return
         }
         isBusy = true
         defer { isBusy = false }
-        do {
-            _ = try await api.verifySignIn(phoneNumber: sentTo, code: codeText)
-        } catch {
-            errorText = OnboardingErrors.isUnauthorized(error)
-                ? OnboardingErrors.wrongCode : OnboardingErrors.text(for: error)
-            return
+        if !isVerified {
+            do {
+                _ = try await api.verifySignIn(phoneNumber: sentTo, code: codeText)
+                isVerified = true
+            } catch {
+                errorText = OnboardingErrors.isUnauthorized(error)
+                    ? OnboardingErrors.wrongCode : OnboardingErrors.text(for: error)
+                return
+            }
         }
         do {
             let user = try await api.me()
@@ -91,6 +97,7 @@ public final class SignInFlow {
         guard !isBusy else { return }
         codeText = ""
         errorText = nil
+        isVerified = false
         state = .enterPhone
     }
 
