@@ -6,5 +6,6 @@
   "bodyweight_kg": 82.1,
   "units": "lb",
   "experience": "intermediate",
+  "onboarding_completed": true,
   "created_at": "2026-11-01T18:00:00Z"
 }
