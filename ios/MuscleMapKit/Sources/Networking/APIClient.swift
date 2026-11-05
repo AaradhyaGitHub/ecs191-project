@@ -35,9 +35,12 @@ public struct APIClient: Sendable {
 
     // MARK: Sign-in (API.md "Sign-in"). Development: +15305550000, code 123456.
 
+    #if DEBUG
     /// The course's test number and code: no text is sent and no setup is needed.
+    /// Debug builds only, so Release builds don't carry them.
     public static let testPhoneNumber = "+15305550000"
     public static let testCode = "123456"
+    #endif
 
     /// Whether a sign-in token is saved.
     public var isSignedIn: Bool { tokens.token() != nil }
