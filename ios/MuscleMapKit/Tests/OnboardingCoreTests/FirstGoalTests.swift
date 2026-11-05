@@ -111,7 +111,7 @@ struct FirstGoalTests {
     @Test("AC-4: on the profile step saveGoal makes no call")
     func saveGoalOnProfileStep() async {
         let flow = OnboardingFlow(api: api, step: .profile)
-        _ = try? await flow.saveGoal(TestGoal.input())
+        await #expect(throws: OnboardingFlow.GoalNotSaved()) { try await flow.saveGoal(TestGoal.input()) }
         #expect(api.calls.isEmpty)
         #expect(flow.savedGoal == nil)
     }
@@ -120,7 +120,7 @@ struct FirstGoalTests {
     func secondGoalIgnored() async throws {
         let flow = goalStepFlow()
         try await flow.saveGoal(TestGoal.input(id: "g_1"))
-        _ = try? await flow.saveGoal(TestGoal.input(id: "g_2"))
+        await #expect(throws: OnboardingFlow.GoalNotSaved()) { try await flow.saveGoal(TestGoal.input(id: "g_2")) }
         #expect(api.goals.map(\.id) == ["g_1"])
         #expect(flow.savedGoal?.id == "g_1")
     }
