@@ -22,5 +22,19 @@ public enum LaunchRoute: Equatable, Sendable {
 /// No token → `.welcome` without a call; otherwise `GET /users/me` decides (AC-5).
 /// A 401 clears the token and goes to `.welcome`.
 public func launchRoute(api: any OnboardingAPI) async -> LaunchRoute {
-    .retry  // scaffold
+    guard api.isSignedIn else { return .welcome }
+    do {
+        let user = try await api.me()
+        return route(for: user)
+    } catch where OnboardingErrors.isUnauthorized(error) {
+        try? api.clearSignIn()
+        return .welcome
+    } catch {
+        return .retry
+    }
+}
+
+/// Home once onboarding is done; otherwise back to the profile step (Q-2).
+public func route(for user: User) -> LaunchRoute {
+    user.onboardingCompleted ? .home : .onboarding(.profile)
 }

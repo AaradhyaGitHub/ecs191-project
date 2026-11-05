@@ -15,6 +15,8 @@ public final class OnboardingFlow {
     public private(set) var errorText: String?
     /// True after a 401 on an onboarding PUT: the token is cleared and the app shows Welcome (Q-10).
     public private(set) var isSignedOut = false
+    /// True while a save is running; the buttons are off.
+    public private(set) var isSaving = false
 
     @ObservationIgnored private let api: any OnboardingAPI
 
@@ -25,11 +27,40 @@ public final class OnboardingFlow {
 
     /// Saves the profile and moves to the goal step. Never sets `onboarding_completed`.
     public func saveProfile(_ draft: ProfileDraft) async {
-        // scaffold
+        guard step == .profile, !isSaving else { return }
+        if let problem = draft.validationError {
+            errorText = problem
+            return
+        }
+        if await save(draft.update()) {
+            step = .firstGoal
+        }
     }
 
     /// Sends `PUT {"onboarding_completed": true}` after the goal step, done or skipped.
+    /// Does nothing on the profile step: the flag is set only after the goal step (spec 3).
     public func finish(skippedGoal: Bool) async {
-        // scaffold
+        guard step == .firstGoal, !isSaving, !isFinished else { return }
+        if await save(UserUpdate(onboardingCompleted: true)) {
+            isFinished = true
+        }
+    }
+
+    /// Sends one `PUT /users/me`; true on success. A 401 clears the token and signs out (Q-10).
+    private func save(_ update: UserUpdate) async -> Bool {
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            _ = try await api.updateMe(update)
+            errorText = nil
+            return true
+        } catch where OnboardingErrors.isUnauthorized(error) {
+            try? api.clearSignIn()
+            isSignedOut = true
+            return false
+        } catch {
+            errorText = OnboardingErrors.text(for: error)
+            return false
+        }
     }
 }

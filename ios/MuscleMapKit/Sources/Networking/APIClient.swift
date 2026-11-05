@@ -63,7 +63,7 @@ public struct APIClient: Sendable {
 
     /// Deletes the saved sign-in token, so the app shows Welcome next (#64; #38 reuses it).
     public func clearSignIn() throws {
-        // Scaffold: not implemented yet.
+        try tokens.clear()
     }
 
     public func me() async throws -> User {
