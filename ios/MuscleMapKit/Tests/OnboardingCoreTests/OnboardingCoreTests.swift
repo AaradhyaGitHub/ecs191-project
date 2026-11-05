@@ -1,5 +1,3 @@
-import Testing
-@testable import OnboardingCore
-
-// Placeholder so the target builds; test-writer adds the OnboardingCore tests
-// (specs/onboarding.llm.md, "Tests").
+// The OnboardingCore tests live in the files next to this one, one per area:
+// PhoneAndCodeTests, LaunchRouteTests, SignInFlowTests, ProfileDraftTests, OnboardingFlowTests.
+// Shared fakes are in TestSupport.swift.
