@@ -8,7 +8,7 @@ struct WelcomeView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.l) {
             Spacer()
             Image(systemName: "figure.strengthtraining.traditional")
-                .font(.system(size: 56))
+                .font(Theme.Fonts.icon)
                 .foregroundStyle(Theme.Colors.accent)
             VStack(alignment: .leading, spacing: Theme.Spacing.s) {
                 Text("Muscle Map")

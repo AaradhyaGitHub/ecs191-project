@@ -53,6 +53,8 @@ enum Theme {
         /// "SAVED WORKOUTS": 12 / semibold, caps, +0.1em tracking (see `sectionHeaderTracking`).
         static let sectionHeader = Font.system(size: 12, weight: .semibold)
         static let sectionHeaderTracking: CGFloat = 1.2
+        /// A large SF Symbol on a full-screen page (Welcome): 56.
+        static let icon = Font.system(size: 56)
     }
 
     // MARK: Shape and spacing (8 pt grid)
