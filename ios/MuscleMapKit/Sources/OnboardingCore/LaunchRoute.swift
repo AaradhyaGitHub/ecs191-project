@@ -19,19 +19,36 @@ public enum LaunchRoute: Equatable, Sendable {
     case home
 }
 
-/// No token → `.welcome` without a call; otherwise `GET /users/me` decides (AC-5).
+/// Where the app opens, with the profile `GET /users/me` returned (nil for `.welcome`/`.retry`),
+/// so the onboarding steps can prefill it without a second call.
+public struct Launch: Equatable, Sendable {
+    public let route: LaunchRoute
+    public let user: User?
+
+    public init(route: LaunchRoute, user: User?) {
+        self.route = route
+        self.user = user
+    }
+}
+
+/// No token → `.welcome` without a call; otherwise one `GET /users/me` decides (AC-5).
 /// A 401 clears the token and goes to `.welcome`.
-public func launchRoute(api: any OnboardingAPI) async -> LaunchRoute {
-    guard api.isSignedIn else { return .welcome }
+public func launch(api: any OnboardingAPI) async -> Launch {
+    guard api.isSignedIn else { return Launch(route: .welcome, user: nil) }
     do {
         let user = try await api.me()
-        return route(for: user)
+        return Launch(route: route(for: user), user: user)
     } catch where OnboardingErrors.isUnauthorized(error) {
         try? api.clearSignIn()
-        return .welcome
+        return Launch(route: .welcome, user: nil)
     } catch {
-        return .retry
+        return Launch(route: .retry, user: nil)
     }
+}
+
+/// Just the route of `launch(api:)`.
+public func launchRoute(api: any OnboardingAPI) async -> LaunchRoute {
+    await launch(api: api).route
 }
 
 /// Home once onboarding is done; otherwise back to the profile step (Q-2).

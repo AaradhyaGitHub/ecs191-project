@@ -68,17 +68,16 @@ struct LaunchGate<Content: View>: View {
     /// At launch and on Try again.
     private func load() async {
         screen = .loading
-        switch await launchRoute(api: server) {
+        let result = await launch(api: server)
+        switch result.route {
         case .welcome: show(.welcome)
         case .retry: show(.retry)
         case .home: show(.home)
         case .onboarding:
-            // The route only says "not finished"; the profile step needs the saved profile to
-            // prefill (Q-2), so it is loaded again here.
-            do {
-                let user = try await server.me()
-                await open(for: user)
-            } catch {
+            // The profile step prefills from the profile the launch call loaded (Q-2).
+            if let user = result.user {
+                show(.onboarding(OnboardingFlow(api: server), user))
+            } else {
                 show(.retry)
             }
         }
