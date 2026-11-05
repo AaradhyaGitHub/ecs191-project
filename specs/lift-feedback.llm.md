@@ -81,6 +81,9 @@ The `Workout` versions in `SavedWorkouts.swift` stay (their tests stay green); t
 10. **Time Sensitive signing:** if our team can't sign the entitlement, stop and ask (fallback: normal level).
 11. **Control Center or the app switcher** count as open (`.inactive`): the app keeps beeping. (Sasa, Nov 4, 2026)
 12. **Time Sensitive entitlement stays:** Sasa signs with a paid Apple Developer account. A teammate with a free Personal Team may get a signing error and can remove the capability locally (not committed). (Sasa, Nov 4, 2026)
+13. **Skipped at Start:** `ActiveWorkout.skippedTemplateExerciseIDs` (optional, local only, never sent) records the saved workout's exercises that Start skipped, so they don't count as removed. (Sasa, Nov 4, 2026)
+14. **Send-now notice title:** "<n> seconds left" ("1 second left"). (Sasa, Nov 4, 2026)
+15. **Update order:** Update keeps the saved workout's block order and appends added exercises; ones skipped at Start go at the end. (Sasa, Nov 4, 2026)
 
 ## Walkthrough
 Setup: lane 2, server on 5001 with emulator 8093 (`seed.load_exercises`), Debug test sign-in, "Push 1" (2 exercises) made with `POST /templates`. Video has no sound and the Simulator has no haptics: beeps and taps are checked on a device; banners are best effort.
