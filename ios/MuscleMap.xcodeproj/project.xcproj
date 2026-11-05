@@ -59,6 +59,10 @@
           "package": "MuscleMapKit",
           "product-name": "GoalsCore",
           "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "MuscleMapKit",
+          "product-name": "OnboardingCore",
+          "build-phase": { "build-phase": "frameworks" },
         },
       ],
       "build-settings": {

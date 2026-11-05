@@ -26,20 +26,20 @@ struct MuscleMapApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environment(\.apiClient, apiClient)
-                .environment(session)
-                .task {
-                    await signInForDevelopment()
-                    await session.outbox.sendPending()
-                }
-                .onChange(of: scenePhase) { _, phase in
-                    restAlerts.scenePhaseChanged(phase)
-                    if phase == .active { Task { await session.outbox.sendPending() } }
-                }
-                .onChange(of: session.active?.restTimer.endsAt, initial: true) { _, endsAt in
-                    restAlerts.update(endsAt: endsAt)
-                }
+            // Welcome, sign-in and onboarding until the account is set up, then the tabs (#64).
+            LaunchGate(onSignedIn: { await session.outbox.sendPending() }) {
+                RootView()
+            }
+            .environment(\.apiClient, apiClient)
+            .environment(session)
+            .task { await session.outbox.sendPending() }
+            .onChange(of: scenePhase) { _, phase in
+                restAlerts.scenePhaseChanged(phase)
+                if phase == .active { Task { await session.outbox.sendPending() } }
+            }
+            .onChange(of: session.active?.restTimer.endsAt, initial: true) { _, endsAt in
+                restAlerts.update(endsAt: endsAt)
+            }
         }
     }
 
@@ -58,20 +58,6 @@ struct MuscleMapApp: App {
             return (try! SwiftDataWorkoutStorage(inMemory: true), true)
             #endif
         }
-    }
-
-    /// Debug builds sign in with the course test number when there's no token (D-9).
-    /// Release builds keep finished workouts in the outbox until sign-in screens exist.
-    private func signInForDevelopment() async {
-        #if DEBUG
-        guard !apiClient.isSignedIn else { return }
-        do {
-            try await apiClient.startSignIn(phoneNumber: APIClient.testPhoneNumber)
-            try await apiClient.verifySignIn(phoneNumber: APIClient.testPhoneNumber, code: APIClient.testCode)
-        } catch {
-            // The server may be down; the next launch tries again.
-        }
-        #endif
     }
 }
 

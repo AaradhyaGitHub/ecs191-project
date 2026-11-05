@@ -14,9 +14,9 @@ OnboardingCore (`swift test --filter OnboardingCoreTests`)
 - **AC-4** `VerificationCode.sanitized` keeps digits, max 6; `isValid` is true only for exactly 6 digits.
 - **AC-5** `launchRoute(api:)`: no token → `.welcome` (no call); `me` failed with 401 → `.welcome` and the token is cleared; other failure → `.retry`; `onboardingCompleted` → `.home`; else `.onboarding(.profile)` (Q-2).
 - **AC-6** `SignInFlow`: `sendCode` with an invalid number sets `errorText` and makes no call; a valid one calls `startSignIn` and moves to `.enterCode`. `verify` → on success fetches `me` and ends `.signedIn(User)`. Errors become texts (Q-7): 401 → "That code isn't right.", 403/400 → the server's message, no connection → "Can't reach the server.". `changeNumber` returns to `.enterPhone` keeping the digits.
-- **AC-7** Resend is allowed only `resendCooldown` (Q-5) after the last send, by injected clock; `resendAvailableIn(now:)` counts down.
+- **AC-7** Resend is allowed only `resendCooldown` (Q-5) after the last send, by injected clock; `resendAvailableIn()` counts down using the injected clock.
 - **AC-8** `ProfileDraft`: prefilled from a `User`; units default lb; switching units converts the typed body weight (via `Weight`, display rounded to 0.1); `update()` sends trimmed name (blank → omitted), `units`, body weight as exact kg, and only the optional fields set; body weight outside >0…500 kg or birth year outside 1900…this year → `validationError`, no call.
-- **AC-9** `OnboardingFlow.finish(skippedGoal:)` sends `PUT {"onboarding_completed": true}` only after the goal step (done or skipped), never after the profile step (spec 3).
+- **AC-9** `OnboardingFlow.finish(skippedGoal:)` sends `PUT {"onboarding_completed": true}` only after the goal step (done or skipped), never after the profile step (spec 3). On success `isFinished` becomes true; a failed save sets `errorText` and stays on the step; a 401 on the onboarding PUTs clears the token and sets `isSignedOut` (Q-10).
 - **AC-10** `User` decodes `user.json` and `user_new.json` with `onboardingCompleted` (true/false); `UserUpdate(onboardingCompleted: true)` encodes `{"onboarding_completed": true}`.
 
 App (by hand, Simulator, local server :5001, test number)
@@ -37,11 +37,13 @@ public enum VerificationCode { static func sanitized(_: String) -> String; stati
 public enum OnboardingStep: Equatable, Sendable { case profile, firstGoal }
 public enum LaunchRoute: Equatable, Sendable { case welcome, retry, onboarding(OnboardingStep), home }
 public func launchRoute(api: any OnboardingAPI) async -> LaunchRoute
-@Observable public final class SignInFlow { phoneText, codeText, state, errorText, isBusy; init(api:, now: @escaping () -> Date)
+@Observable public final class SignInFlow { enum State { enterPhone, enterCode, signedIn(User) }; static resendCooldown = 30
+  phoneText, codeText, state, errorText, isBusy; init(api:, now: @escaping () -> Date)
   func sendCode() async; func resend() async; func verify() async; func changeNumber(); func resendAvailableIn() -> Int }
 public struct ProfileDraft: Equatable { init(user: User); displayName, units, bodyweightText, sex, birthYear, experience
   mutating func setUnits(_: WeightUnit); var validationError: String? { get }; func update() -> UserUpdate }
-@Observable public final class OnboardingFlow { step; func saveProfile(_: ProfileDraft) async; func finish(skippedGoal: Bool) async }
+@Observable public final class OnboardingFlow { step, isFinished: Bool, errorText: String?, isSignedOut: Bool; init(api:, step: = .profile)
+  func saveProfile(_: ProfileDraft) async; func finish(skippedGoal: Bool) async }
 ```
 ## Files
 - Server: `server/services/user_service.py`; tests `server/tests/services/test_user_service.py`, `server/tests/api/test_users.py`.
@@ -82,11 +84,12 @@ AC-1–2 server unit + emulator integration; AC-3–9 `OnboardingCoreTests`; AC-
 - **Q-10 401 scope.** **#64 handles 401 only for its own calls (launch `GET /users/me`, onboarding PUTs): clear token, go to Welcome.** The app-wide "any 401 → sign-in" and log out stay in #38, which reuses `clearSignIn()` and `LaunchGate`.
 - **Q-11 #51 limits.** **Client checks birth year 1900…this year and name ≤60 now; the server limits stay in #51.**
 - **Q-12 Module name** **`OnboardingCore`** (like `LiftCore`, `GoalsCore`). **No walkthrough**; AC-11–12 by hand.
+- **Q-13 OnboardingFlow outcome fields and the names above: Gabriel, Nov 4, 2026** (`isFinished`, `errorText`, `isSignedOut`; `SignInFlow.State` cases, `resendCooldown` 30 s, `resendAvailableIn()` on the injected clock, `ProfileDraft.sex: String?` "female"/"male"/nil, `birthYear: Int?`).
 
 ## Progress
 - [x] Plan approved
-- [ ] Scaffold
-- [ ] Tests red
-- [ ] Build green
-- [ ] Review
-- [ ] PR
+- [x] Scaffold (db49863)
+- [x] Tests red (2b027c0)
+- [x] Build green (48d322b; package and server tests pass; app built Debug and launched on Welcome at e77cb6d. Review fixes 8c04cdc, 0d73b4d, cef4fa8, 98f048c: Debug and Release builds succeed)
+- [x] Review (S-1..S-3, N-1 fixed in 8c04cdc, 0d73b4d, cef4fa8, 98f048c; N-2 → #79; clearing profile fields → #78; re-check clean)
+- [x] PR (#80)

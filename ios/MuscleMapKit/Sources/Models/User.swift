@@ -15,11 +15,13 @@ public struct User: Codable, Identifiable, Hashable, Sendable {
     /// Display only; storage is always kg.
     public var units: WeightUnit
     public var experience: Experience?
+    /// Whether the user finished onboarding (API.md; `false` for a new user).
+    public var onboardingCompleted: Bool
     public var createdAt: Date
 
     public init(id: String, displayName: String? = nil, sex: String? = nil, birthYear: Int? = nil,
                 bodyweightKg: Double? = nil, units: WeightUnit, experience: Experience? = nil,
-                createdAt: Date) {
+                onboardingCompleted: Bool = false, createdAt: Date) {
         self.id = id
         self.displayName = displayName
         self.sex = sex
@@ -27,6 +29,7 @@ public struct User: Codable, Identifiable, Hashable, Sendable {
         self.bodyweightKg = bodyweightKg
         self.units = units
         self.experience = experience
+        self.onboardingCompleted = onboardingCompleted
         self.createdAt = createdAt
     }
 }
@@ -39,16 +42,18 @@ public struct UserUpdate: Codable, Hashable, Sendable {
     public var bodyweightKg: Double?
     public var units: WeightUnit?
     public var experience: Experience?
+    public var onboardingCompleted: Bool?
 
     public init(displayName: String? = nil, sex: String? = nil, birthYear: Int? = nil,
                 bodyweightKg: Double? = nil, units: WeightUnit? = nil,
-                experience: Experience? = nil) {
+                experience: Experience? = nil, onboardingCompleted: Bool? = nil) {
         self.displayName = displayName
         self.sex = sex
         self.birthYear = birthYear
         self.bodyweightKg = bodyweightKg
         self.units = units
         self.experience = experience
+        self.onboardingCompleted = onboardingCompleted
     }
 }
 

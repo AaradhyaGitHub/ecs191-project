@@ -13,6 +13,7 @@ let package = Package(
         .library(name: "LiftCore", targets: ["LiftCore"]),
         .library(name: "BodyCore", targets: ["BodyCore"]),
         .library(name: "GoalsCore", targets: ["GoalsCore"]),
+        .library(name: "OnboardingCore", targets: ["OnboardingCore"]),
     ],
     targets: [
         .target(name: "Models"),
@@ -23,10 +24,13 @@ let package = Package(
         .target(name: "BodyCore", resources: [.process("Resources")]),
         // Goals tab: goal form rules, card texts, screen state (specs/goals.llm.md).
         .target(name: "GoalsCore", dependencies: ["Models", "Networking"]),
+        // Welcome, sign-in, profile setup, launch routing (specs/onboarding.llm.md).
+        .target(name: "OnboardingCore", dependencies: ["Models", "Networking"]),
         .testTarget(name: "ModelsTests", dependencies: ["Models"]),
         .testTarget(name: "NetworkingTests", dependencies: ["Networking"]),
         .testTarget(name: "LiftCoreTests", dependencies: ["LiftCore"]),
         .testTarget(name: "BodyCoreTests", dependencies: ["BodyCore"]),
         .testTarget(name: "GoalsCoreTests", dependencies: ["GoalsCore"]),
+        .testTarget(name: "OnboardingCoreTests", dependencies: ["OnboardingCore"]),
     ]
 )

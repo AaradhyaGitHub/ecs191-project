@@ -9,7 +9,8 @@ from services.errors import ApiError
 from services.timestamps import iso
 
 # The only fields PUT /users/me may change (API.md).
-EDITABLE_FIELDS = ("display_name", "sex", "birth_year", "bodyweight_kg", "units", "experience")
+EDITABLE_FIELDS = ("display_name", "sex", "birth_year", "bodyweight_kg", "units", "experience",
+                   "onboarding_completed")
 UNITS = ("lb", "kg")
 EXPERIENCE = ("beginner", "intermediate", "advanced")
 DEFAULT_UNITS = "lb"
@@ -32,11 +33,13 @@ _RULES = {
                       f"a number above 0 and at most {workout_service.MAX_BODYWEIGHT_KG}"),
     "units": (lambda v: v in UNITS, "lb or kg"),
     "experience": (lambda v: v in EXPERIENCE, "beginner, intermediate or advanced"),
+    "onboarding_completed": (lambda v: isinstance(v, bool), "true or false"),
 }
 
 
 def _profile(user: dict) -> dict:
-    """The stored user in API.md's shape: every field present; units "lb" until set (D-8)."""
+    """The stored user in API.md's shape: every field present; units "lb" until set (D-8);
+    onboarding_completed false until set (#64)."""
     return {
         "id": user["id"],
         "display_name": user.get("display_name"),
@@ -45,6 +48,8 @@ def _profile(user: dict) -> dict:
         "bodyweight_kg": user.get("bodyweight_kg"),
         "units": user.get("units") or DEFAULT_UNITS,
         "experience": user.get("experience"),
+        # Missing (stored before #64) or null counts as not done (Q-3).
+        "onboarding_completed": user.get("onboarding_completed") is True,
         "created_at": iso(user.get("created_at")),
     }
 

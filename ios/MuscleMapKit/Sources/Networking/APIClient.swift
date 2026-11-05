@@ -35,9 +35,12 @@ public struct APIClient: Sendable {
 
     // MARK: Sign-in (API.md "Sign-in"). Development: +15305550000, code 123456.
 
+    #if DEBUG
     /// The course's test number and code: no text is sent and no setup is needed.
+    /// Debug builds only, so Release builds don't carry them.
     public static let testPhoneNumber = "+15305550000"
     public static let testCode = "123456"
+    #endif
 
     /// Whether a sign-in token is saved.
     public var isSignedIn: Bool { tokens.token() != nil }
@@ -59,6 +62,11 @@ public struct APIClient: Sendable {
                                             authorized: false)
         try tokens.save(result.token)
         return result
+    }
+
+    /// Deletes the saved sign-in token, so the app shows Welcome next (#64; #38 reuses it).
+    public func clearSignIn() throws {
+        try tokens.clear()
     }
 
     public func me() async throws -> User {
